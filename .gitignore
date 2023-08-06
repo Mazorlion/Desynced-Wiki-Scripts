@@ -1,0 +1,19 @@
+# Exclude env/libs
+.conda/
+.venv/
+
+# Cython?
+apicache-py3/*
+**__pycache__**
+
+# Don't include secret stuff :)
+**credential**
+**pickle**
+
+# Don't include testing notebooks
+**ipynb**
+
+# Actual Lua implementation of the game
+game_data/*
+# Output wiki pages
+wiki/GameData/*
