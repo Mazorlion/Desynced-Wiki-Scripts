@@ -41,7 +41,12 @@ def main(game_data_directory: str, recipe_directory: str, dry_run: bool):
     # Create a file in `recipe_directory` for each parsed recipe.
     for recipe in game.recipes:
         # TODO(Maz): Remove this once there are better heuristics for "real" recipes.
-        if "building" not in recipe.name.lower():
+        if (
+            recipe.race != "robot"
+            or recipe.is_derived
+            or "virus" in recipe.name.lower()
+            or "artificial" in recipe.name.lower()
+        ):
             continue
         with open(
             os.path.join(recipe_directory, recipe.name), "w"
@@ -67,14 +72,14 @@ if __name__ == "__main__":
         default="game_data/main/data",
     )
     parser.add_argument(
-        "--recipe_directory",
+        "--recipe-directory",
         type=str,
         help="Path to the directory containing wiki files for gamedata recipes.",
         default="wiki/GameData/Recipe",
     )
     parser.add_argument(
         "--dry_run",
-        type=bool,
+        action=argparse.BooleanOptionalAction,
         help="If True, prevents any changes to the wiki. Default: True.",
         default="True",
     )

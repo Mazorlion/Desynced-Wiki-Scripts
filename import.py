@@ -32,7 +32,7 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "--dry_run",
-        type=bool,
+        action=argparse.BooleanOptionalAction,
         help="If True, prevents any changes to the wiki. Default: True.",
         default="True",
     )
