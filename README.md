@@ -19,8 +19,12 @@ See: `analyze_lua.py`.
 WARNING: Deletes all files (not directories) found in `--recipe_directory` if `--no-dry_run`.
 
 1) Evaluates a subset of game files in `--game_data_directory` in a lua environment.
-2) Traverses the `data` tree to parse out necessarty information.
-3) Outputs wiki templates to (currently just recipes) to `--recipe_directory`.
+2) Traverses the `data` tree to parse out necessary information.
+3) Outputs wiki templates (currently just recipes) to `--recipe_directory`.
+
+Default directories:
+- `--game_data_directory`: `game_data/main/data`
+- `--recipe_directory`: `wiki/GameData/Recipe`
 
 ## Wiki Upload
 
@@ -29,6 +33,8 @@ See: `import.py`
 1) Reads the set of files in `--recipe_directory`
 2) For each file, updates a specific page in the [GameData Category](https://wiki.desyncedgame.com/Category:GameData) with the content of that file, based on filename.
 
+Default directories:
+- `--recipe_directory`: `wiki/GameData/Recipe`
 
 ### Wiki Credentials
 
