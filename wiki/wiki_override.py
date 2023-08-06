@@ -24,6 +24,8 @@ class DesyncedWiki(Wiki):
             username,
             password,
         )
+        # Override bot status even without the "bot" permission.
+        self.is_bot = True
 
     def __setattr__(self, name, value):
         # Block the super constructor from setting the endpoint to something bad
