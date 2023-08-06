@@ -10,11 +10,45 @@ import sys
 import os
 from lua.game_data import GameData
 import lua.lua_util as lua_util
+from lua.recipe import Recipe
 from wiki.wiki_constants import game_data_category
 from wiki.wiki_util import only_include
 
 logging.basicConfig(level=logging.INFO, stream=sys.stdout)
 logger = logging.getLogger("analyze_lua.py")
+
+
+def should_skip_recipe(recipe: Recipe) -> bool:
+    """Attempts to heuristically detect if a recipe is "real" or not.
+
+    Args:
+        recipe (Recipe): Recipe to analyze.
+
+    Returns:
+        bool: True if the recipe should be excluded, False otherwise.
+    """
+    if recipe.race != None and recipe.race.lower() not in ["robot"]:
+        return True
+    lower_name: str = recipe.name.lower()
+    if lower_name in ["simulator"] or any(
+        exclusion in lower_name
+        for exclusion in [
+            "virus",
+            "artificial",
+            "alien",
+            "human",
+            "trilobyte",
+            "curious",
+        ]
+    ):
+        return True
+    for producer in recipe.producers:
+        prod_name = producer.name.lower()
+        if any(
+            exclusion in prod_name for exclusion in ["human", "alien", "hive"]
+        ):
+            return True
+    return False
 
 
 def clean_wiki_dir(dir: str):
@@ -40,13 +74,8 @@ def main(game_data_directory: str, recipe_directory: str, dry_run: bool):
 
     # Create a file in `recipe_directory` for each parsed recipe.
     for recipe in game.recipes:
-        # TODO(Maz): Remove this once there are better heuristics for "real" recipes.
-        if (
-            recipe.race != "robot"
-            or recipe.is_derived
-            or "virus" in recipe.name.lower()
-            or "artificial" in recipe.name.lower()
-        ):
+        if should_skip_recipe(recipe):
+            logger.debug(f"Skipping recipe: {recipe.name}")
             continue
         with open(
             os.path.join(recipe_directory, recipe.name), "w"
