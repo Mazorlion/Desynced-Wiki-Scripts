@@ -2,7 +2,9 @@
 
 A set of scripts for exporting game data from [Desynced](https://www.desyncedgame.com/) lua files and importing it into the [Desynced Wiki](https://wiki.desyncedgame.com/Main_Page).
 
-Note: Both tools below default to `--dry_run=True` and should not perform any destructive actions by default.
+Note: Both tools below default to `--dry_run` and should not perform any destructive actions by default. To disable this behavior set `--no-dry_run`.
+
+TODO(maz): Fix mixed hyphen/underscore in flags.
 
 ## Setup
 
@@ -14,7 +16,7 @@ pip install -r requirements.txt
 
 See: `analyze_lua.py`.
 
-WARNING: Deletes all files (not directories) found in `--recipe_directory` is `--dry_run=False`.
+WARNING: Deletes all files (not directories) found in `--recipe_directory` if `--no-dry_run`.
 
 1) Evaluates a subset of game files in `--game_data_directory` in a lua environment.
 2) Traverses the `data` tree to parse out necessarty information.
@@ -38,7 +40,7 @@ username = "<username>"
 password = "<password>"
 ```
 
-This files is already ignored by git.
+This file is already ignored by git.
 
 ## Disclaimer
 
