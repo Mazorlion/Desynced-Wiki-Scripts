@@ -1,5 +1,5 @@
 from enum import Enum
-from pprint import pprint
+from pprint import pformat
 
 # Number of expected items/producers in the template.
 # See: https://wiki.desyncedgame.com/Template:Recipe
@@ -50,10 +50,9 @@ class Recipe:
         return ret
 
     def __repr__(self) -> str:
-        return pprint(vars(self)) or ""
+        return pformat(vars(self)) or ""
 
 
-# TODO(maz): Mining recipe? Maybe separate class.
 class RecipeType(Enum):
     Construction = 1
     Production = 2

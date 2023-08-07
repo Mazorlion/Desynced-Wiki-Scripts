@@ -72,8 +72,8 @@ def load_lua_runtime(dir="game_data/main/data") -> LuaRuntime:
         }
     end
 
-    function CreateMiningRecipe(recipe, ignored)
-        return recipe
+    function CreateMiningRecipe(miners)
+        return miners
     end
 
     """

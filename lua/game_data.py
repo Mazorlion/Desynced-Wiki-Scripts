@@ -1,8 +1,16 @@
+import logging
+from pprint import pprint, pformat
 from lupa import LuaRuntime
 from typing import Optional
-from lua.lua_util import tick_duration_to_seconds, ticks_to_seconds
-
+from lua.lua_util import (
+    print_lua_table,
+    tick_duration_to_seconds,
+    ticks_to_seconds,
+)
+from lua.mining_recipe import MiningRecipe
 from lua.recipe import Recipe, RecipeItem, RecipeProducer, RecipeType
+
+logger = logging.getLogger("GameData")
 
 
 class GameData:
@@ -23,6 +31,7 @@ class GameData:
         self.components = self.globals().data.components
         self.items = self.globals().data["items"]
         self.recipes: list[Recipe] = self._parse_recipes()
+        self.mining_recipes: list[MiningRecipe] = self._parse_mining_recipes()
 
     def _parse_recipes(self) -> list[Recipe]:
         """Parses and returns the recipes from various structures in the runtime.
@@ -87,11 +96,49 @@ class GameData:
             return component["name"]
         return None
 
+    def lookup_frame_name(self, frame_id: str) -> Optional[str]:
+        """Returns the `name` for the corresponding `frame_id`.
+
+        Args:
+            frame_id (str): Lua ID of the frame to look up.
+
+        Returns:
+            Optional[str]: Name of the item or None if not found.
+        """
+        item = self.data_lookup("frames", frame_id)
+        if item:
+            return item["name"]
+        return None
+
     def lookup_visual(self, name: str):
         return self.data_lookup("visuals", name)
 
     def globals(self):
         return self.lua.globals()
+
+    # -- Mining Recipes --
+    # mining_recipe = CreateMiningRecipe({ <MINER_COMPONENT_ID = <MINING_TICKS>, ... }),
+    def _parse_mining_recipes(self):
+        mining_recipes = []
+        for item_id, tbl in self.items.items():
+            mining_recipe = tbl["mining_recipe"]
+            if not mining_recipe:
+                continue
+            name = self.lookup_item_name(item_id) or item_id
+            miners: list[RecipeProducer] = []
+            for mining_component, mining_ticks in mining_recipe.items():
+                miners.append(
+                    RecipeProducer(
+                        readable_name=self.lookup_component_name(
+                            mining_component
+                        )
+                        or mining_component,
+                        time_seconds=tick_duration_to_seconds(mining_ticks),
+                    )
+                )
+            mining_recipes.append(MiningRecipe(name, miners))
+        logger.debug(f"Mining Recipes: {pformat(mining_recipes)}")
+        return mining_recipes
 
     # -- Recipe of produced item
     # production_recipe = CreateProductionRecipe(
@@ -124,7 +171,12 @@ class GameData:
     def _parse_recipe_items(self, tbl) -> list[RecipeItem]:
         ret = []
         for item_id, item_amount in tbl.items():
-            name = self.lookup_item_name(item_id) or item_id
+            name = (
+                self.lookup_item_name(item_id)
+                or self.lookup_component_name(item_id)
+                or self.lookup_frame_name(item_id)
+                or item_id
+            )
             ret.append(RecipeItem(readable_name=name, amount=item_amount))
         return ret
 
@@ -153,6 +205,7 @@ class GameData:
         for component_id, game_ticks in tbl.items():
             name: str = (
                 self.lookup_component_name(component_id=component_id)
+                or self.lookup_frame_name(component_id)
                 or component_id
             )
             ret.append(

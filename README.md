@@ -16,25 +16,25 @@ pip install -r requirements.txt
 
 See: `analyze_lua.py`.
 
-WARNING: Deletes all files (not directories) found in `--recipe_directory` if `--no-dry_run`.
+WARNING: Deletes all files (not directories) found in `--wiki-directory` if `--no-dry-run`.
 
 1) Evaluates a subset of game files in `--game_data_directory` in a lua environment.
 2) Traverses the `data` tree to parse out necessary information.
 3) Outputs wiki templates (currently just recipes) to `--recipe_directory`.
 
 Default directories:
-- `--game_data_directory`: `game_data/main/data`
-- `--recipe_directory`: `wiki/GameData/Recipe`
+- `--game-data-directory`: `game_data/main/data`
+- `--wiki-directory`: `wiki/GameData`
 
 ## Wiki Upload
 
 See: `import.py`
 
-1) Reads the set of files in `--recipe_directory`
-2) For each file, updates a specific page in the [GameData Category](https://wiki.desyncedgame.com/Category:GameData) with the content of that file, based on filename.
+1) Reads the set of files in `--wiki-directory`
+2) For each file, updates a specific page in the [GameData Category](https://wiki.desyncedgame.com/Category:GameData) with the content of that file, based on filename and parent directory.
 
 Default directories:
-- `--recipe_directory`: `wiki/GameData/Recipe`
+- `--wiki-directory`: `wiki/GameData`
 
 ### Wiki Credentials
 
