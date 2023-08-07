@@ -16,8 +16,9 @@ class Recipe:
         self.type: RecipeType = recipe_type
         self.race: str = race
         self.name: str = name
-        self.items: list[RecipeItem] = items
+        self.items: list[RecipeItem] = sorted(items, key=lambda x: x.name)
         self.producers: list[RecipeProducer] = producers or []
+        self.producers = sorted(self.producers, key=lambda x: x.name)
         self.template_str: str = self.to_template()
         self.is_derived: bool = is_derived
 
