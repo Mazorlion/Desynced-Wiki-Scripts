@@ -54,10 +54,10 @@ def load_lua_runtime(dir="game_data/main/data") -> LuaRuntime:
         return { blight_threshold = 0.1 }
     end
 
-    function CreateConstructionRecipe(recipe, ticks)
+    function CreateConstructionRecipe(recipe, seconds)
         return {
             items = recipe,
-            ticks = ticks
+            seconds = seconds
         }
     end
 

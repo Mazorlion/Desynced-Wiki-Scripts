@@ -129,16 +129,16 @@ class GameData:
         return ret
 
     # TODO(maz): Make this future-proof by using lupa features to actually connect this function to code.
-    # function CreateConstructionRecipe(recipe, ticks)
+    # function CreateConstructionRecipe(recipe, seconds)
     #     return {
     #         items = recipe,
-    #         ticks = ticks
+    #         seconds = seconds
     #     }
     # end
     def _parse_recipe_construction(
-        self, ticks
+        self, seconds
     ) -> Optional[list[RecipeProducer]]:
-        return [RecipeProducer("Construction", ticks_to_seconds(ticks))]
+        return [RecipeProducer("Construction", seconds)]
 
     # function CreateProductionRecipe(recipe, production)
     #     return {
@@ -179,7 +179,7 @@ class GameData:
         BASE_ID = "base_id"
         RECIPE_ITEMS = "items"
         RECIPE_PRODUCERS = "producers"
-        RECIPE_CONSTRUCTION_TICKS = "ticks"
+        RECIPE_CONSTRUCTION_SECONDS = "seconds"
 
         recipe = None
         recipe_type = None
@@ -188,7 +188,7 @@ class GameData:
             recipe_type = RecipeType.Construction
             recipe = tbl[CONSTRUCTION_RECIPE]
             producers: list[RecipeProducer] = self._parse_recipe_construction(
-                recipe[RECIPE_CONSTRUCTION_TICKS]
+                recipe[RECIPE_CONSTRUCTION_SECONDS]
             )
         elif tbl[PRODUCTION_RECIPE]:
             recipe_type = RecipeType.Production
