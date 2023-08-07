@@ -12,6 +12,10 @@ def ticks_to_seconds(ticks: int) -> int:
     return ticks * 5
 
 
+def tick_duration_to_seconds(ticks: int) -> float:
+    return ticks / 5
+
+
 # Set of lua files that are executed in the runtime for `load_lua_runtime`
 TARGET_FILES: list[str] = [
     "data.lua",
@@ -54,10 +58,10 @@ def load_lua_runtime(dir="game_data/main/data") -> LuaRuntime:
         return { blight_threshold = 0.1 }
     end
 
-    function CreateConstructionRecipe(recipe, seconds)
+    function CreateConstructionRecipe(recipe, ticks)
         return {
             items = recipe,
-            seconds = seconds
+            ticks = ticks
         }
     end
 

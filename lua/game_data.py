@@ -1,6 +1,6 @@
 from lupa import LuaRuntime
 from typing import Optional
-from lua.lua_util import ticks_to_seconds
+from lua.lua_util import tick_duration_to_seconds, ticks_to_seconds
 
 from lua.recipe import Recipe, RecipeItem, RecipeProducer, RecipeType
 
@@ -132,13 +132,13 @@ class GameData:
     # function CreateConstructionRecipe(recipe, seconds)
     #     return {
     #         items = recipe,
-    #         seconds = seconds
+    #         ticks = ticks
     #     }
     # end
     def _parse_recipe_construction(
-        self, seconds
+        self, ticks
     ) -> Optional[list[RecipeProducer]]:
-        return [RecipeProducer("Construction", seconds)]
+        return [RecipeProducer("Construction", tick_duration_to_seconds(ticks))]
 
     # function CreateProductionRecipe(recipe, production)
     #     return {
@@ -158,7 +158,7 @@ class GameData:
             ret.append(
                 RecipeProducer(
                     readable_name=name,
-                    time_seconds=ticks_to_seconds(ticks=game_ticks),
+                    time_seconds=tick_duration_to_seconds(ticks=game_ticks),
                 )
             )
         return ret
@@ -179,7 +179,7 @@ class GameData:
         BASE_ID = "base_id"
         RECIPE_ITEMS = "items"
         RECIPE_PRODUCERS = "producers"
-        RECIPE_CONSTRUCTION_SECONDS = "seconds"
+        RECIPE_CONSTRUCTION_TICKS = "ticks"
 
         recipe = None
         recipe_type = None
@@ -188,7 +188,7 @@ class GameData:
             recipe_type = RecipeType.Construction
             recipe = tbl[CONSTRUCTION_RECIPE]
             producers: list[RecipeProducer] = self._parse_recipe_construction(
-                recipe[RECIPE_CONSTRUCTION_SECONDS]
+                recipe[RECIPE_CONSTRUCTION_TICKS]
             )
         elif tbl[PRODUCTION_RECIPE]:
             recipe_type = RecipeType.Production
