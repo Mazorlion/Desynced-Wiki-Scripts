@@ -53,7 +53,6 @@ class GameData:
                 continue
 
             if not visual_tbl["sockets"]:
-                # print(f"Oof {frame}")
                 continue
 
             sockets: Sockets = Sockets()
@@ -138,7 +137,8 @@ class GameData:
         """
         item = self.data_lookup("items", item_id)
         if item:
-            return item["name"]
+            name: str = item["name"]
+            return name.title() if name == "Silica sand" else name
         return None
 
     def lookup_component_name(self, component_id: str) -> Optional[str]:
