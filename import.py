@@ -2,6 +2,7 @@ import logging
 import sys
 import os
 import argparse
+from ratelimiter import RateLimiter
 from wiki.wiki_override import DesyncedWiki
 
 logging.basicConfig(level=logging.INFO, stream=sys.stdout)
@@ -11,6 +12,8 @@ logger = logging.getLogger("import.py")
 def run(input_dir: str, dry_run: bool):
     # TODO(maz): Compare content to existing page to avoid unecessary edits
 
+    # 90 calls per minute.
+    rate_limiter = RateLimiter(max_calls=90, period=60)
     # Logs in and initializes wiki connection.
     wiki = DesyncedWiki()
     # Walk the recipes directory and upload each file there.
@@ -26,9 +29,11 @@ def run(input_dir: str, dry_run: bool):
                     logger.info(
                         f"Uploading {file}  to GameData:{subcategory}:{file}"
                     )
-                    wiki.edit(
-                        title=f"GameData:{subcategory}:{file}", text=f.read()
-                    )
+                    with rate_limiter:
+                        wiki.edit(
+                            title=f"GameData:{subcategory}:{file}",
+                            text=f.read(),
+                        )
 
 
 if __name__ == "__main__":
