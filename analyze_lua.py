@@ -11,7 +11,8 @@ import os
 from pathlib import Path
 from lua.game_data import GameData
 import lua.lua_util as lua_util
-from lua.recipe import Recipe
+from models.recipe import Recipe
+from wiki.templater import render_recipe_production, recipe_production_category
 from wiki.wiki_constants import game_data_category
 from wiki.wiki_util import only_include
 
@@ -67,20 +68,22 @@ def clean_wiki_dir(dir: str):
 
 def main(
     game_data_directory: str,
-    wiki_directory: str,
+    output_directory: str,
     dry_run: bool,
 ):
     lua = lua_util.load_lua_runtime(game_data_directory)
     game = GameData(lua)
 
     # Delete outdated wiki files.
-    Path(wiki_directory).mkdir(parents=True, exist_ok=True)
+    Path(output_directory).mkdir(parents=True, exist_ok=True)
     if not dry_run:
-        clean_wiki_dir(wiki_directory)
+        clean_wiki_dir(output_directory)
 
     # TODO(maz): Factor out to a function
     # Create a file in `recipe_directory` for each parsed recipe.
-    recipe_directory = os.path.join(wiki_directory, "Recipe")
+    recipe_directory = os.path.join(
+        output_directory, recipe_production_category().replace(":", "/")
+    )
     Path(recipe_directory).mkdir(parents=True, exist_ok=True)
     for recipe in game.recipes:
         if should_skip_recipe(recipe):
@@ -89,9 +92,7 @@ def main(
         with open(
             os.path.join(recipe_directory, recipe.name), "w"
         ) as recipe_file:
-            content: str = game_data_category + only_include(
-                recipe.template_str
-            )
+            content: str = render_recipe_production(recipe)
             logger.debug(f"File: {recipe.name}. Content: {content}\n")
             if dry_run:
                 logger.info(
@@ -100,23 +101,23 @@ def main(
                 continue
             recipe_file.write(content)
 
-    # Create a file in `recipe_directory` for each parsed recipe.
-    mining_recipe_dir = os.path.join(wiki_directory, "MiningRecipe")
-    Path(mining_recipe_dir).mkdir(parents=True, exist_ok=True)
-    for recipe in game.mining_recipes:
-        with open(
-            os.path.join(mining_recipe_dir, recipe.name), "w"
-        ) as recipe_file:
-            content: str = game_data_category + only_include(
-                recipe.template_str
-            )
-            logger.debug(f"File: {recipe.name}. Content: {content}\n")
-            if dry_run:
-                logger.info(
-                    f"Skipped writing {recipe.name} due to `--dry_run`."
-                )
-                continue
-            recipe_file.write(content)
+    # # Create a file in `recipe_directory` for each parsed recipe.
+    # mining_recipe_dir = os.path.join(wiki_directory, "MiningRecipe")
+    # Path(mining_recipe_dir).mkdir(parents=True, exist_ok=True)
+    # for recipe in game.mining_recipes:
+    #     with open(
+    #         os.path.join(mining_recipe_dir, recipe.name), "w"
+    #     ) as recipe_file:
+    #         content: str = game_data_category + only_include(
+    #             recipe.template_str
+    #         )
+    #         logger.debug(f"File: {recipe.name}. Content: {content}\n")
+    #         if dry_run:
+    #             logger.info(
+    #                 f"Skipped writing {recipe.name} due to `--dry_run`."
+    #             )
+    #             continue
+    #         recipe_file.write(content)
 
 
 if __name__ == "__main__":
@@ -128,10 +129,10 @@ if __name__ == "__main__":
         default="game_data/main/data",
     )
     parser.add_argument(
-        "--wiki-directory",
+        "--output-directory",
         type=str,
-        help="Path to the directory containing wiki files for gamedata.",
-        default="wiki/GameData",
+        help="Path to the directory containing the output wiki files for gamedata.",
+        default="Output",
     )
 
     parser.add_argument(
@@ -144,6 +145,6 @@ if __name__ == "__main__":
     args = parser.parse_args()
     main(
         args.game_data_directory,
-        args.wiki_directory,
+        args.output_directory,
         args.dry_run,
     )

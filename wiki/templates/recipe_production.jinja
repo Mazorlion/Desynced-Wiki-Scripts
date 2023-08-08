@@ -1,0 +1,21 @@
+{% extends "game_data_generic.jinja" %}
+
+{% block category %}GameData:RecipeProduction{% endblock %}
+
+{% block content %}
+{% raw -%}
+{{Recipe_Production
+{% endraw -%}
+|name = {{ recipe.name }}
+{% for i in range(4) %}
+|ingredient{{ i + 1 }} = {{ recipe.items[i].name if i < recipe.items|length else "" }}
+|amount{{ i + 1 }} = {{ recipe.items[i].amount if i < recipe.items|length else "" }}
+{% endfor %}
+{% for i in range(2) %}
+|produced-by{{ i + 1 }} = {{ recipe.producers[i].name if i < recipe.producers|length else "" }}
+|time{{ i + 1 }} = {{ recipe.producers[i].time if i < recipe.producers|length else "" }}
+{% endfor %}
+{% raw -%}
+}}
+{% endraw -%}
+{% endblock %}

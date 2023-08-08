@@ -7,8 +7,8 @@ from lua.lua_util import (
     tick_duration_to_seconds,
     ticks_to_seconds,
 )
-from lua.mining_recipe import MiningRecipe
-from lua.recipe import Recipe, RecipeItem, RecipeProducer, RecipeType
+from models.mining_recipe import MiningRecipe
+from models.recipe import Recipe, RecipeItem, RecipeProducer, RecipeType
 
 logger = logging.getLogger("GameData")
 

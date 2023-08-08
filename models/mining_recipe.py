@@ -1,5 +1,5 @@
 from pprint import pformat
-from lua.recipe import RecipeProducer
+from models.recipe import RecipeProducer
 
 TEMPLATE_NUM_PRODUCERS = 4
 
