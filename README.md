@@ -2,9 +2,7 @@
 
 A set of scripts for exporting game data from [Desynced](https://www.desyncedgame.com/) lua files and importing it into the [Desynced Wiki](https://wiki.desyncedgame.com/Main_Page).
 
-Note: Both tools below default to `--dry_run` and should not perform any destructive actions by default. To disable this behavior set `--no-dry_run`.
-
-TODO(maz): Fix mixed hyphen/underscore in flags.
+Note: Both tools below default to `--dry-run` and should not perform any destructive actions by default. To disable this behavior set `--no-dry-run`.
 
 ## Setup
 
@@ -16,25 +14,18 @@ pip install -r requirements.txt
 
 See: `analyze_lua.py`.
 
-WARNING: Deletes all files (not directories) found in `--wiki-directory` if `--no-dry-run`.
+WARNING: Deletes all files (not directories) found in `--output-directory` if `--no-dry-run`.
 
-1) Evaluates a subset of game files in `--game_data_directory` in a lua environment.
+1) Evaluates a subset of game files in `--game-data-directory` in a lua environment.
 2) Traverses the `data` tree to parse out necessary information.
-3) Outputs wiki templates (currently just recipes) to `--recipe_directory`.
-
-Default directories:
-- `--game-data-directory`: `game_data/main/data`
-- `--wiki-directory`: `wiki/GameData`
+3) Outputs wiki templates to `--output_directory` structured by category.
 
 ## Wiki Upload
 
 See: `import.py`
 
-1) Reads the set of files in `--wiki-directory`
+1) Reads the set of files in `--input-directory`
 2) For each file, updates a specific page in the [GameData Category](https://wiki.desyncedgame.com/Category:GameData) with the content of that file, based on filename and parent directory.
-
-Default directories:
-- `--wiki-directory`: `wiki/GameData`
 
 ### Wiki Credentials
 
