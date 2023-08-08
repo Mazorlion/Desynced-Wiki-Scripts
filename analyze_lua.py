@@ -107,13 +107,12 @@ def main(args):
     if not dry_run:
         clean_output_dir(output_directory)
 
-    # write_templates(
-    #     args,
-    #     game.recipes,
-    #     recipe_production_category(),
-    #     render_recipe_production,
-    #     should_skip_recipe,
-    # )
+    write_templates(
+        args,
+        game.recipes,
+        WikiTemplate.RECIPE,
+        should_skip_recipe,
+    )
 
     write_templates(
         args,

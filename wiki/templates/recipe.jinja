@@ -1,0 +1,21 @@
+{% extends "game_data_generic.jinja" %}
+
+{% block category %}GameData:Recipe{% endblock %}
+
+{% block content %}
+{% raw -%}
+{{Recipe
+{% endraw -%}
+|{{ recipe.name }}
+{% for i in range(4) -%}
+|{{ recipe.items[i].name if i < recipe.items|length else "" }}
+|{{ recipe.items[i].amount if i < recipe.items|length else "" }}
+{% endfor -%}
+{% for i in range(2) -%}
+|{{ recipe.producers[i].name if i < recipe.producers|length else "" }}
+|{{ recipe.producers[i].time if i < recipe.producers|length else "" }}
+{% endfor -%}
+{% raw -%}
+}}
+{% endraw -%}
+{% endblock %}

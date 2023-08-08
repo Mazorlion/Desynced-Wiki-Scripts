@@ -8,6 +8,12 @@ from jinja2 import Environment, FileSystemLoader, Template, meta
 logger = logging.getLogger("templater.py")
 
 
+class WikiTemplate(Enum):
+    RECIPE_PRODUCTION = "recipe_production.jinja"
+    ENTITY_STATS = "entity_stats.jinja"
+    RECIPE = "recipe.jinja"
+
+
 def _parse_category(template: Template) -> Optional[str]:
     """Read the content of the `category` block in `template`.
 
@@ -36,11 +42,6 @@ def remove_none(element):
 env = Environment(
     loader=FileSystemLoader("wiki/templates"), finalize=remove_none
 )
-
-
-class WikiTemplate(Enum):
-    RECIPE_PRODUCTION = "recipe_production.jinja"
-    ENTITY_STATS = "entity_stats.jinja"
 
 
 @dataclass
