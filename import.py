@@ -8,18 +8,20 @@ logging.basicConfig(level=logging.INFO, stream=sys.stdout)
 logger = logging.getLogger("import.py")
 
 
-def run(wiki_dir: str, dry_run: bool):
+def run(input_dir: str, dry_run: bool):
     # TODO(maz): Compare content to existing page to avoid unecessary edits
 
     # Logs in and initializes wiki connection.
     wiki = DesyncedWiki()
     # Walk the recipes directory and upload each file there.
-    for root, dirs, files in os.walk(wiki_dir):
+    for root, dirs, files in os.walk(input_dir):
         subcategory = os.path.basename(root)
         for file in files:
             with open(os.path.join(root, file), "r") as f:
                 if dry_run:
-                    logger.info(f"Not uploading {file} due to --dry_run.")
+                    logger.info(
+                        f"Not uploading {file} to GameData:{subcategory}:{file} due to --dry-run."
+                    )
                 else:
                     logger.info(
                         f"Uploading {file}  to GameData:{subcategory}:{file}"
@@ -45,4 +47,4 @@ if __name__ == "__main__":
     )
 
     args = parser.parse_args()
-    run(args.wiki_directory, args.dry_run)
+    run(args.input_directory, args.dry_run)
