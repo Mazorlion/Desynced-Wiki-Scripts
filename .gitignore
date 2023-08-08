@@ -16,4 +16,4 @@ apicache-py3/*
 # Actual Lua implementation of the game
 game_data/*
 # Output wiki pages
-wiki/GameData/*
+Output/*
