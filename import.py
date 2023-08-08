@@ -21,7 +21,9 @@ def run(wiki_dir: str, dry_run: bool):
                 if dry_run:
                     logger.info(f"Not uploading {file} due to --dry_run.")
                 else:
-                    logger.info(f"Uploading {file}")
+                    logger.info(
+                        f"Uploading {file}  to GameData:{subcategory}:{file}"
+                    )
                     wiki.edit(
                         title=f"GameData:{subcategory}:{file}", text=f.read()
                     )
@@ -30,10 +32,10 @@ def run(wiki_dir: str, dry_run: bool):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "--wiki-directory",
+        "--input-directory",
         type=str,
         help="Path to the directory containing wiki files for gamedata recipes.",
-        default="wiki/GameData",
+        default="Output",
     )
     parser.add_argument(
         "--dry-run",

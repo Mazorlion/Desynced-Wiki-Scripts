@@ -1,5 +1,5 @@
 from pwiki.wiki import Wiki
-from wiki.wiki_credentials import username, password
+from wiki_credentials import username, password
 
 DESYNCED_WIKI_URL = "wiki.desyncedgame.com"
 

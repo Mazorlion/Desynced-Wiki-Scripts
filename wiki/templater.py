@@ -2,6 +2,7 @@ import logging
 from pprint import pformat
 from typing import Optional
 from jinja2 import Environment, FileSystemLoader, Template
+from models.entity import Entity
 from models.recipe import Recipe
 
 logger = logging.getLogger("templater.py")
@@ -23,18 +24,22 @@ def get_category(template: Template) -> Optional[str]:
         logger.error("Invalid template: " + str(template))
         return None
     return "".join(
-        recipe_production_template.blocks["category"](
-            recipe_production_template.new_context({})
-        )
+        template.blocks["category"](template.new_context({}))
     ).strip()
 
 
+def remove_none(element):
+    return element if element else ""
+
+
 # Set up the environment and file loader
-env = Environment(loader=FileSystemLoader("wiki/templates"))
-recipe_production_template: Template = env.get_template(
+env = Environment(
+    loader=FileSystemLoader("wiki/templates"), finalize=remove_none
+)
+_recipe_production_template: Template = env.get_template(
     "recipe_production.jinja"
 )
-_recipe_production_cat = get_category(recipe_production_template)
+_recipe_production_cat = get_category(_recipe_production_template)
 
 
 def recipe_production_category() -> str:
@@ -42,4 +47,16 @@ def recipe_production_category() -> str:
 
 
 def render_recipe_production(recipe: Recipe) -> str:
-    return recipe_production_template.render(recipe=recipe)
+    return _recipe_production_template.render(recipe=recipe)
+
+
+_entity_stats_template: Template = env.get_template("entity_stats.jinja")
+_entity_stats_cat = get_category(_entity_stats_template)
+
+
+def entity_stats_category() -> str:
+    return _entity_stats_cat
+
+
+def render_entity_stats(entity: Entity) -> str:
+    return _entity_stats_template.render(entity=entity)

@@ -2,13 +2,17 @@ import logging
 from pprint import pprint, pformat
 from lupa import LuaRuntime
 from typing import Optional
+
+from zmq import Socket
 from lua.lua_util import (
     print_lua_table,
     tick_duration_to_seconds,
     ticks_to_seconds,
 )
+from models.entity import Entity
 from models.mining_recipe import MiningRecipe
 from models.recipe import Recipe, RecipeItem, RecipeProducer, RecipeType
+from models.sockets import Sockets
 
 logger = logging.getLogger("GameData")
 
@@ -32,6 +36,61 @@ class GameData:
         self.items = self.globals().data["items"]
         self.recipes: list[Recipe] = self._parse_recipes()
         self.mining_recipes: list[MiningRecipe] = self._parse_mining_recipes()
+        self.entities: list[Entity] = self._parse_entities()
+
+    def _parse_entities(self):
+        entities: list[Entity] = []
+        for frame, frame_tbl in self.frames.items():
+            # Skip frames that don't have visuals
+            visual_key = frame_tbl["visual"]
+            if not visual_key:
+                logger.debug(f"Skipping {frame} due to missing visual table.")
+                continue
+            # Map to visuals
+            visual_tbl = self.lookup_visual(visual_key)
+            if not visual_tbl:
+                logger.debug(f"Skipping {frame} due to missing visual table.")
+                continue
+
+            if not visual_tbl["sockets"]:
+                # print(f"Oof {frame}")
+                continue
+
+            sockets: Sockets = Sockets()
+            for idx, socket in visual_tbl["sockets"].items():
+                sockets.increment_socket(socket[2])
+
+            entities.append(
+                Entity(
+                    name=frame_tbl["name"],
+                    health=frame_tbl["health_points"],
+                    power_usage_per_tick=ticks_to_seconds(
+                        abs(frame_tbl["power"])
+                    )
+                    if frame_tbl["power"]
+                    else 0,
+                    movement_speed=frame_tbl["movement_speed"],
+                    visibility=frame_tbl["visibility_range"],
+                    storage=frame_tbl["slots"]["storage"]
+                    if frame_tbl["slots"]
+                    else 0,
+                    size=frame_tbl["size"],
+                    race=frame_tbl["race"].capitalize()
+                    if frame_tbl["race"]
+                    else "",
+                    types=list(
+                        map(
+                            str.capitalize,
+                            frame_tbl["trigger_channels"].split("|"),
+                        )
+                    )
+                    if frame_tbl["trigger_channels"]
+                    else [],
+                    sockets=sockets,
+                )
+            )
+
+        return entities
 
     def _parse_recipes(self) -> list[Recipe]:
         """Parses and returns the recipes from various structures in the runtime.

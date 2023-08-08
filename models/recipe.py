@@ -19,35 +19,7 @@ class Recipe:
         self.items: list[RecipeItem] = sorted(items, key=lambda x: x.name)
         self.producers: list[RecipeProducer] = producers or []
         self.producers = sorted(self.producers, key=lambda x: x.name)
-        self.template_str: str = self.to_template()
         self.is_derived: bool = is_derived
-
-    # Template: {{Recipe|Name|Item1|Amount1|Item2|Amount2|Item3|Amount3|Item4|Amount4|ProducedBy1|Time1|ProducedBy2|Time2}}
-    # See: https://wiki.desyncedgame.com/Template:Recipe
-    def to_template(self) -> str:
-        return (
-            "{{Recipe|"
-            + f"{self.name}{self._items_to_template()}{self._producers_to_template()}"
-            + "}}"
-        )
-
-    def _items_to_template(self) -> str:
-        ret = ""
-        for item in self.items:
-            ret += str(item)
-        padding: int = TEMPLATE_NUM_ITEMS - len(self.items)
-        for i in range(padding):
-            ret += "||"
-        return ret
-
-    def _producers_to_template(self) -> str:
-        ret = ""
-        for producer in self.producers:
-            ret += f"|{producer.name}|{str(producer.time)}"
-        padding: int = TEMPLATE_NUM_PRODUCERS - len(self.producers)
-        for i in range(padding):
-            ret += "||"
-        return ret
 
     def __repr__(self) -> str:
         return pformat(vars(self)) or ""

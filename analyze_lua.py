@@ -12,7 +12,12 @@ from pathlib import Path
 from lua.game_data import GameData
 import lua.lua_util as lua_util
 from models.recipe import Recipe
-from wiki.templater import render_recipe_production, recipe_production_category
+from wiki.templater import (
+    entity_stats_category,
+    render_entity_stats,
+    render_recipe_production,
+    recipe_production_category,
+)
 from wiki.wiki_constants import game_data_category
 from wiki.wiki_util import only_include
 
@@ -53,7 +58,7 @@ def should_skip_recipe(recipe: Recipe) -> bool:
     return False
 
 
-def clean_wiki_dir(dir: str):
+def clean_output_dir(dir: str):
     """Recursively deletes all files in `dir`. Doesn't touch directories.
 
     Args:
@@ -66,40 +71,75 @@ def clean_wiki_dir(dir: str):
             os.remove(file_path)
 
 
-def main(
-    game_data_directory: str,
-    output_directory: str,
-    dry_run: bool,
+def write_templates(
+    args, objects, category, parse_function, filter_function=None
 ):
+    dir = os.path.join(args.output_directory, category.replace(":", "/"))
+    Path(dir).mkdir(parents=True, exist_ok=True)
+    for object in objects:
+        if filter_function and filter_function(object):
+            logger.debug(f"Skipping recipe: {object.name}")
+            continue
+        with open(os.path.join(dir, object.name), "w") as recipe_file:
+            content: str = parse_function(object)
+            logger.debug(f"File: {object.name}. Content: {content}\n")
+            if args.dry_run:
+                logger.info(
+                    f"Skipped writing {object.name} due to `--dry_run`."
+                )
+                continue
+            recipe_file.write(content)
+
+
+def main(args):
+    game_data_directory = args.game_data_directory
+    dry_run = args.dry_run
+    output_directory = args.output_directory
+
     lua = lua_util.load_lua_runtime(game_data_directory)
     game = GameData(lua)
 
     # Delete outdated wiki files.
     Path(output_directory).mkdir(parents=True, exist_ok=True)
     if not dry_run:
-        clean_wiki_dir(output_directory)
+        clean_output_dir(output_directory)
 
-    # TODO(maz): Factor out to a function
-    # Create a file in `recipe_directory` for each parsed recipe.
-    recipe_directory = os.path.join(
-        output_directory, recipe_production_category().replace(":", "/")
+    write_templates(
+        args,
+        game.recipes,
+        recipe_production_category(),
+        render_recipe_production,
+        should_skip_recipe,
     )
-    Path(recipe_directory).mkdir(parents=True, exist_ok=True)
-    for recipe in game.recipes:
-        if should_skip_recipe(recipe):
-            logger.debug(f"Skipping recipe: {recipe.name}")
-            continue
-        with open(
-            os.path.join(recipe_directory, recipe.name), "w"
-        ) as recipe_file:
-            content: str = render_recipe_production(recipe)
-            logger.debug(f"File: {recipe.name}. Content: {content}\n")
-            if dry_run:
-                logger.info(
-                    f"Skipped writing {recipe.name} due to `--dry_run`."
-                )
-                continue
-            recipe_file.write(content)
+
+    write_templates(
+        args,
+        game.entities,
+        entity_stats_category(),
+        render_entity_stats,
+        lambda entity: "Bug" in entity.types
+        or (entity.race and entity.race != "Robot"),
+    )
+
+    # recipe_directory = os.path.join(
+    #     output_directory, recipe_production_category().replace(":", "/")
+    # )
+    # Path(recipe_directory).mkdir(parents=True, exist_ok=True)
+    # for recipe in game.recipes:
+    #     if should_skip_recipe(recipe):
+    #         logger.debug(f"Skipping recipe: {recipe.name}")
+    #         continue
+    #     with open(
+    #         os.path.join(recipe_directory, recipe.name), "w"
+    #     ) as recipe_file:
+    #         content: str = render_recipe_production(recipe)
+    #         logger.debug(f"File: {recipe.name}. Content: {content}\n")
+    #         if dry_run:
+    #             logger.info(
+    #                 f"Skipped writing {recipe.name} due to `--dry_run`."
+    #             )
+    #             continue
+    #         recipe_file.write(content)
 
     # # Create a file in `recipe_directory` for each parsed recipe.
     # mining_recipe_dir = os.path.join(wiki_directory, "MiningRecipe")
@@ -134,7 +174,6 @@ if __name__ == "__main__":
         help="Path to the directory containing the output wiki files for gamedata.",
         default="Output",
     )
-
     parser.add_argument(
         "--dry-run",
         action=argparse.BooleanOptionalAction,
@@ -143,8 +182,4 @@ if __name__ == "__main__":
     )
 
     args = parser.parse_args()
-    main(
-        args.game_data_directory,
-        args.output_directory,
-        args.dry_run,
-    )
+    main(args)

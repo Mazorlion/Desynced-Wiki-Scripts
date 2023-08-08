@@ -8,14 +8,19 @@
 {% endraw -%}
 |name = {{entity.name}}
 |health = {{entity.health}}
-|power = {{entity.power}}
+|power = {{entity.power_usage_per_tick}}
 |movement-speed = {{entity.movement_speed}}
 |visibility = {{entity.visibility}}
 |storage = {{entity.storage}}
 |size = {{entity.size}}
 |race = {{entity.race}}
-|entity-type1 = {{entity.entity_type1}}
-|entity-type2 = {{entity.entity_type2}}
+{% for i in range(2) -%}
+|entity-type{{ i + 1 }} = {{ entity.types[i] if i < entity.types|length else "" }}
+{% endfor -%}
+|socket-l = {{entity.sockets.large_sockets}}
+|socket-m = {{entity.sockets.medium_sockets}}
+|socket-s = {{entity.sockets.small_sockets}}
+|socket-i = {{entity.sockets.internal_sockets}}
 {% raw -%}
 }}
 {% endraw -%}
