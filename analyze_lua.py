@@ -13,10 +13,9 @@ from lua.game_data import GameData
 import lua.lua_util as lua_util
 from models.recipe import Recipe
 from wiki.templater import (
-    entity_stats_category,
-    render_entity_stats,
-    render_recipe_production,
-    recipe_production_category,
+    WikiTemplate,
+    get_category,
+    render_template,
 )
 from wiki.wiki_constants import game_data_category
 from wiki.wiki_util import only_include
@@ -72,16 +71,20 @@ def clean_output_dir(dir: str):
 
 
 def write_templates(
-    args, objects, category, parse_function, filter_function=None
+    args, objects, template: WikiTemplate, filter_function=None
 ):
+    # Create the directory if it doesn't exist.
+    category = get_category(template)
     dir = os.path.join(args.output_directory, category.replace(":", "/"))
     Path(dir).mkdir(parents=True, exist_ok=True)
+
+    # Write each object to the correct file.
     for object in objects:
         if filter_function and filter_function(object):
-            logger.debug(f"Skipping recipe: {object.name}")
+            logger.debug(f"Skipping item: {object.name}")
             continue
         with open(os.path.join(dir, object.name), "w") as recipe_file:
-            content: str = parse_function(object)
+            content: str = render_template(template, object)
             logger.debug(f"File: {object.name}. Content: {content}\n")
             if args.dry_run:
                 logger.info(
@@ -104,19 +107,25 @@ def main(args):
     if not dry_run:
         clean_output_dir(output_directory)
 
+    # write_templates(
+    #     args,
+    #     game.recipes,
+    #     recipe_production_category(),
+    #     render_recipe_production,
+    #     should_skip_recipe,
+    # )
+
     write_templates(
         args,
         game.recipes,
-        recipe_production_category(),
-        render_recipe_production,
+        WikiTemplate.RECIPE_PRODUCTION,
         should_skip_recipe,
     )
 
     write_templates(
         args,
         game.entities,
-        entity_stats_category(),
-        render_entity_stats,
+        WikiTemplate.ENTITY_STATS,
         lambda entity: "Bug" in entity.types
         or (entity.race and entity.race != "Robot"),
     )

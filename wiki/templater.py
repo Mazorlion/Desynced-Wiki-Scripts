@@ -1,14 +1,14 @@
+import ast
+from dataclasses import dataclass
+from enum import Enum
 import logging
-from pprint import pformat
 from typing import Optional
-from jinja2 import Environment, FileSystemLoader, Template
-from models.entity import Entity
-from models.recipe import Recipe
+from jinja2 import Environment, FileSystemLoader, Template, meta
 
 logger = logging.getLogger("templater.py")
 
 
-def get_category(template: Template) -> Optional[str]:
+def _parse_category(template: Template) -> Optional[str]:
     """Read the content of the `category` block in `template`.
 
     You'd be better off pretending this function doesn't exist.
@@ -36,27 +36,41 @@ def remove_none(element):
 env = Environment(
     loader=FileSystemLoader("wiki/templates"), finalize=remove_none
 )
-_recipe_production_template: Template = env.get_template(
-    "recipe_production.jinja"
-)
-_recipe_production_cat = get_category(_recipe_production_template)
 
 
-def recipe_production_category() -> str:
-    return _recipe_production_cat
+class WikiTemplate(Enum):
+    RECIPE_PRODUCTION = "recipe_production.jinja"
+    ENTITY_STATS = "entity_stats.jinja"
 
 
-def render_recipe_production(recipe: Recipe) -> str:
-    return _recipe_production_template.render(recipe=recipe)
+@dataclass
+class CachedTemplate:
+    template: Template
+    category: str
+    var_name: str
 
 
-_entity_stats_template: Template = env.get_template("entity_stats.jinja")
-_entity_stats_cat = get_category(_entity_stats_template)
+cached_templates: dict[WikiTemplate, CachedTemplate] = {}
 
 
-def entity_stats_category() -> str:
-    return _entity_stats_cat
+def get_var_name(ast: ast) -> str:
+    return meta.find_undeclared_variables(ast).pop()
 
 
-def render_entity_stats(entity: Entity) -> str:
-    return _entity_stats_template.render(entity=entity)
+for type in WikiTemplate:
+    template = env.get_template(type.value)
+    category = _parse_category(template)
+    var_name = get_var_name(env.parse(env.loader.get_source(env, type.value)))
+    cached_templates[type] = CachedTemplate(template, category, var_name)
+
+
+# Actual Public Interface
+# TODO(maz): Hide the above stuff better
+def render_template(type: WikiTemplate, object):
+    template: Template = cached_templates[type].template
+    var_name = cached_templates[type].var_name
+    return template.render({var_name: object})
+
+
+def get_category(type: WikiTemplate) -> str:
+    return cached_templates[type].category
