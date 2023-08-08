@@ -121,44 +121,6 @@ def main(args):
         or (entity.race and entity.race != "Robot"),
     )
 
-    # recipe_directory = os.path.join(
-    #     output_directory, recipe_production_category().replace(":", "/")
-    # )
-    # Path(recipe_directory).mkdir(parents=True, exist_ok=True)
-    # for recipe in game.recipes:
-    #     if should_skip_recipe(recipe):
-    #         logger.debug(f"Skipping recipe: {recipe.name}")
-    #         continue
-    #     with open(
-    #         os.path.join(recipe_directory, recipe.name), "w"
-    #     ) as recipe_file:
-    #         content: str = render_recipe_production(recipe)
-    #         logger.debug(f"File: {recipe.name}. Content: {content}\n")
-    #         if dry_run:
-    #             logger.info(
-    #                 f"Skipped writing {recipe.name} due to `--dry_run`."
-    #             )
-    #             continue
-    #         recipe_file.write(content)
-
-    # # Create a file in `recipe_directory` for each parsed recipe.
-    # mining_recipe_dir = os.path.join(wiki_directory, "MiningRecipe")
-    # Path(mining_recipe_dir).mkdir(parents=True, exist_ok=True)
-    # for recipe in game.mining_recipes:
-    #     with open(
-    #         os.path.join(mining_recipe_dir, recipe.name), "w"
-    #     ) as recipe_file:
-    #         content: str = game_data_category + only_include(
-    #             recipe.template_str
-    #         )
-    #         logger.debug(f"File: {recipe.name}. Content: {content}\n")
-    #         if dry_run:
-    #             logger.info(
-    #                 f"Skipped writing {recipe.name} due to `--dry_run`."
-    #             )
-    #             continue
-    #         recipe_file.write(content)
-
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
