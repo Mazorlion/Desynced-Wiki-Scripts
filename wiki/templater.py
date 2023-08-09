@@ -40,7 +40,10 @@ def remove_none(element):
 
 # Set up the environment and file loader
 env = Environment(
-    loader=FileSystemLoader("wiki/templates"), finalize=remove_none
+    loader=FileSystemLoader("wiki/templates"),
+    finalize=remove_none,
+    trim_blocks=True,
+    lstrip_blocks=True,
 )
 
 

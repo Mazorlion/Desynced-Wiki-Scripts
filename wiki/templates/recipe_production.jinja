@@ -2,8 +2,8 @@
 
 {% block category %}GameData:RecipeProduction{% endblock %}
 
-{% block content %}
-{% raw -%}
+{%- block content -%}
+{%- raw -%}
 {{Recipe_Production
 {% endraw -%}
 |name = {{ recipe.name }}
@@ -17,5 +17,5 @@
 {% endfor -%}
 {% raw -%}
 }}
-{% endraw -%}
-{% endblock %}
+{%- endraw -%}
+{%- endblock -%}

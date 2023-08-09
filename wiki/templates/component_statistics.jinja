@@ -2,7 +2,7 @@
 
 {% block category %}GameData:ComponentStatistics{% endblock %}
 
-{% block content %}
+{%- block content -%}
 {% raw -%}
 {{ComponentStatistics
 {% endraw -%}
@@ -14,5 +14,5 @@
 |Faction = {{component.faction}}
 {% raw -%}
 }}
-{% endraw %}
-{% endblock %}
+{%- endraw -%}
+{%- endblock -%}

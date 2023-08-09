@@ -2,8 +2,8 @@
 
 {% block category %}GameData:EntityStats{% endblock %}
 
-{% block content %}
-{% raw -%}
+{%- block content -%}
+{%- raw -%}
 {{Entity_Stats
 {% endraw -%}
 |name = {{entity.name}}
@@ -23,5 +23,5 @@
 |socket-i = {{entity.sockets.internal_sockets}}
 {% raw -%}
 }}
-{% endraw -%}
-{% endblock %}
+{%- endraw -%}
+{%- endblock -%}
