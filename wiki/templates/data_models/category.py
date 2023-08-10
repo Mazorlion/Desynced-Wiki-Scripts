@@ -25,6 +25,7 @@ class Category:
         RESEARCH = "Research"
         PACKAGE = "Package"
 
+    name: str
     race: Race = None
     item_type: ItemType = None
     material_type: MaterialType = None
@@ -34,6 +35,7 @@ class Category:
 
 def category_from_entity(entity: Entity) -> Category:
     return Category(
+        name=entity.name,
         race=entity.race,
         entity_type=Category.EntityType.BUILDING
         if EntityType.BUILDING in entity.types
@@ -50,4 +52,6 @@ def category_from_item(item: Item) -> Category:
         item_type = Category.ItemType.MATERIAL
         material_type = Category.MaterialType[item.type.name.split("_")[0]]
 
-    return Category(item_type=item_type, material_type=material_type)
+    return Category(
+        name=item.name, item_type=item_type, material_type=material_type
+    )

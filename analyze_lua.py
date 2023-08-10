@@ -139,6 +139,8 @@ def main(args):
         map(category_from_item, game.items)
     )
 
+    write_templates(args, categories, WikiTemplate.CATEGORY)
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
