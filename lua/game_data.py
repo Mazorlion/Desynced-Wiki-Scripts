@@ -9,10 +9,11 @@ from lua.lua_util import (
     tick_duration_to_seconds,
     ticks_to_seconds,
 )
-from models.entity import Entity
+from models.entity import Entity, EntityType, SlotType
 from models.mining_recipe import MiningRecipe
 from models.recipe import Recipe, RecipeItem, RecipeProducer, RecipeType
 from models.sockets import Sockets
+from models.types import Race
 
 logger = logging.getLogger("GameData")
 
@@ -59,6 +60,11 @@ class GameData:
             for idx, socket in visual_tbl["sockets"].items():
                 sockets.increment_socket(socket[2])
 
+            types = []
+            if frame_tbl["trigger_channels"]:
+                for type in frame_tbl["trigger_channels"].split("|"):
+                    types.append(EntityType[type.upper()])
+
             entities.append(
                 Entity(
                     name=frame_tbl["name"],
@@ -72,18 +78,14 @@ class GameData:
                     if frame_tbl["slots"]
                     else 0,
                     size=frame_tbl["size"],
-                    race=frame_tbl["race"].capitalize()
+                    race=Race[frame_tbl["race"].upper()]
                     if frame_tbl["race"]
                     else "",
-                    types=list(
-                        map(
-                            str.capitalize,
-                            frame_tbl["trigger_channels"].split("|"),
-                        )
-                    )
-                    if frame_tbl["trigger_channels"]
-                    else [],
+                    types=types,
                     sockets=sockets,
+                    slot_type=SlotType[frame_tbl["slot_type"].upper()]
+                    if frame_tbl["slot_type"]
+                    else SlotType.NONE,
                 )
             )
 

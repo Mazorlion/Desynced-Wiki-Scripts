@@ -20,11 +20,3 @@ class MaterialType(Enum):
     SIMPLE = "Simple"
     ADVANCED = "Advanced"
     HIGH_TECH = "High-Tech"
-
-
-class UnitType(Enum):
-    BOT = "Bot"
-    ALIEN = "Alien"
-    BUG = "Bug"
-    HUMAN = "Human"
-    SPACE = "Space"
