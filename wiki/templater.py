@@ -12,6 +12,7 @@ class WikiTemplate(Enum):
     RECIPE_PRODUCTION = "recipe_production.jinja"
     ENTITY_STATS = "entity_stats.jinja"
     RECIPE = "recipe.jinja"
+    CATEGORY = "category.jinja"
 
 
 def _parse_category(template: Template) -> Optional[str]:

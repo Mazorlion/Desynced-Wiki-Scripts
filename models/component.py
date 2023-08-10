@@ -59,4 +59,3 @@ class Component:
     charge_rate: float
     # Number of tiles across which it can transfer items?
     transfer_radius: int
-    trigger_channels =

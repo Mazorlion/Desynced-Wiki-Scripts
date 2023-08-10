@@ -10,6 +10,7 @@ from lua.lua_util import (
     ticks_to_seconds,
 )
 from models.entity import Entity, EntityType, SlotType
+from models.item import Item, ItemType
 from models.mining_recipe import MiningRecipe
 from models.recipe import Recipe, RecipeItem, RecipeProducer, RecipeType
 from models.sockets import Sockets
@@ -32,12 +33,28 @@ class GameData:
 
     def __init__(self, lua: LuaRuntime):
         self.lua: LuaRuntime = lua
-        self.frames = self.globals().data.frames
-        self.components = self.globals().data.components
-        self.items = self.globals().data["items"]
+        self.data = self.globals().data
+        self.frames = self.data.frames
+        self.components = self.data.components
         self.recipes: list[Recipe] = self._parse_recipes()
+        self.items = self._parse_items()
         self.mining_recipes: list[MiningRecipe] = self._parse_mining_recipes()
         self.entities: list[Entity] = self._parse_entities()
+
+    def _parse_items(self) -> list[Item]:
+        items = []
+
+        for name, item in self.data["items"].items():
+            items.append(
+                Item(
+                    name=item["name"],
+                    description=item["desc"],
+                    stack_size=item["stack_size"],
+                    type=ItemType[item["tag"].upper()],
+                )
+            )
+
+        return items
 
     def _parse_entities(self):
         entities: list[Entity] = []
@@ -101,7 +118,7 @@ class GameData:
         RECIPE_SOURCES: list = [
             self.frames,
             self.components,
-            self.items,
+            self.globals().data["items"],
         ]
         for source in RECIPE_SOURCES:
             for key, tbl in source.items():
@@ -179,7 +196,7 @@ class GameData:
     # mining_recipe = CreateMiningRecipe({ <MINER_COMPONENT_ID = <MINING_TICKS>, ... }),
     def _parse_mining_recipes(self):
         mining_recipes = []
-        for item_id, tbl in self.items.items():
+        for item_id, tbl in self.globals().data["items"].items():
             mining_recipe = tbl["mining_recipe"]
             if not mining_recipe:
                 continue

@@ -1,7 +1,8 @@
 from enum import Enum
+from typing import Optional
 from unittest import case
 
-from models.entity import Entity, SlotType
+from models.entity import Entity, EntityType, SlotType
 from models.types import Race
 
 
@@ -14,23 +15,23 @@ class UnitType(Enum):
     SPACE = "Space"
 
 
-def derive_unit_type(entity: Entity) -> UnitType:
+def derive_unit_type(entity: Entity) -> Optional[UnitType]:
     if entity.race == Race.ALIEN:
         return UnitType.ALIEN
 
-    if entity.race == Race.BUG:
+    if entity.race == Race.BUG or EntityType.BUG in entity.types:
         return UnitType.BUG
 
     if entity.race == Race.HUMAN:
         return UnitType.HUMAN
 
-    entity.type
-
-    slot_unit_mapping = {
-        SlotType.SATELLITE: UnitType.SPACE,
-        SlotType.GARAGE: UnitType.BOT,
-        SlotType.DRONE: UnitType.DRONE,
-    }
+    if entity.slot_type == SlotType.DRONE:
+        return UnitType.DRONE
 
     if entity.slot_type == SlotType.SATELLITE:
         return UnitType.SPACE
+
+    if EntityType.BOT in entity.types:
+        return UnitType.BOT
+
+    return None

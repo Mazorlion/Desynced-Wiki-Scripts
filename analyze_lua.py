@@ -19,6 +19,10 @@ from wiki.templater import (
     get_category,
     render_template,
 )
+from wiki.templates.data_models.category import (
+    category_from_entity,
+    category_from_item,
+)
 from wiki.wiki_constants import game_data_category
 from wiki.wiki_util import only_include
 
@@ -129,6 +133,10 @@ def main(args):
         WikiTemplate.ENTITY_STATS,
         lambda entity: EntityType.BUG in entity.types
         or (entity.race and entity.race != Race.ROBOT),
+    )
+
+    categories = list(map(category_from_entity, game.entities)) + list(
+        map(category_from_item, game.items)
     )
 
 

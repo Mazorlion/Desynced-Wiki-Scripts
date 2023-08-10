@@ -6,11 +6,11 @@
 {% raw -%}
 {{Category
 {% endraw -%}
-|race = {{ entity.race }}
-|item-type = {{ item.type }}
-|material-type = {{ item.material_type }}
-|entity-type = {{ entity.type }}
-## |unit-type = {{ category.unit_type }}
+|race = {{ category.race.value if category.race else "" }}
+|item-type = {{ category.item_type.value if category.item_type else "" }}
+|material-type = {{ category.material_type.value if category.material_type else "" }}
+|entity-type = {{ category.entity_type.value if category.entity_type else "" }}
+## |unit-type = {{ category.unit_type.value if category.unit_type else "" }}
 {% raw -%}
 }}
 {%- endraw -%}
