@@ -63,9 +63,7 @@ class GameData:
                 Entity(
                     name=frame_tbl["name"],
                     health=frame_tbl["health_points"],
-                    power_usage_per_tick=ticks_to_seconds(
-                        abs(frame_tbl["power"])
-                    )
+                    power_usage_per_second=ticks_to_seconds(frame_tbl["power"])
                     if frame_tbl["power"]
                     else 0,
                     movement_speed=frame_tbl["movement_speed"],
