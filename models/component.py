@@ -1,41 +1,10 @@
-from dataclasses import dataclass
 from enum import Enum
+from typing import List
 
-# data.components.samplecomponent = {
-# 	name = "<NAME>",
-# 	texture = "<PATH/TO/IMAGE.png>",
-# 	-- Optional
-# 	visual = "<VISUAL-ID>",
-# 	slot_type = "storage|liquid|radioactive|...", -- default 'storage'
-# 	attachment_size = "Hidden|Internal|Small|Medium|Large", -- default 'Hidden'
-# 	activation = "None|Always|Manual|OnFirstRegisterChange|OnComponentRegisterChange|OnFirstItemSlotChange|OnComponentItemSlotChange|OnAnyItemSlotChange|OnLowPower|OnPowerStoredEmpty|OnTrustChange|OnOtherCompFinish", -- default 'None'
-# 	slots = { <SLOT_TYPE> = <NUM>, ... },
-# 	registers = { ... },
-# 	power = -0.1,
-# 	power_storage = 1000,
-# 	drain_rate = 1,
-# 	charge_rate = 5,
-# 	bandwidth = 2,
-# 	transfer_radius = 10,
-# 	adjust_extra_power = true,
-# 	dumping_ground = "None|Simple|Smart", -- default 'None'
-# 	effect = "fx_power_core", -- automatically spawned when this components visual is placed on the map
-# 	effect_socket = "fx",
-# 	trigger_radius = 8, -- attack range
-# 	trigger_channels = "bot|building|bug",
-# 	non_removable = true,
-# 	production_recipe = CreateProductionRecipe(
-# 		{ <INGREDIENT_ITEM_ID> = <INGREDIENT_NUM>, ... },
-# 		{ <PRODUCTION_COMPONENT_ID> = <PRODUCTION_TICKS>, }
-# 		-- Optional
-# 		<AMOUNT_NUM>, --default: 1
-# 	),
-# 	on_add = function(self, comp) ... end,
-# 	on_remove = function(self, comp) ... end,
-# 	on_update = function(self, comp, cause) ... end,
-# 	on_trigger = function(self, comp, other_entity) ... end,
-# 	on_take_damage = function(self, comp, amount) ... end,
-# }
+from models.decorators import desynced_object
+from models.decorators_options import DataClassFieldOptions, ListFieldOptions, annotate
+from models.recipe import Recipe
+from models.sockets import SocketSize
 
 
 class ComponentSize(Enum):
@@ -46,16 +15,70 @@ class ComponentSize(Enum):
     LARGE = "Large"
 
 
-@dataclass
-class Component:
-    name: str
-    attachment_size: ComponentSize
-    # Rate at which this will drain self storage or power grid.
-    power_usage_per_second: float
+# Unused unless there's a reason for it.
+class ComponentActivation(Enum):
+    # Requires manual activation (deployer)
+    MANUAL = "Manual"
+    # Activates on register change (miner)
+    ONFIRSTREGISTERCHANGE = "OnFirstRegisterChange"
+    # Always active (repair kit)
+    ALWAYS = "Always"
+
+
+@desynced_object
+class Register:
+    type: str
+    # Tooltip of the register.
+    tip: str
+    ui_apply: str
+
+
+@desynced_object
+class PowerStats:
     power_storage: int
     # Rate at which the component will offer power to the grid?
     drain_rate: float
     # Rate at which the component will pull excess power from the grid?
     charge_rate: float
+    # For power trasmission components, the rate of power transfer
+    bandwidth: float
+    # Is this affected by events like day/night or blight storms? (ex. solar panel)
+    affected_by_events: bool
+
+
+@desynced_object
+class WeaponStats:
+    damage: int
+    # Charge time of the weapon
+    charge_duration_sec: int
+    # Delay between shooting and hitting.
+    projectile_delay_sec: int
+    # Splash radius of the hit.
+    splash_range: int
+
+
+@desynced_object
+class Component:
+    name: str
+    # Socket size this component consumes
+    attachment_size: SocketSize
+    # Rate at which this will drain self storage or power grid.
+    power_usage_per_second: float
+    power_stats: PowerStats
     # Number of tiles across which it can transfer items?
     transfer_radius: int
+    # Range in which this can activate (attack range for weapons)
+    activation_radius: float
+    # List of available registers
+    register: List[Register] = annotate(
+        ListFieldOptions(
+            max_length=5,
+            dataclass_options=DataClassFieldOptions(prefix_name=True),
+        )
+    )
+    # Recipe is always production for components
+    production_recipe: Recipe
+    # Is this component removable?
+    is_removable: bool
+    # If the component is a weapon, describes the weapon stats.
+    weapon_stats: WeaponStats

@@ -1,5 +1,11 @@
-from pwiki.wiki import Wiki
-from wiki.wiki_credentials import username, password
+from typing import Dict
+
+from pwiki.wiki import WAction, Wiki
+
+try:
+    from wiki.wiki_credentials import password, username
+except ImportError:
+    pass
 
 DESYNCED_WIKI_URL = "wiki.desyncedgame.com"
 
@@ -33,3 +39,20 @@ class DesyncedWiki(Wiki):
             return
         else:
             super().__setattr__(name, value)
+
+    def recreate_cargo_table(self, template_name: str) -> bool:
+        form: Dict = {
+            "template": template_name,
+            "createReplacement": "true",
+        }
+
+        # Private invocation, whatever.
+        result = WAction._post_action(self, action="cargorecreatetables", form=form)
+        return result.success or False
+
+    def recreate_cargo_data(self, template_name: str, table_name: str) -> bool:
+        form: Dict = {"template": template_name, "table": table_name}
+
+        # Private invocation, whatever.
+        result = WAction._post_action(self, action="cargorecreatedata", form=form)
+        return result.success or False

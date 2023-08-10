@@ -1,5 +1,8 @@
-from dataclasses import dataclass
 from enum import Enum
+
+from models.decorators import desynced_object, length_check
+from models.decorators_options import ListFieldOptions, annotate
+from models.recipe import Recipe
 from models.sockets import Sockets
 from models.types import Race
 
@@ -9,6 +12,7 @@ class SlotType(Enum):
     FLYER = "Flyer"
     DRONE = "Drone"
     SATELLITE = "Satellite"
+    # Most bots are garage.
     GARAGE = "Garage"
     BUGHOLE = "Bughole"
 
@@ -19,7 +23,8 @@ class EntityType(Enum):
     BUILDING = "Building"
 
 
-@dataclass
+@desynced_object
+@length_check
 class Entity:
     name: str
     health: int
@@ -29,6 +34,10 @@ class Entity:
     storage: int
     size: str
     race: Race
-    types: list[EntityType]
+    types: list[EntityType] = annotate(
+        ListFieldOptions(max_length=2, skip_suffix=False)
+    )
     sockets: Sockets
+    # Special kind of storage to house this entity.
     slot_type: SlotType
+    recipe: Recipe

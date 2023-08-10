@@ -1,8 +1,10 @@
-import logging
-import sys
-import os
 import argparse
+import logging
+import os
+import sys
+
 from ratelimiter import RateLimiter
+
 from wiki.wiki_override import DesyncedWiki
 
 logging.basicConfig(level=logging.INFO, stream=sys.stdout)
@@ -16,19 +18,22 @@ def run(input_dir: str, dry_run: bool):
     rate_limiter = RateLimiter(max_calls=3, period=2)
     # Logs in and initializes wiki connection.
     wiki = DesyncedWiki()
+
     # Walk the recipes directory and upload each file there.
-    for root, dirs, files in os.walk(input_dir):
+    for root, _, files in os.walk(input_dir):
         subcategory = os.path.basename(root)
         for file in files:
-            with open(os.path.join(root, file), "r") as f:
-                title: str = f"GameData:{subcategory}:{file}"
+            with open(os.path.join(root, file), "r", encoding="utf-8") as f:
+                if subcategory == "Template":
+                    title = f"Template:Data{file[0].upper() + file[1:]}"
+                else:
+                    title = f"Data:{subcategory}:{file}"
+
                 content: str = f.read()
 
                 # Bail if it's a dry run.
                 if dry_run:
-                    logger.info(
-                        f"Not uploading {file} to {title} due to --dry-run."
-                    )
+                    logger.info("Not uploading %s to %s due to --dry-run.", file, title)
                     continue
 
                 # Upload the file.

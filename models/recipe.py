@@ -1,59 +1,41 @@
 from enum import Enum
-from pprint import pformat
+from typing import List
 
-from models.types import Race
-
-# Number of expected items/producers in the template.
-# See: https://wiki.desyncedgame.com/Template:Recipe
-TEMPLATE_NUM_ITEMS = 4
-TEMPLATE_NUM_PRODUCERS = 2
-
-
-class Recipe:
-    """Class representing a recipe for some item/building/unit."""
-
-    def __init__(
-        self, recipe_type, race, name, items, producers, is_derived
-    ) -> None:
-        self.type: RecipeType = recipe_type
-        self.race: Race = race
-        self.name: str = name
-        self.items: list[RecipeItem] = sorted(items, key=lambda x: x.name)
-        self.producers: list[RecipeProducer] = producers or []
-        self.producers = sorted(self.producers, key=lambda x: x.name)
-        self.is_derived: bool = is_derived
-
-    def __repr__(self) -> str:
-        return pformat(vars(self)) or ""
+from models.decorators import desynced_object
+from models.decorators_options import ListFieldOptions, annotate
 
 
 class RecipeType(Enum):
-    Construction = 1
-    Production = 2
+    Construction = "Construction"
+    Production = "Production"
+    Uplink = "Uplink"
 
 
+@desynced_object
 class RecipeItem:
-    """Item in a recipe"""
-
-    def __init__(self, readable_name, amount) -> None:
-        self.name: str = readable_name
-        self.amount: int = amount
-
-    def __repr__(self) -> str:
-        return f"|{self.name}|{str(self.amount)}"
+    # Item name.
+    ingredient: str
+    # Numer of the required item.
+    amount: int
 
 
+@desynced_object
 class RecipeProducer:
-    """Producer of a recipe."""
+    # Name of producing component.
+    producer: str
+    # Time in seconds to produce.
+    time: float
 
-    def __init__(self, readable_name: str, time_seconds: int) -> None:
-        """
-        Args:
-            name (str): Name of the producer (NOT ID)
-            time (int): Time in SECONDS to produce
-        """
-        self.name: str = readable_name
-        self.time: int = time_seconds
 
-    def __repr__(self) -> str:
-        return f"|{self.name}|{str(self.time)}"
+@desynced_object
+class Recipe:
+    items: List[RecipeItem] = annotate(ListFieldOptions(max_length=4))
+    producers: List[RecipeProducer] = annotate(ListFieldOptions(max_length=2))
+    recipe_type: RecipeType
+    # For production recipes, the type produced may be greater than one.
+    num_produced: int
+
+    def __post_init__(self):
+        """Sort the internal lists so that they always get exported in a consistent order."""
+        self.items: list[RecipeItem] = sorted(self.items, key=lambda x: x.ingredient)
+        self.producers = sorted(self.producers, key=lambda x: x.producer)
