@@ -11,7 +11,9 @@ import os
 from pathlib import Path
 from lua.game_data import GameData
 import lua.lua_util as lua_util
+from models.entity import EntityType
 from models.recipe import Recipe
+from models.types import Race
 from wiki.templater import (
     WikiTemplate,
     get_category,
@@ -33,7 +35,7 @@ def should_skip_recipe(recipe: Recipe) -> bool:
     Returns:
         bool: True if the recipe should be excluded, False otherwise.
     """
-    if recipe.race != None and recipe.race.lower() not in ["robot"]:
+    if recipe.race != None and recipe.race != Race.ROBOT:
         return True
     lower_name: str = recipe.name.lower()
     if lower_name in ["simulator"] or any(
@@ -125,8 +127,8 @@ def main(args):
         args,
         game.entities,
         WikiTemplate.ENTITY_STATS,
-        lambda entity: "Bug" in entity.types
-        or (entity.race and entity.race != "Robot"),
+        lambda entity: EntityType.BUG in entity.types
+        or (entity.race and entity.race != Race.ROBOT),
     )
 
 

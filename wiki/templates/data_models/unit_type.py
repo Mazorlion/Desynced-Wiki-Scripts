@@ -24,6 +24,8 @@ def derive_unit_type(entity: Entity) -> UnitType:
     if entity.race == Race.HUMAN:
         return UnitType.HUMAN
 
+    entity.type
+
     slot_unit_mapping = {
         SlotType.SATELLITE: UnitType.SPACE,
         SlotType.GARAGE: UnitType.BOT,

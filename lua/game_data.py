@@ -209,7 +209,7 @@ class GameData:
     # -- Recipe of resources harvested from the world
     # mining_recipe = CreateMiningRecipe({ <MINER_COMPONENT_ID = <MINING_TICKS>, ... }),
 
-    def _try_fix_race(self, recipe_tbl, is_derived):
+    def _try_fix_race(self, recipe_tbl, is_derived) -> Optional[Race]:
         """Tries to determine the true `race` of an object.
 
         Args:
@@ -220,12 +220,14 @@ class GameData:
             _type_: _description_
         """
         race = recipe_tbl["race"]
+        if not race:
+            return None
         if not is_derived:
-            return race
+            return Race[race.upper()]
         shoot_fx = recipe_tbl["shoot_fx"]
         if shoot_fx and "bug" in shoot_fx:
             return "implied_bug"
-        return race
+        return Race[race.upper()]
 
     def _parse_recipe_items(self, tbl) -> list[RecipeItem]:
         ret = []
@@ -313,7 +315,7 @@ class GameData:
 
         name: str = tbl[NAME]
         is_derived: bool = tbl[BASE_ID] is not None
-        race: str = self._try_fix_race(tbl, is_derived)
+        race: Race = self._try_fix_race(tbl, is_derived)
         items: list[RecipeItem] = self._parse_recipe_items(recipe[RECIPE_ITEMS])
         return Recipe(
             recipe_type=recipe_type,

@@ -1,6 +1,8 @@
 from enum import Enum
 from pprint import pformat
 
+from models.types import Race
+
 # Number of expected items/producers in the template.
 # See: https://wiki.desyncedgame.com/Template:Recipe
 TEMPLATE_NUM_ITEMS = 4
@@ -14,7 +16,7 @@ class Recipe:
         self, recipe_type, race, name, items, producers, is_derived
     ) -> None:
         self.type: RecipeType = recipe_type
-        self.race: str = race
+        self.race: Race = race
         self.name: str = name
         self.items: list[RecipeItem] = sorted(items, key=lambda x: x.name)
         self.producers: list[RecipeProducer] = producers or []

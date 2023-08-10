@@ -6,6 +6,8 @@ class Race(Enum):
     ALIEN = "Alien"
     BUG = "Bug"
     HUMAN = "Human"
+    VIRUS = "Virus"
+    BLIGHT = "Blight"
 
 
 class ItemType(Enum):
