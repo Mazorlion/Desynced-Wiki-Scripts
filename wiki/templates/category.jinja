@@ -1,0 +1,17 @@
+{% extends "game_data_generic.jinja" %}
+
+{% block category %}GameData:Category{% endblock %}
+
+{%- block content -%}
+{% raw -%}
+{{Category
+{% endraw -%}
+|race = {{ category.race }}
+|item-type = {{ category.item_type }}
+|material-type = {{ category.material_type }}
+|entity-type = {{ category.entity_type }}
+## |unit-type = {{ category.unit_type }}
+{% raw -%}
+}}
+{%- endraw -%}
+{%- endblock -%}
