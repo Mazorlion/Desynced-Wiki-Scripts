@@ -10,6 +10,8 @@ Note: Both tools below default to `--dry-run` and should not perform any destruc
 pip install -r requirements.txt
 ```
 
+Place the lua files into a directory called `game_data`, or alternatively change the `--game-data-directory` for analyze.py.
+
 ## Game Data Extraction
 
 See: `analyze_lua.py`.
@@ -18,7 +20,7 @@ WARNING: Deletes all files (not directories) found in `--output-directory` if `-
 
 1) Evaluates a subset of game files in `--game-data-directory` in a lua environment.
 2) Traverses the `data` tree to parse out necessary information.
-3) Outputs wiki templates to `--output_directory` structured by category.
+3) Outputs wiki templates to `--output-directory` structured by category.
 
 ## Wiki Upload
 
