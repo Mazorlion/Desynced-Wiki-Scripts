@@ -1,6 +1,7 @@
-import os
 import logging
+import os
 from typing import Optional
+
 import lupa
 from lupa import LuaRuntime
 
@@ -9,11 +10,11 @@ logger = logging.getLogger("lua_util.py")
 
 # Five ticks per second
 def ticks_to_seconds(ticks: int) -> int:
-    return ticks * 5
+    return ticks * 5 if ticks else None
 
 
 def tick_duration_to_seconds(ticks: int) -> float:
-    return ticks / 5
+    return ticks / 5 if ticks else None
 
 
 # Set of lua files that are executed in the runtime for `load_lua_runtime`
@@ -23,10 +24,17 @@ TARGET_FILES: list[str] = [
     "visuals.lua",
     "components.lua",
     "items.lua",
+    "instructions.lua",
+    "techs.lua",
+    "tech_alien.lua",
+    "tech_blight.lua",
+    "tech_human.lua",
+    "tech_robots.lua",
+    "tech_virus.lua",
 ]
 
 
-def load_lua_runtime(dir="game_data/main/data") -> LuaRuntime:
+def load_lua_runtime(game_data_dir="game_data/main/data") -> LuaRuntime:
     """Creates a lua runtime and executes files in `dir`.
 
     Only loads specific files.
@@ -47,7 +55,9 @@ def load_lua_runtime(dir="game_data/main/data") -> LuaRuntime:
         visuals = {},
         visualmeshes = {},
         visualeffects = {},
-        components = {}
+        components = {},
+        techs = {},
+        tech_categories = {}
     }
 
     Map = {}
@@ -65,10 +75,18 @@ def load_lua_runtime(dir="game_data/main/data") -> LuaRuntime:
         }
     end
 
-    function CreateProductionRecipe(recipe, production)
+    function CreateUplinkRecipe(recipe, ticks)
         return {
             items = recipe,
-            producers = production
+            ticks = ticks
+        }
+    end
+
+    function CreateProductionRecipe(recipe, production, amount)
+        return {
+            items = recipe,
+            producers = production,
+            num_produced = amount
         }
     end
 
@@ -81,14 +99,12 @@ def load_lua_runtime(dir="game_data/main/data") -> LuaRuntime:
     lua = LuaRuntime(unpack_returned_tuples=True)
     lua.execute(preamble)
 
-    for root, dirs, files in os.walk(dir):
+    for root, _, files in os.walk(game_data_dir):
         for file in files:
             if file.endswith(".lua") and file in TARGET_FILES:
-                with open(os.path.join(root, file), "r") as readfile:
-                    logger.info(f"Executing lua file: {readfile.name}")
-                    lua.execute(
-                        readfile.read().replace("local package = ...", "")
-                    )
+                with open(os.path.join(root, file), "r", encoding="utf-8") as readfile:
+                    logger.info("Executing lua file: %s", readfile.name)
+                    lua.execute(readfile.read().replace("local package = ...", ""))
     return lua
 
 
@@ -114,7 +130,7 @@ def print_lua_table(table, filter_keys=None, prefix=""):
             print(f"{prefix}{key}: {str(table[key])}")
 
 
-def visual_key(tbl) -> Optional[str]:
+def get_visual_key(tbl) -> Optional[str]:
     """Returns the key for use in the `visuals` table corresponding to `tbl`.
 
     Args:

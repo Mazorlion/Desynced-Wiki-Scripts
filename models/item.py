@@ -1,5 +1,9 @@
-from dataclasses import dataclass
 from enum import Enum
+from typing import List
+
+from models.decorators import desynced_object
+from models.decorators_options import ListFieldOptions, annotate
+from models.recipe import Recipe
 
 
 class ItemType(Enum):
@@ -18,9 +22,52 @@ class ItemType(Enum):
         ]
 
 
-@dataclass
+class ItemSlotType(Enum):
+    STORAGE = "Storage"
+    ALIEN_STORAGE = "Alien Storage"
+    GAS = "Gas"
+
+
+@desynced_object
+class MiningRecipe:
+    # Name of mining component.
+    miner_component: str
+    # Number of seconds to mine the item.
+    mining_seconds: float
+
+
+@desynced_object
 class Item:
     name: str
     description: str
-    stack_size: int
+    # Item Category.
     type: ItemType
+    # Some items are stored in a special storage (such as gas).
+    slot_type: ItemSlotType
+    # Recipe to produce this item.
+    production_recipe: Recipe
+    # If this `Item` is mineable, this is a list of components that can mine it.
+    mining_recipes: List[MiningRecipe] = annotate(ListFieldOptions(max_length=3))
+    # How many of this item stack in a single slot.
+    stack_size: int = 1
+
+
+# data.items.sampleitem = {
+# 	name = "<NAME>",
+# 	texture = "<PATH/TO/IMAGE.png>",
+# 	slot_type = "storage|intel|liquid|radioactive|...",
+# 	-- Optional
+# 	stack_size = <COUNT>, --default: 1
+# 	visual = "<VISUAL>", -- visual to use when visible in world
+# 	-- Recipe of produced item
+# 	production_recipe = CreateProductionRecipe(
+# 		{ <INGREDIENT_ITEM_ID> = <INGREDIENT_NUM>, ... },
+# 		{ <PRODUCTION_COMPONENT_ID> = <PRODUCTION_TICKS>, }
+# 		-- Optional
+# 		<AMOUNT_NUM>, --default: 1
+# 	),
+# 	-- Recipe of resources harvested from the world
+# 	mining_recipe = CreateMiningRecipe({ <MINER_COMPONENT_ID = <MINING_TICKS>, ... }),
+# }
+# -- when renaming an id
+# data.update_mapping.simulation_data = "datacube_matrix"

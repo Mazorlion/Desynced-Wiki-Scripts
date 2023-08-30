@@ -14,6 +14,7 @@ apicache-py3/*
 **ipynb**
 
 # Actual Lua implementation of the game
-game_data/*
+game_data*/*
+
 # Output wiki pages
 Output/*

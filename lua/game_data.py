@@ -1,19 +1,17 @@
 import logging
-from pprint import pprint, pformat
-from lupa import LuaRuntime
-from typing import Optional
+import os
+from typing import List, Optional
 
-from zmq import Socket
-from lua.lua_util import (
-    print_lua_table,
-    tick_duration_to_seconds,
-    ticks_to_seconds,
-)
+from lupa import LuaRuntime
+
+from lua.lua_util import tick_duration_to_seconds, ticks_to_seconds
+from models.component import Component, PowerStats, Register, WeaponStats
 from models.entity import Entity, EntityType, SlotType
-from models.item import Item, ItemType
-from models.mining_recipe import MiningRecipe
+from models.instructions import ArgType, Instruction, InstructionArg
+from models.item import Item, ItemSlotType, ItemType, MiningRecipe
 from models.recipe import Recipe, RecipeItem, RecipeProducer, RecipeType
-from models.sockets import Sockets
+from models.sockets import Sockets, SocketSize
+from models.tech import Technology, TechnologyCategory, TechnologyUnlock
 from models.types import Race
 
 logger = logging.getLogger("GameData")
@@ -35,22 +33,168 @@ class GameData:
         self.lua: LuaRuntime = lua
         self.data = self.globals().data
         self.frames = self.data.frames
-        self.components = self.data.components
-        self.recipes: list[Recipe] = self._parse_recipes()
+        self.components = self._parse_components()
         self.items = self._parse_items()
-        self.mining_recipes: list[MiningRecipe] = self._parse_mining_recipes()
         self.entities: list[Entity] = self._parse_entities()
+        self.instructions: List[Instruction] = self._parse_instructions()
+        self.tech_unlocks: List[TechnologyUnlock] = []
+        self.technologies = self._parse_technologies()
+        self.technology_categories = self._parse_technology_categories()
+
+    def _parse_technology_categories(self) -> List[TechnologyCategory]:
+        categories: List[TechnologyCategory] = []
+        for _, cat in self.data.tech_categories.items():
+            sub_cats: List[str] = []
+            for _, sub_cat in cat["sub_categories"].items():
+                sub_cats.append(sub_cat)
+            categories.append(
+                TechnologyCategory(
+                    name=cat["name"],
+                    discovery_tech=self.lookup_tech_name(cat["discovery_tech"]),
+                    initial_tech=self.lookup_tech_name(cat["initial_tech"]),
+                    sub_categories=sub_cats,
+                    texture=(
+                        os.path.basename(cat["texture"]) if cat["texture"] else None
+                    ),
+                )
+            )
+        return categories
+
+    def _parse_technologies(self) -> List[Technology]:
+        techs: List[Technology] = []
+        for _, tech in self.data.techs.items():
+            required_techs = []
+            if tech["require_tech"]:
+                for _, req in tech["require_tech"].items():
+                    required_techs.append(self.lookup_tech_name(req))
+            if tech["unlocks"]:
+                for _, unlock in tech["unlocks"].items():
+                    if unlock and self.lookup_name(unlock):
+                        self.tech_unlocks.append(
+                            TechnologyUnlock(
+                                name=tech["name"] + "_" + self.lookup_name(unlock),
+                                tech_name=tech["name"],
+                                unlocks=self.lookup_name(unlock),
+                            )
+                        )
+            techs.append(
+                Technology(
+                    name=tech["name"],
+                    description=tech["description"],
+                    category=tech["category"],
+                    texture=(
+                        os.path.basename(tech["texture"]) if tech["texture"] else None
+                    ),
+                    required_tech=required_techs,
+                    progress_count=tech["progress_count"],
+                    uplink_recipe=self._parse_recipe_from_table(tech),
+                )
+            )
+        return techs
+
+    def _parse_instructions(self) -> List[Instruction]:
+        instructions = []
+
+        for instruction_id, ins in self.data.instructions.items():
+            args: List[InstructionArg] = []
+            if ins["args"]:
+                for _, arg_tbl in ins["args"].items():
+                    args.append(
+                        InstructionArg(
+                            type=ArgType[arg_tbl[1].upper()],
+                            name=arg_tbl[2],
+                            description=arg_tbl[3],
+                            data_type=arg_tbl[4],
+                        )
+                    )
+            instructions.append(
+                Instruction(
+                    name=ins["name"] or instruction_id,
+                    description=ins["desc"],
+                    category=ins["category"],
+                    icon=os.path.basename(ins["icon"]),
+                    args=args,
+                )
+            )
+
+        return instructions
+
+    def _parse_components(self):
+        components = []
+
+        for _, c_tbl in self.data.components.items():
+            registers: List[Register] = []
+            if c_tbl["registers"]:
+                for register in c_tbl["registers"].values():
+                    registers.append(
+                        Register(
+                            type=register["type"],
+                            tip=register["tip"],
+                            ui_apply=register["ui_apply"],
+                        )
+                    )
+            power_stats: PowerStats = PowerStats(
+                power_storage=c_tbl["power_storage"],
+                drain_rate=c_tbl["drain_rate"],
+                charge_rate=c_tbl["charge_rate"],
+                bandwidth=c_tbl["bandwidth"],
+                affected_by_events=c_tbl["adjust_extra_power"],
+            )
+
+            weapon_stats: WeaponStats = WeaponStats(
+                damage=c_tbl["damage"],
+                charge_duration_sec=tick_duration_to_seconds(c_tbl["duration"]),
+                projectile_delay_sec=tick_duration_to_seconds(c_tbl["shoot_speed"]),
+                splash_range=c_tbl["blast"],
+            )
+
+            components.append(
+                Component(
+                    name=c_tbl["name"],
+                    attachment_size=(
+                        SocketSize[c_tbl["attachment_size"].upper()]
+                        if c_tbl["attachment_size"]
+                        else None
+                    ),
+                    power_usage_per_second=ticks_to_seconds(c_tbl["power"]),
+                    power_stats=power_stats,
+                    transfer_radius=c_tbl["transfer_radius"],
+                    activation_radius=c_tbl["activation_radius"],
+                    register=registers,
+                    production_recipe=self._parse_recipe_from_table(c_tbl),
+                    is_removable=False if c_tbl["non_removable"] else True,
+                    weapon_stats=weapon_stats,
+                )
+            )
+
+        return components
+
+    def _parse_mining_recipes(self, item) -> Optional[List[MiningRecipe]]:
+        if not item or not item["mining_recipe"]:
+            return None
+
+        ret = []
+        for component_id, mining_ticks in item["mining_recipe"].items():
+            c_name = self.lookup_component_name(component_id)
+            mining_seconds = tick_duration_to_seconds(mining_ticks)
+            ret.append(MiningRecipe(c_name, mining_seconds))
+
+        return ret
 
     def _parse_items(self) -> list[Item]:
         items = []
 
-        for name, item in self.data["items"].items():
+        for _, item in self.data["items"].items():
+            recipe = self._parse_recipe_from_table(item)
             items.append(
                 Item(
                     name=item["name"],
                     description=item["desc"],
-                    stack_size=item["stack_size"],
                     type=ItemType[item["tag"].upper()],
+                    slot_type=ItemSlotType[item["slot_type"].upper()],
+                    production_recipe=recipe,
+                    mining_recipes=self._parse_mining_recipes(item),
+                    stack_size=item["stack_size"],
                 )
             )
 
@@ -62,71 +206,54 @@ class GameData:
             # Skip frames that don't have visuals
             visual_key = frame_tbl["visual"]
             if not visual_key:
-                logger.debug(f"Skipping {frame} due to missing visual table.")
+                logger.debug("Skipping %s due to missing visual table.", frame)
                 continue
             # Map to visuals
             visual_tbl = self.lookup_visual(visual_key)
             if not visual_tbl:
-                logger.debug(f"Skipping {frame} due to missing visual table.")
+                logger.debug("Skipping %s due to missing visual table.", frame)
                 continue
 
             if not visual_tbl["sockets"]:
                 continue
 
             sockets: Sockets = Sockets()
-            for idx, socket in visual_tbl["sockets"].items():
+            for _, socket in visual_tbl["sockets"].items():
                 sockets.increment_socket(socket[2])
 
             types = []
             if frame_tbl["trigger_channels"]:
-                for type in frame_tbl["trigger_channels"].split("|"):
-                    types.append(EntityType[type.upper()])
+                for channel_type in frame_tbl["trigger_channels"].split("|"):
+                    types.append(EntityType[channel_type.upper()])
+
+            recipe = self._parse_recipe_from_table(frame_tbl)
 
             entities.append(
                 Entity(
                     name=frame_tbl["name"],
                     health=frame_tbl["health_points"],
-                    power_usage_per_second=ticks_to_seconds(frame_tbl["power"])
-                    if frame_tbl["power"]
-                    else 0,
+                    power_usage_per_second=(
+                        ticks_to_seconds(frame_tbl["power"])
+                        if frame_tbl["power"]
+                        else 0
+                    ),
                     movement_speed=frame_tbl["movement_speed"],
                     visibility=frame_tbl["visibility_range"],
-                    storage=frame_tbl["slots"]["storage"]
-                    if frame_tbl["slots"]
-                    else 0,
+                    storage=frame_tbl["slots"]["storage"] if frame_tbl["slots"] else 0,
                     size=frame_tbl["size"],
-                    race=Race[frame_tbl["race"].upper()]
-                    if frame_tbl["race"]
-                    else "",
+                    race=Race[frame_tbl["race"].upper()] if frame_tbl["race"] else "",
                     types=types,
                     sockets=sockets,
-                    slot_type=SlotType[frame_tbl["slot_type"].upper()]
-                    if frame_tbl["slot_type"]
-                    else SlotType.NONE,
+                    slot_type=(
+                        SlotType[frame_tbl["slot_type"].upper()]
+                        if frame_tbl["slot_type"]
+                        else SlotType.NONE
+                    ),
+                    recipe=recipe,
                 )
             )
 
         return entities
-
-    def _parse_recipes(self) -> list[Recipe]:
-        """Parses and returns the recipes from various structures in the runtime.
-
-        Returns:
-            list[Recipe]: List of recipes for objects in the runtime.
-        """
-        ret: list[Recipe] = []
-        RECIPE_SOURCES: list = [
-            self.frames,
-            self.components,
-            self.globals().data["items"],
-        ]
-        for source in RECIPE_SOURCES:
-            for key, tbl in source.items():
-                recipe: Optional[Recipe] = self._parse_recipe_from_table(tbl)
-                if not recipe:
-                    continue
-                ret.append(recipe)
-        return ret
 
     def data_lookup(self, field: str, name: str):
         """Shortcut for accessing `data` fields with error handling.
@@ -139,7 +266,7 @@ class GameData:
             Any | None: Returns the object found or else None.
         """
         try:
-            return self.lua.globals().data[field][name]
+            return self.data[field][name]
         except KeyError:
             return None
 
@@ -179,84 +306,41 @@ class GameData:
             frame_id (str): Lua ID of the frame to look up.
 
         Returns:
-            Optional[str]: Name of the item or None if not found.
+            Optional[str]: Name of the frame or None if not found.
         """
         item = self.data_lookup("frames", frame_id)
         if item:
             return item["name"]
         return None
 
+    def lookup_tech_name(self, tech_id: str) -> Optional[str]:
+        """Returns the `name` for the corresponding `tech_id`.
+
+        Args:
+            tech_id (str): Lua ID of the tech to look up.
+
+        Returns:
+            Optional[str]: Name of the tech or None if not found.
+        """
+        item = self.data_lookup("techs", tech_id)
+        if item:
+            return item["name"]
+        return None
+
+    def lookup_name(self, object_id: str) -> Optional[str]:
+        return (
+            self.lookup_component_name(object_id)
+            or self.lookup_frame_name(object_id)
+            or self.lookup_item_name(object_id)
+            or self.lookup_tech_name(object_id)
+            or None
+        )
+
     def lookup_visual(self, name: str):
         return self.data_lookup("visuals", name)
 
     def globals(self):
         return self.lua.globals()
-
-    # -- Mining Recipes --
-    # mining_recipe = CreateMiningRecipe({ <MINER_COMPONENT_ID = <MINING_TICKS>, ... }),
-    def _parse_mining_recipes(self):
-        mining_recipes = []
-        for item_id, tbl in self.globals().data["items"].items():
-            mining_recipe = tbl["mining_recipe"]
-            if not mining_recipe:
-                continue
-            name = self.lookup_item_name(item_id) or item_id
-            miners: list[RecipeProducer] = []
-            for mining_component, mining_ticks in mining_recipe.items():
-                miners.append(
-                    RecipeProducer(
-                        readable_name=self.lookup_component_name(
-                            mining_component
-                        )
-                        or mining_component,
-                        time_seconds=tick_duration_to_seconds(mining_ticks),
-                    )
-                )
-            mining_recipes.append(MiningRecipe(name, miners))
-        logger.debug(f"Mining Recipes: {pformat(mining_recipes)}")
-        return mining_recipes
-
-    # -- Recipe of produced item
-    # production_recipe = CreateProductionRecipe(
-    # 	{ <INGREDIENT_ITEM_ID> = <INGREDIENT_NUM>, ... },
-    # 	{ <PRODUCTION_COMPONENT_ID> = <PRODUCTION_TICKS>, }
-    # 	-- Optional
-    # 	<AMOUNT_NUM>, --default: 1
-    # ),
-    # -- Recipe of resources harvested from the world
-    # mining_recipe = CreateMiningRecipe({ <MINER_COMPONENT_ID = <MINING_TICKS>, ... }),
-
-    def _try_fix_race(self, recipe_tbl, is_derived) -> Optional[Race]:
-        """Tries to determine the true `race` of an object.
-
-        Args:
-            recipe_tbl: Lua table of information to use
-            is_derived (bool): True if this inherits from another object.
-
-        Returns:
-            _type_: _description_
-        """
-        race = recipe_tbl["race"]
-        if not race:
-            return None
-        if not is_derived:
-            return Race[race.upper()]
-        shoot_fx = recipe_tbl["shoot_fx"]
-        if shoot_fx and "bug" in shoot_fx:
-            return "implied_bug"
-        return Race[race.upper()]
-
-    def _parse_recipe_items(self, tbl) -> list[RecipeItem]:
-        ret = []
-        for item_id, item_amount in tbl.items():
-            name = (
-                self.lookup_item_name(item_id)
-                or self.lookup_component_name(item_id)
-                or self.lookup_frame_name(item_id)
-                or item_id
-            )
-            ret.append(RecipeItem(readable_name=name, amount=item_amount))
-        return ret
 
     # TODO(maz): Make this future-proof by using lupa features to actually connect this function to code.
     # function CreateConstructionRecipe(recipe, seconds)
@@ -265,10 +349,11 @@ class GameData:
     #         ticks = ticks
     #     }
     # end
-    def _parse_recipe_construction(
-        self, ticks
-    ) -> Optional[list[RecipeProducer]]:
+    def _parse_recipe_construction(self, ticks) -> Optional[list[RecipeProducer]]:
         return [RecipeProducer("Construction", tick_duration_to_seconds(ticks))]
+
+    def _parse_recipe_uplink(self, ticks) -> Optional[list[RecipeProducer]]:
+        return [RecipeProducer("Uplink", tick_duration_to_seconds(ticks))]
 
     # function CreateProductionRecipe(recipe, production)
     #     return {
@@ -288,10 +373,22 @@ class GameData:
             )
             ret.append(
                 RecipeProducer(
-                    readable_name=name,
-                    time_seconds=tick_duration_to_seconds(ticks=game_ticks),
+                    name,
+                    tick_duration_to_seconds(ticks=game_ticks),
                 )
             )
+        return ret
+
+    def _parse_recipe_items(self, tbl) -> list[RecipeItem]:
+        ret = []
+        for item_id, item_amount in tbl.items():
+            name = (
+                self.lookup_item_name(item_id)
+                or self.lookup_component_name(item_id)
+                or self.lookup_frame_name(item_id)
+                or item_id
+            )
+            ret.append(RecipeItem(name, item_amount))
         return ret
 
     def _parse_recipe_from_table(self, tbl) -> Optional[Recipe]:
@@ -306,8 +403,7 @@ class GameData:
         # Lua table fields
         CONSTRUCTION_RECIPE = "construction_recipe"
         PRODUCTION_RECIPE = "production_recipe"
-        NAME = "name"
-        BASE_ID = "base_id"
+        UPLINK_RECIPE = "uplink_recipe"
         RECIPE_ITEMS = "items"
         RECIPE_PRODUCERS = "producers"
         RECIPE_CONSTRUCTION_TICKS = "ticks"
@@ -315,6 +411,7 @@ class GameData:
         recipe = None
         recipe_type = None
         producers: Optional[list[RecipeProducer]] = None
+        num_produced: int = 1
         if tbl[CONSTRUCTION_RECIPE]:
             recipe_type = RecipeType.Construction
             recipe = tbl[CONSTRUCTION_RECIPE]
@@ -327,18 +424,21 @@ class GameData:
             producers: list[RecipeProducer] = self._parse_recipe_producers(
                 recipe[RECIPE_PRODUCERS]
             )
+            num_produced = recipe["num_produced"]
+        elif tbl[UPLINK_RECIPE]:
+            recipe_type = RecipeType.Uplink
+            recipe = tbl[UPLINK_RECIPE]
+            producers: list[RecipeProducer] = self._parse_recipe_uplink(
+                recipe[RECIPE_CONSTRUCTION_TICKS]
+            )
+
         else:
             return None
 
-        name: str = tbl[NAME]
-        is_derived: bool = tbl[BASE_ID] is not None
-        race: Race = self._try_fix_race(tbl, is_derived)
         items: list[RecipeItem] = self._parse_recipe_items(recipe[RECIPE_ITEMS])
         return Recipe(
-            recipe_type=recipe_type,
-            race=race,
-            name=name,
             items=items,
             producers=producers,
-            is_derived=is_derived,
+            recipe_type=recipe_type,
+            num_produced=num_produced,
         )
