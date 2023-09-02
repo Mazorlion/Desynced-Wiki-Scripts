@@ -8,6 +8,7 @@ from models.recipe import Recipe
 @desynced_object
 class Technology:
     name: str
+    lua_id: str
     description: str
     category: str
     texture: str
@@ -32,3 +33,12 @@ class TechnologyCategory:
     initial_tech: str
     sub_categories: List[str] = annotate(ListFieldOptions(max_length=3))
     texture: str
+
+
+@desynced_object
+class TechCategorization:
+    # Name of the unlocked object.
+    name: str
+    # A name from TechnologyCategory or ROBOT.
+    # TODO(maz): This could be an enum if I didn't want to overengineer.
+    category: str
