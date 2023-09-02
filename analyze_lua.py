@@ -170,6 +170,17 @@ class LuaAnalyzer:
             "objectTechCategory": TD(TechCategorization, game.tech_categorizations),
         }
 
+        if args.table_filter and len(args.table_filter) > 0:
+            filtered_tables = {
+                k: tables_by_name[k]
+                for k in args.table_filter.split(",")
+                if k in tables_by_name
+            }
+            if len(filtered_tables) == 0:
+                logger.error("--table-filter filtered all tables.")
+                return
+            tables_by_name = filtered_tables
+
         for table_name, table_def in tables_by_name.items():
             self.fill_templates(
                 output_dir=args.output_directory,
@@ -199,6 +210,11 @@ if __name__ == "__main__":
         action=argparse.BooleanOptionalAction,
         help="If True, prevents any changes to the wiki. Default: True.",
         default="True",
+    )
+    parser.add_argument(
+        "--table-filter",
+        type=str,
+        help="If set, only produces data for tables specified. Separator: ,",
     )
 
     args = parser.parse_args()
