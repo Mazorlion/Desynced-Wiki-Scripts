@@ -44,6 +44,8 @@ def run(dry_run: bool):
         for page in wiki.category_members(cat):
             if should_prune(page):
                 print(f"Deleting {page}")
+                if dry_run:
+                    continue
                 with rate_limiter:
                     wiki.edit(page, "Pruned hidden game data.")
 
