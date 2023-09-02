@@ -39,6 +39,7 @@ class MiningRecipe:
 @desynced_object
 class Item:
     name: str
+    lua_id: str
     description: str
     # Item Category.
     type: ItemType

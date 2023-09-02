@@ -57,6 +57,9 @@ class CargoPrinter:
         if field_type.options.skip_field:
             return []
 
+        if field_type.options.name_override:
+            field_name = field_type.options.name_override
+
         if field_type.kind == TypeInfo.Kind.LIST:
             return self._print_list(
                 value=obj,

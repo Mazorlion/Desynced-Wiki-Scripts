@@ -48,11 +48,11 @@ class DesyncedWiki(Wiki):
 
         # Private invocation, whatever.
         result = WAction._post_action(self, action="cargorecreatetables", form=form)
-        return result.success or False
+        return result["success"] or False
 
     def recreate_cargo_data(self, template_name: str, table_name: str) -> bool:
         form: Dict = {"template": template_name, "table": table_name}
 
         # Private invocation, whatever.
         result = WAction._post_action(self, action="cargorecreatedata", form=form)
-        return result.success or False
+        return result["success"] or False
