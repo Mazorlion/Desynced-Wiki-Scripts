@@ -2,7 +2,12 @@ from enum import Enum
 from typing import List
 
 from models.decorators import desynced_object
-from models.decorators_options import DataClassFieldOptions, ListFieldOptions, annotate
+from models.decorators_options import (
+    DataClassFieldOptions,
+    FieldOptions,
+    ListFieldOptions,
+    annotate,
+)
 from models.recipe import Recipe
 from models.sockets import SocketSize
 
@@ -60,6 +65,9 @@ class WeaponStats:
 @desynced_object
 class Component:
     name: str
+    # ID of the component in lua.
+    lua_id: str
+    description: str
     # Socket size this component consumes
     attachment_size: SocketSize
     # Rate at which this will drain self storage or power grid.
@@ -69,6 +77,11 @@ class Component:
     transfer_radius: int
     # Range in which this can activate (attack range for weapons)
     activation_radius: float
+    # Range for things like radars and transporters.
+    # Cannot be named `range` because it's a SQL keyword
+    range: int = annotate(FieldOptions(name_override="component_range"))
+    # Maximum range at which the radar will visibly reveal a scanned object.
+    radar_show_range: int
     # List of available registers
     register: List[Register] = annotate(
         ListFieldOptions(

@@ -109,6 +109,7 @@ class GameData:
                     )
             instructions.append(
                 Instruction(
+                    lua_id=instruction_id,
                     name=ins["name"] or instruction_id,
                     description=ins["desc"],
                     category=ins["category"],
@@ -122,7 +123,7 @@ class GameData:
     def _parse_components(self):
         components = []
 
-        for _, c_tbl in self.data.components.items():
+        for component_id, c_tbl in self.data.components.items():
             registers: List[Register] = []
             if c_tbl["registers"]:
                 for register in c_tbl["registers"].values():
@@ -150,7 +151,9 @@ class GameData:
 
             components.append(
                 Component(
+                    lua_id=component_id,
                     name=c_tbl["name"],
+                    description=c_tbl["desc"],
                     attachment_size=(
                         SocketSize[c_tbl["attachment_size"].upper()]
                         if c_tbl["attachment_size"]
@@ -160,6 +163,8 @@ class GameData:
                     power_stats=power_stats,
                     transfer_radius=c_tbl["transfer_radius"],
                     activation_radius=c_tbl["activation_radius"],
+                    range=c_tbl["range"],
+                    radar_show_range=c_tbl["radar_show_range"],
                     register=registers,
                     production_recipe=self._parse_recipe_from_table(c_tbl),
                     is_removable=False if c_tbl["non_removable"] else True,
@@ -184,10 +189,11 @@ class GameData:
     def _parse_items(self) -> list[Item]:
         items = []
 
-        for _, item in self.data["items"].items():
+        for item_id, item in self.data["items"].items():
             recipe = self._parse_recipe_from_table(item)
             items.append(
                 Item(
+                    lua_id=item_id,
                     name=item["name"],
                     description=item["desc"],
                     type=ItemType[item["tag"].upper()],
@@ -202,16 +208,16 @@ class GameData:
 
     def _parse_entities(self):
         entities: list[Entity] = []
-        for frame, frame_tbl in self.frames.items():
+        for frame_id, frame_tbl in self.frames.items():
             # Skip frames that don't have visuals
             visual_key = frame_tbl["visual"]
             if not visual_key:
-                logger.debug("Skipping %s due to missing visual table.", frame)
+                logger.debug("Skipping %s due to missing visual table.", frame_id)
                 continue
             # Map to visuals
             visual_tbl = self.lookup_visual(visual_key)
             if not visual_tbl:
-                logger.debug("Skipping %s due to missing visual table.", frame)
+                logger.debug("Skipping %s due to missing visual table.", frame_id)
                 continue
 
             if not visual_tbl["sockets"]:
@@ -230,6 +236,7 @@ class GameData:
 
             entities.append(
                 Entity(
+                    lua_id=frame_id,
                     name=frame_tbl["name"],
                     health=frame_tbl["health_points"],
                     power_usage_per_second=(

@@ -22,6 +22,7 @@ class InstructionArg:
 @desynced_object
 class Instruction:
     name: str
+    lua_id: str
     description: str
     category: str
     # Filename of the icon (no path).
