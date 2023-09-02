@@ -136,13 +136,17 @@ See: `import.py`
 
 ## Schema Change Process
 
-TODO(maz): Make this much easier (maybe automate it?)
+`import.py` now does all of the following steps for you, though you must have the correct permissions on the wiki.
+
+TODO(maz): Fail without the correct permissions.
+
 1) Upload the templates
 2) For each template that changed (or all of them) trigger recreate of the table on the wiki, using a new table
 3) Upload the data using the new templates
 
-If this worked, swap in the recreated table. If not, just delete the temp table and recreate again and it should work.
+New tables/data must be swapped in at https://wiki.desyncedgame.com/Special:CargoTables manually. If it didn't work, delete the temporary table and try again.
 
+TODO(maz): Add specific flags for force recreating data.
 
 ### Wiki Credentials
 
