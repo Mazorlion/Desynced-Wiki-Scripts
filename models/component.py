@@ -55,9 +55,9 @@ class PowerStats:
 class WeaponStats:
     damage: int
     # Charge time of the weapon
-    charge_duration_sec: int
+    charge_duration_sec: float
     # Delay between shooting and hitting.
-    projectile_delay_sec: int
+    projectile_delay_sec: float
     # Splash radius of the hit.
     splash_range: int
 
