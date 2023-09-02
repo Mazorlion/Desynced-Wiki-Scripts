@@ -232,7 +232,7 @@ class GameData:
                     power_usage_per_second=ticks_to_seconds(c_tbl["power"]),
                     power_stats=power_stats,
                     transfer_radius=c_tbl["transfer_radius"],
-                    activation_radius=c_tbl["activation_radius"],
+                    trigger_radius=c_tbl["trigger_radius"],
                     range=c_tbl["range"],
                     radar_show_range=c_tbl["radar_show_range"],
                     register=registers,

@@ -76,7 +76,7 @@ class Component:
     # Number of tiles across which it can transfer items?
     transfer_radius: int
     # Range in which this can activate (attack range for weapons)
-    activation_radius: float
+    trigger_radius: float
     # Range for things like radars and transporters.
     # Cannot be named `range` because it's a SQL keyword
     range: int = annotate(FieldOptions(name_override="component_range"))
