@@ -34,6 +34,9 @@ logger = logging.getLogger("analyze_lua.py")
 
 
 class LuaAnalyzer:
+    def __init__(self, args) -> None:
+        self.args = args
+
     def should_skip(self, desynced_object: Any) -> bool:
         return desynced_object.name not in self.unlockable_names
 
@@ -72,7 +75,7 @@ class LuaAnalyzer:
                 },
             )
 
-            if args.dry_run:
+            if self.args.dry_run:
                 logger.info(f"Skipped writing {tabledef_file.name} due to `--dry-run`.")
                 return
             logger.debug(f"File: {table_name}. Content: {content}\n")
@@ -97,6 +100,9 @@ class LuaAnalyzer:
         """
         # First write out the table definition.
         self.write_declaration(output_dir, table_name, desynced_object_type)
+
+        if self.args.template_only:
+            return
 
         # Then write out the storage templates.
         output_dir: str = os.path.join(output_dir, "Data", table_name)
@@ -126,7 +132,7 @@ class LuaAnalyzer:
                     },
                 )
 
-                if args.dry_run:
+                if self.args.dry_run:
                     logger.info(
                         "Skipped writing %s due to `--dry-run`.", storage_file.name
                     )
@@ -134,10 +140,10 @@ class LuaAnalyzer:
                 logger.debug("File: %s. Content: %s\n", desynced_object.name, content)
                 storage_file.write(content)
 
-    def main(self, args):
-        game_data_directory = args.game_data_directory
-        dry_run = args.dry_run
-        output_directory = args.output_directory
+    def main(self):
+        game_data_directory = self.args.game_data_directory
+        dry_run = self.args.dry_run
+        output_directory = self.args.output_directory
 
         lua = lua_util.load_lua_runtime(game_data_directory)
         game = GameData(lua)
@@ -170,10 +176,10 @@ class LuaAnalyzer:
             "objectTechCategory": TD(TechCategorization, game.tech_categorizations),
         }
 
-        if args.table_filter and len(args.table_filter) > 0:
+        if self.args.table_filter and len(self.args.table_filter) > 0:
             filtered_tables = {
                 k: tables_by_name[k]
-                for k in args.table_filter.split(",")
+                for k in self.args.table_filter.split(",")
                 if k in tables_by_name
             }
             if len(filtered_tables) == 0:
@@ -183,7 +189,7 @@ class LuaAnalyzer:
 
         for table_name, table_def in tables_by_name.items():
             self.fill_templates(
-                output_dir=args.output_directory,
+                output_dir=self.args.output_directory,
                 table_name=table_name,
                 desynced_object_type=table_def.type,
                 objects=table_def.objects,
@@ -209,13 +215,19 @@ if __name__ == "__main__":
         "--dry-run",
         action=argparse.BooleanOptionalAction,
         help="If True, prevents any changes to the wiki. Default: True.",
-        default="True",
+        default=True,
     )
     parser.add_argument(
         "--table-filter",
         type=str,
         help="If set, only produces data for tables specified. Separator: ,",
     )
+    parser.add_argument(
+        "--template-only",
+        action=argparse.BooleanOptionalAction,
+        help="If True, only produces templates and no data. Default: False.",
+        default=False,
+    )
 
-    args = parser.parse_args()
-    LuaAnalyzer().main(args)
+    parsed_args = parser.parse_args()
+    LuaAnalyzer(parsed_args).main()
