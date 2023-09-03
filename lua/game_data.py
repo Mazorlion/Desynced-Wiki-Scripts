@@ -6,7 +6,7 @@ from typing import Dict, List, Optional
 
 from lupa import LuaRuntime
 
-from lua.lua_util import tick_duration_to_seconds, ticks_to_seconds
+from lua.lua_util import tick_duration_to_seconds, per_tick_to_per_second
 from models.component import Component, PowerStats, Register, WeaponStats
 from models.entity import Entity, EntityType, SlotType
 from models.instructions import ArgType, Instruction, InstructionArg
@@ -206,9 +206,9 @@ class GameData:
                     )
             power_stats: PowerStats = PowerStats(
                 power_storage=c_tbl["power_storage"],
-                drain_rate=c_tbl["drain_rate"],
-                charge_rate=c_tbl["charge_rate"],
-                bandwidth=c_tbl["bandwidth"],
+                drain_rate=per_tick_to_per_second(c_tbl["drain_rate"]),
+                charge_rate=per_tick_to_per_second(c_tbl["charge_rate"]),
+                bandwidth=per_tick_to_per_second(c_tbl["bandwidth"]),
                 affected_by_events=c_tbl["adjust_extra_power"],
             )
 
@@ -229,7 +229,7 @@ class GameData:
                         if c_tbl["attachment_size"]
                         else None
                     ),
-                    power_usage_per_second=ticks_to_seconds(c_tbl["power"]),
+                    power_usage_per_second=per_tick_to_per_second(c_tbl["power"]),
                     power_stats=power_stats,
                     transfer_radius=c_tbl["transfer_radius"],
                     trigger_radius=c_tbl["trigger_radius"],
@@ -310,7 +310,7 @@ class GameData:
                     name=frame_tbl["name"],
                     health=frame_tbl["health_points"],
                     power_usage_per_second=(
-                        ticks_to_seconds(frame_tbl["power"])
+                        per_tick_to_per_second(frame_tbl["power"])
                         if frame_tbl["power"]
                         else 0
                     ),

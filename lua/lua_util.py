@@ -9,7 +9,7 @@ logger = logging.getLogger("lua_util.py")
 
 
 # Five ticks per second
-def ticks_to_seconds(ticks: int) -> int:
+def per_tick_to_per_second(ticks: int) -> int:
     return ticks * 5 if ticks else None
 
 
