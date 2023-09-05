@@ -308,6 +308,7 @@ class GameData:
                 Entity(
                     lua_id=frame_id,
                     name=frame_tbl["name"],
+                    description=frame_tbl["desc"],
                     health=frame_tbl["health_points"],
                     power_usage_per_second=(
                         per_tick_to_per_second(frame_tbl["power"])

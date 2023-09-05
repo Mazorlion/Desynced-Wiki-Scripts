@@ -27,6 +27,7 @@ class EntityType(Enum):
 @length_check
 class Entity:
     name: str
+    description: str
     lua_id: str
     health: int
     power_usage_per_second: int
