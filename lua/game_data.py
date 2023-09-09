@@ -1,17 +1,24 @@
+import collections
+from dataclasses import dataclass
 import logging
 import os
-from typing import List, Optional
+from typing import Dict, List, Optional
 
 from lupa import LuaRuntime
 
-from lua.lua_util import tick_duration_to_seconds, ticks_to_seconds
+from lua.lua_util import tick_duration_to_seconds, per_tick_to_per_second
 from models.component import Component, PowerStats, Register, WeaponStats
 from models.entity import Entity, EntityType, SlotType
 from models.instructions import ArgType, Instruction, InstructionArg
 from models.item import Item, ItemSlotType, ItemType, MiningRecipe
 from models.recipe import Recipe, RecipeItem, RecipeProducer, RecipeType
 from models.sockets import Sockets, SocketSize
-from models.tech import Technology, TechnologyCategory, TechnologyUnlock
+from models.tech import (
+    TechCategorization,
+    Technology,
+    TechnologyCategory,
+    TechnologyUnlock,
+)
 from models.types import Race
 
 logger = logging.getLogger("GameData")
@@ -33,13 +40,15 @@ class GameData:
         self.lua: LuaRuntime = lua
         self.data = self.globals().data
         self.frames = self.data.frames
-        self.components = self._parse_components()
-        self.items = self._parse_items()
+        self.components: List[Component] = self._parse_components()
+        self.items: list[Item] = self._parse_items()
         self.entities: list[Entity] = self._parse_entities()
         self.instructions: List[Instruction] = self._parse_instructions()
         self.tech_unlocks: List[TechnologyUnlock] = []
-        self.technologies = self._parse_technologies()
-        self.technology_categories = self._parse_technology_categories()
+        self.technologies: List[Technology] = self._parse_technologies()
+        self.technology_categories: List[
+            TechnologyCategory
+        ] = self._parse_technology_categories()
 
     def _parse_technology_categories(self) -> List[TechnologyCategory]:
         categories: List[TechnologyCategory] = []
@@ -60,15 +69,51 @@ class GameData:
             )
         return categories
 
+    SEED_TECHS = ["t_assembly", "t_robot_tech_basic"]
+
     def _parse_technologies(self) -> List[Technology]:
+        # Return list of tech objects.
         techs: List[Technology] = []
-        for _, tech in self.data.techs.items():
+        # Tech Lua ID to Lua ID of techs it unlocks.
+        tech_id_to_unlocked_tech_ids: Dict[str, List[str]] = {}
+        # Lua ID of technology to object (non-tech) lua IDs.
+        tech_id_to_unlock_id: Dict[str, List[str]] = {}
+
+        @dataclass
+        class TechNode:
+            # Lua ID.
+            id: str
+            # Research category.
+            category: str
+
+        queue: collections.deque[TechNode] = collections.deque()
+        for _, cat in self.data.tech_categories.items():
+            if cat["initial_tech"]:
+                queue.append(TechNode(cat["initial_tech"], cat.name))
+            if cat["discovery_tech"]:
+                queue.append(TechNode(cat["discovery_tech"], cat.name))
+
+        for technology_id, tech in self.data.techs.items():
+            # Process previously required technologies.
             required_techs = []
             if tech["require_tech"]:
+                # Build a tree of the inverse of requirement: which techs unlock which.
                 for _, req in tech["require_tech"].items():
+                    tech_id_to_unlocked_tech_ids.setdefault(req, []).append(
+                        technology_id
+                    )
                     required_techs.append(self.lookup_tech_name(req))
+            elif technology_id in self.SEED_TECHS:
+                # Seed our queue with the root techs.
+                # Robot isn't properly set on the category.
+                queue.append(TechNode(technology_id, "Robot"))
+
+            # Process unlocked objects (non-techs).
             if tech["unlocks"]:
+                # Keep track of unlocks by object ID.
+                unlocked_ids = tech_id_to_unlock_id.setdefault(technology_id, [])
                 for _, unlock in tech["unlocks"].items():
+                    unlocked_ids.append(unlock)
                     if unlock and self.lookup_name(unlock):
                         self.tech_unlocks.append(
                             TechnologyUnlock(
@@ -80,6 +125,7 @@ class GameData:
             techs.append(
                 Technology(
                     name=tech["name"],
+                    lua_id=technology_id,
                     description=tech["description"],
                     category=tech["category"],
                     texture=(
@@ -90,6 +136,30 @@ class GameData:
                     uplink_recipe=self._parse_recipe_from_table(tech),
                 )
             )
+
+        cats: list[TechCategorization] = []
+        while len(queue) > 0:
+            current_node: TechNode = queue.popleft()
+            # Traverse the tree and ad child techs for future processing.
+            for unlocked_tech_id in tech_id_to_unlocked_tech_ids.get(
+                current_node.id, []
+            ):
+                queue.append(TechNode(unlocked_tech_id, current_node.category))
+
+            # Categorize the things we unlock at this node.
+            for unlocked_object_id in tech_id_to_unlock_id.get(current_node.id, []):
+                unlock_name = self.lookup_name(unlocked_object_id)
+                # Skip codex entries, menus, visuals, etc...
+                if not unlock_name:
+                    continue
+                cats.append(
+                    TechCategorization(
+                        name=unlock_name,
+                        category=current_node.category,
+                    )
+                )
+        self.tech_categorizations: List[TechCategorization] = cats
+
         return techs
 
     def _parse_instructions(self) -> List[Instruction]:
@@ -136,9 +206,9 @@ class GameData:
                     )
             power_stats: PowerStats = PowerStats(
                 power_storage=c_tbl["power_storage"],
-                drain_rate=c_tbl["drain_rate"],
-                charge_rate=c_tbl["charge_rate"],
-                bandwidth=c_tbl["bandwidth"],
+                drain_rate=per_tick_to_per_second(c_tbl["drain_rate"]),
+                charge_rate=per_tick_to_per_second(c_tbl["charge_rate"]),
+                bandwidth=per_tick_to_per_second(c_tbl["bandwidth"]),
                 affected_by_events=c_tbl["adjust_extra_power"],
             )
 
@@ -159,10 +229,10 @@ class GameData:
                         if c_tbl["attachment_size"]
                         else None
                     ),
-                    power_usage_per_second=ticks_to_seconds(c_tbl["power"]),
+                    power_usage_per_second=per_tick_to_per_second(c_tbl["power"]),
                     power_stats=power_stats,
                     transfer_radius=c_tbl["transfer_radius"],
-                    activation_radius=c_tbl["activation_radius"],
+                    trigger_radius=c_tbl["trigger_radius"],
                     range=c_tbl["range"],
                     radar_show_range=c_tbl["radar_show_range"],
                     register=registers,
@@ -238,9 +308,10 @@ class GameData:
                 Entity(
                     lua_id=frame_id,
                     name=frame_tbl["name"],
+                    description=frame_tbl["desc"],
                     health=frame_tbl["health_points"],
                     power_usage_per_second=(
-                        ticks_to_seconds(frame_tbl["power"])
+                        per_tick_to_per_second(frame_tbl["power"])
                         if frame_tbl["power"]
                         else 0
                     ),

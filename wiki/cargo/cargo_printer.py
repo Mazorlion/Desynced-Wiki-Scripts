@@ -89,7 +89,7 @@ class CargoPrinter:
                 f"|{field_name}{suffix} = "
                 + "{{{"
                 + f"{self.to_camel_case(field_name + suffix)}"
-                + "}}}"
+                + "|}}}"
             ]
 
         if isinstance(field_type.type, type) and issubclass(field_type.type, Enum):

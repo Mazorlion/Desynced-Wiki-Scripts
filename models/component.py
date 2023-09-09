@@ -55,9 +55,9 @@ class PowerStats:
 class WeaponStats:
     damage: int
     # Charge time of the weapon
-    charge_duration_sec: int
+    charge_duration_sec: float
     # Delay between shooting and hitting.
-    projectile_delay_sec: int
+    projectile_delay_sec: float
     # Splash radius of the hit.
     splash_range: int
 
@@ -71,12 +71,12 @@ class Component:
     # Socket size this component consumes
     attachment_size: SocketSize
     # Rate at which this will drain self storage or power grid.
-    power_usage_per_second: float
+    power_usage_per_second: int
     power_stats: PowerStats
     # Number of tiles across which it can transfer items?
     transfer_radius: int
     # Range in which this can activate (attack range for weapons)
-    activation_radius: float
+    trigger_radius: int
     # Range for things like radars and transporters.
     # Cannot be named `range` because it's a SQL keyword
     range: int = annotate(FieldOptions(name_override="component_range"))
