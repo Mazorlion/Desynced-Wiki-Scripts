@@ -15,6 +15,7 @@ class SlotType(Enum):
     # Most bots are garage.
     GARAGE = "Garage"
     BUGHOLE = "Bughole"
+    ALIEN = "Alien"
 
 
 class EntityType(Enum):

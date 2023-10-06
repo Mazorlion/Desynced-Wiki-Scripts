@@ -26,6 +26,7 @@ class ItemSlotType(Enum):
     STORAGE = "Storage"
     ALIEN_STORAGE = "Alien Storage"
     GAS = "Gas"
+    ANOMALY = "Anomaly"
 
 
 @desynced_object
