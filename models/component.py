@@ -49,6 +49,8 @@ class PowerStats:
     bandwidth: float
     # Is this affected by events like day/night or blight storms? (ex. solar panel)
     affected_by_events: bool
+    # Power generated per second during day.
+    solar_power_generated: int
 
 
 @desynced_object
@@ -95,3 +97,5 @@ class Component:
     is_removable: bool
     # If the component is a weapon, describes the weapon stats.
     weapon_stats: WeaponStats
+    # Number of seconds for extraction (ex. blight gas)
+    extraction_time: float

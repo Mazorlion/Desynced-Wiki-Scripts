@@ -210,6 +210,9 @@ class GameData:
                 charge_rate=per_tick_to_per_second(c_tbl["charge_rate"]),
                 bandwidth=per_tick_to_per_second(c_tbl["bandwidth"]),
                 affected_by_events=c_tbl["adjust_extra_power"],
+                solar_power_generated=per_tick_to_per_second(
+                    c_tbl["solar_power_generated"]
+                ),
             )
 
             weapon_stats: WeaponStats = WeaponStats(
@@ -239,6 +242,7 @@ class GameData:
                     production_recipe=self._parse_recipe_from_table(c_tbl),
                     is_removable=False if c_tbl["non_removable"] else True,
                     weapon_stats=weapon_stats,
+                    extraction_time=tick_duration_to_seconds(c_tbl["extraction_time"]),
                 )
             )
 
