@@ -28,8 +28,9 @@ class ListFieldOptions(FieldOptions):
     dataclass_options: DataClassFieldOptions = DataClassFieldOptions()
 
 
-def annotate(options: FieldOptions):
+def annotate(options: FieldOptions) -> Field:
     """Shortcut for setting options in the metadata in a known location."""
+    #  # pylint: disable=invalid-field-call
     return field(
         metadata={"desynced_field_options": options},
     )
