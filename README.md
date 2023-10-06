@@ -14,6 +14,15 @@ Place the lua files into a directory called `game_data`, or alternatively change
 
 ## Game Data Extraction
 
+### Pull game data from steam
+See: `fetch_main_from_steam.py`
+
+1) Prompts user to log in from CLI
+  - Steam account must have a valid purchase of desynced.
+2) Downloads `main.zip` from the steam depot
+3) Unzips into a directory for use by analysis scripts.
+
+### Analyze lua and generate wiki files
 See: `analyze_lua.py`.
 
 WARNING: Deletes all files (not directories) found in `--output-directory` if `--no-dry-run`.

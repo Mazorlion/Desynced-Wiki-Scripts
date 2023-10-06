@@ -31,6 +31,7 @@ def fetch_main(output_zip_file: str, output_game_data_dir: str):
     cdn_client: CDNClient = CDNClient(client)
 
     # Grab the main zip.
+    # TODO(maz): Add toggle for downloading from `experimental` branch.
     files = list(
         cdn_client.iter_files(DESYNCED_APP_ID, "Desynced\Content\mods\main.zip")
     )
