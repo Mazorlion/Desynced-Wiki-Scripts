@@ -62,6 +62,7 @@ def load_lua_runtime(game_data_dir="game_data/main/data") -> LuaRuntime:
 
     Map = {}
     EntityAction = {}
+    FactionAction = {}
     Delay = {}
 
     function Map:GetSettings()

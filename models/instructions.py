@@ -29,7 +29,7 @@ class Instruction:
     icon: str
     args: List[InstructionArg] = annotate(
         ListFieldOptions(
-            max_length=7,
+            max_length=11,
             dataclass_options=DataClassFieldOptions(prefix_name=True),
         )
     )
