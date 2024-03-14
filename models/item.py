@@ -28,6 +28,7 @@ class ItemSlotType(Enum):
     GAS = "Gas"
     ANOMALY = "Anomaly"
     VIRUS = "Virus"
+    ALIEN = "Alien"
 
 
 @desynced_object

@@ -203,7 +203,7 @@ if __name__ == "__main__":
         "--game-data-directory",
         type=str,
         help="Path to the directory containing the lua game data files.",
-        default="game_data/data",
+        default="fetched_game_data",
     )
     parser.add_argument(
         "--output-directory",
