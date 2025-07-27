@@ -90,11 +90,11 @@ async def run(input_dir: str, dry_run: bool, debug: bool):
                 title = f"Data:{subcategory}:{file}"
                 content: str = f.read()
 
-                # existing_content = await limiter(wiki.page_text)(title)
+                existing_content = await limiter(wiki.page_text)(title)
 
-                # # Bail if there's no change. (long!)
-                # if content == existing_content:
-                #     continue
+                # Bail if there's no change. (long!)
+                if content == existing_content:
+                    continue
 
                 logger.debug("Updating page %s", title)
                 updated_files[subcategory].append(title)
