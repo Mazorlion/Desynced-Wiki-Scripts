@@ -5,6 +5,7 @@ On game update, the `lua` library may require changes.
 
 """
 
+import pprint
 import argparse
 import logging
 import os
@@ -82,10 +83,6 @@ class LuaAnalyzer:
                 },
             )
 
-            if self.args.dry_run:
-                logger.info(f"Skipped writing {tabledef_file.name} due to `--dry-run`.")
-                return
-
             logger.debug(f"File: {table_name}. Content: {content}\n")
             tabledef_file.write(content)
 
@@ -146,17 +143,11 @@ class LuaAnalyzer:
                     },
                 )
 
-                if self.args.dry_run:
-                    logger.info(
-                        "Skipped writing %s due to `--dry-run`.", storage_file.name
-                    )
-                    continue
                 logger.debug("File: %s. Content: %s\n", desynced_object.name, content)
                 storage_file.write(content)
 
     def main(self):
         game_data_directory = self.args.game_data_directory
-        dry_run = self.args.dry_run
         output_directory = self.args.output_directory
 
         lua = lua_util.load_lua_runtime(game_data_directory)
@@ -169,7 +160,15 @@ class LuaAnalyzer:
 
         # Delete outdated wiki files.
         Path(output_directory).mkdir(parents=True, exist_ok=True)
-        if not dry_run:
+        if not self.args.overwrite and Path(output_directory).exists():
+            # prompt user to confirm deletion
+            confirm = input(
+                f"Output directory {output_directory} already exists. Do you want to delete it? (y/n): "
+            )
+            if confirm.lower() != "y":
+                logger.info("Exiting without deleting output directory.")
+                return
+
             self.clean_output_dir(output_directory)
 
         @dataclass
@@ -229,10 +228,10 @@ if __name__ == "__main__":
         default="Output",
     )
     parser.add_argument(
-        "--dry-run",
+        "--overwrite",
         action=argparse.BooleanOptionalAction,
-        help="If True, prevents any changes to the wiki. Default: True.",
-        default=True,
+        help="If True, will clean the output directory without prompting.",
+        default=False,
     )
     parser.add_argument(
         "--table-filter",
@@ -242,10 +241,11 @@ if __name__ == "__main__":
     parser.add_argument(
         "--template-only",
         action=argparse.BooleanOptionalAction,
-        help="If True, only produces templates and no data. Default: False.",
+        help="If True, only produces templates and no data.",
         default=False,
     )
 
     parsed_args = parser.parse_args()
-    logger.info(f"Running with args: {parsed_args}")
+
+    logger.info(f"Running with args: {pprint.pformat(vars(parsed_args))}")
     LuaAnalyzer(parsed_args).main()
