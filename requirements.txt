@@ -1,5 +1,5 @@
 Jinja2==3.1.2
 lupa==2.5
 pwiki==1.2.0
-ratelimiter==1.2.0.post0
+aiolimiter
 steam[client]

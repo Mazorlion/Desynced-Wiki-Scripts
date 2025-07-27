@@ -2,11 +2,11 @@ import argparse
 from dataclasses import dataclass
 import logging
 import os
-from re import template
 import sys
 from typing import List
 
-from ratelimiter import RateLimiter
+import asyncio
+from aiolimiter import AsyncLimiter
 from util.logging_util import PrefixAdapter
 
 from wiki.wiki_override import DesyncedWiki
@@ -14,12 +14,18 @@ from wiki.wiki_override import DesyncedWiki
 logging.basicConfig(level=logging.DEBUG, stream=sys.stdout)
 logger = logging.getLogger("import.py")
 
+# 90 calls per minute.
+rate_limiter = AsyncLimiter(max_rate=3, time_period=2)
 
-def run(input_dir: str, dry_run: bool):
+async def rate_limited_call(func, *args, **kwargs):
+    async with rate_limiter:
+        return await asyncio.to_thread(func, *args, **kwargs)
+    
+async def run(input_dir: str, dry_run: bool):
     # TODO(maz): Compare content to existing page to avoid unecessary edits
 
-    # 90 calls per minute.
-    rate_limiter = RateLimiter(max_calls=3, period=2)
+    limiter = lambda f: (lambda *a, **kw: rate_limited_call(f, *a, **kw))
+
     # Logs in and initializes wiki connection.
     wiki = DesyncedWiki()
 
@@ -47,9 +53,7 @@ def run(input_dir: str, dry_run: bool):
                 content: str = f.read()
 
                 # Upload the file.
-                existing_content = None
-                with rate_limiter:
-                    existing_content = wiki.page_text(title)
+                existing_content = await limiter(wiki.page_text)(title)
 
                 # Bail if there's no change.
                 if content == existing_content:
@@ -62,21 +66,19 @@ def run(input_dir: str, dry_run: bool):
                 if dry_run:
                     continue
 
-                with rate_limiter:
-                    wiki.edit(
-                        title=title,
-                        text=content,
-                    )
+                await limiter(wiki.edit)(
+                    title=title,
+                    text=content,
+                )
 
     # Recreate cargo tables here.
     for changed_table in updated_tables:
         logger.info("Recreating cargo table for %s", changed_table.template_title)
         if dry_run:
             continue
-        with rate_limiter:
-            assert wiki.recreate_cargo_table(
-                changed_table.template_title
-            ), f"Failed to recreate table for {changed_table.template_title}"
+        assert await limiter(wiki.recreate_cargo_table)(
+            changed_table.template_title
+        ), f"Failed to recreate table for {changed_table.template_title}"
 
     # Update data files.
     for root, _, files in os.walk(input_dir):
@@ -92,21 +94,19 @@ def run(input_dir: str, dry_run: bool):
                     continue
 
                 # Upload the file.
-                with rate_limiter:
-                    wiki.edit(
-                        title=title,
-                        text=content,
-                    )
+                await limiter(wiki.edit)(
+                    title=title,
+                    text=content,
+                )
 
     # Recreate cargo data here.
     for changed_table in updated_tables:
         logger.info("Recreating cargo data for %s", changed_table.template_title)
         if dry_run:
             continue
-        with rate_limiter:
-            assert wiki.recreate_cargo_data(
-                changed_table.template_title, changed_table.table
-            ), f"Failed to recreate data for {changed_table.template_title}"
+        assert await limiter(wiki.recreate_cargo_data)(
+            changed_table.template_title, changed_table.table
+        ), f"Failed to recreate data for {changed_table.template_title}"
 
 
 if __name__ == "__main__":
@@ -125,4 +125,4 @@ if __name__ == "__main__":
     )
 
     args = parser.parse_args()
-    run(args.input_directory, args.dry_run)
+    asyncio.run(run(args.input_directory, args.dry_run))
