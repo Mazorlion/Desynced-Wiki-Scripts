@@ -24,7 +24,7 @@
             "name": "Analyze Lua",
             "type": "debugpy",
             "request": "launch",
-            "program": "analyze_lua.py",
+            "program": "generate_wiki.py",
             "console": "integratedTerminal",
             "args": [
                 "--game-data-dir",
