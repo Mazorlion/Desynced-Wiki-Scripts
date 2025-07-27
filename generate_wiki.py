@@ -32,7 +32,6 @@ from wiki.cargo.cargo_printer import CargoPrinter
 from wiki.templates.templater import WikiTemplate, render_template
 
 logging.basicConfig(level=logging.INFO, stream=sys.stdout)
-# Get current filename for logging
 current_file = os.path.basename(__file__)
 logger = logging.getLogger(current_file)
 

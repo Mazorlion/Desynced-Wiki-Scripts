@@ -37,7 +37,7 @@
             "name": "Import",
             "type": "debugpy",
             "request": "launch",
-            "program": "import.py",
+            "program": "upload_wiki.py",
             "console": "integratedTerminal",
             "justMyCode": true
         },

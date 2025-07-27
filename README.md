@@ -2,42 +2,47 @@
 
 A set of scripts for exporting game data from [Desynced](https://www.desyncedgame.com/) lua files and importing it into the [Desynced Wiki](https://wiki.desyncedgame.com/Main_Page).
 
-Note: Both tools below default to `--dry-run` and should not perform any destructive actions by default. To disable this behavior set `--no-dry-run`.
-
 ## Setup
 
 ```
 pip install -r requirements.txt
 ```
 
-Place the lua files into a directory called `game_data`, or alternatively change the `--game-data-directory` for analyze.py.
+## Usage overview
+Steps:
+- 1 - [Get game files](#pull-game-data-from-steam)  
+  Get the game "main" mod. Either using script (`python fetch_main_from_steam.py --help`) or from steam installation.
+- 2 - [Generate wiki files](#generate-wiki-files)  
+  Generate wiki files from the game files (`python generate_wiki.py --help`)
+- 3 - [Update Wiki](#wiki-upload)  
+  Upload files to Wiki.
 
 ## Game Data Extraction
 
-### Pull game data from steam (currently broken)
-See: `fetch_main_from_steam.py`
+### Pull game data from steam 
+(currently broken, you can skip this step and use your regular steam game installation.)
+See: `fetch_main_from_steam.py`.  
 
-1) Prompts user to log in from CLI
-  - Steam account must have a valid purchase of desynced.
-2) Downloads `main.zip` from the steam depot
-3) Unzips into a directory for use by analysis scripts.
+Script will:  
+1) Login to steam using provided credentials in config. 
+     - Steam account must have a valid purchase of desynced.
+2) Downloads `main.zip` from the steam depot.
+3) Unzips into a directory for use by generate script.
 
-### Analyze lua and generate wiki files
-See: `analyze_lua.py`.
-
-WARNING: Deletes all files (not directories) found in `--output-directory` if `--no-dry-run`.
+### Generate wiki files
+See: `generate_wiki.py`.
 
 1) Evaluates a subset of game files in `--game-data-directory` in a lua environment.
 2) Traverses the `data` tree to parse out necessary information.
 3) Outputs wiki templates to `--output-directory` structured by category.
 
-### Workflow
+#### Workflow
 
 1) For each cargo table to create in the wiki, there should be a model in `models`.
 2) Once you have it modeled as you'd like, update `lua/game_data.py` to build the models and store them.
-3) Update `analyze_lua.py` to create templates based on this new model and the collection of them you built in `GameData`.
+3) Update `generate_wiki.py` to create templates based on this new model and the collection of them you built in `GameData`.
 
-### Special Table
+#### Special Table
 
 There exists a special table which is defined in `wiki/include/Template/DataTableIndex`. This table is used to figure out which table a given name belongs to. This means that, for example, a `Recipe` template on the wiki can just take a name, query the `TableIndex` to find which table the name lives in, then query that table using the name.
 
@@ -45,7 +50,7 @@ This is especially useful for wiki templates like `Recipe` which are shared acro
 
 NOTE: Every `Data` page uploaded contains a directive to `store` in the table index.
 
-### Models
+#### Models
 
 In order to make adding new data as easy as possible, the heavy lifting for how fields should be named and formatted is done by the two files in `wiki/cargo`: `analyze_type.py` and `cargo_printer.py`.
 
@@ -134,10 +139,13 @@ TODO(maz): Make this dynamically figure out list length from the longest list th
 
 There are a number of other useful decorator options in `models/decorators_options.py`.
 
+### Prune hidden data script
+
+Used to prune hidden game data? Like bugs units. Is that generated atm?    
 
 ## Wiki Upload
 
-See: `import.py`
+See: `upload_wiki.py`
 
 1) Reads the set of files in `--input-directory`
 2) For files in `--input-directory` in `Template` uploads them as templates (cargo table definitions).
@@ -145,9 +153,7 @@ See: `import.py`
 
 ## Schema Change Process
 
-`import.py` now does all of the following steps for you, though you must have the correct permissions on the wiki.
-
-TODO(maz): Fail without the correct permissions.
+`upload_wiki.py` now does all of the following steps for you, though you must have the correct permissions on the wiki.
 
 1) Upload the templates
 2) For each template that changed (or all of them) trigger recreate of the table on the wiki, using a new table
@@ -157,14 +163,11 @@ New tables/data must be swapped in at https://wiki.desyncedgame.com/Special:Carg
 
 TODO(maz): Add specific flags for force recreating data.
 
-### Wiki Credentials
+### Steam & Wiki Credentials
 
-TODO(maz): Make this less bad and easier to use.
-Place credentials in `wiki/wiki_credentials.py` in the format:
-```
-username = "<username>"
-password = "<password>"
-```
+Copy `config.ini.example` to `config.ini` and update your credentials as needed.  
+Steam credentials are needed to download the game assets.  
+Wiki credentials are needed for the import process.  
 
 This file is already ignored by git.
 

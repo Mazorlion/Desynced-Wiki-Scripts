@@ -30,7 +30,7 @@ class DesyncedWiki(Wiki):
         )
         if not self.is_logged_in:
             raise RuntimeError(
-                f"Could not log in to {DESYNCED_WIKI_URL} with provided credentials (see {CONFIG_FILE})."
+                f"Could not log in to {DESYNCED_WIKI_URL} with provided credentials (see{CONFIG_FILE})."
             )
 
         # Override bot status even without the "bot" permission.
