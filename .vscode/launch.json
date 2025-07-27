@@ -6,19 +6,40 @@
     "configurations": [
         {
             "name": "Python: Current File",
-            "type": "python",
+            "type": "debugpy",
             "request": "launch",
             "program": "${file}",
             "console": "integratedTerminal",
             "justMyCode": true
         },
         {
-            "name": "Python: Analyze Lua",
-            "type": "python",
+            "name": "Fetch Main from Steam",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "fetch_main_from_steam.py",
+            "console": "integratedTerminal",
+            "justMyCode": true
+        },
+        {
+            "name": "Analyze Lua",
+            "type": "debugpy",
             "request": "launch",
             "program": "analyze_lua.py",
             "console": "integratedTerminal",
+            "args": [
+                "--game-data-dir",
+                "../main",
+                "--no-dry-run",
+            ],
             "justMyCode": true
-        }
+        },
+        {
+            "name": "Import",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "import.py",
+            "console": "integratedTerminal",
+            "justMyCode": true
+        },
     ]
 }

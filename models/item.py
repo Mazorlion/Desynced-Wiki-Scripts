@@ -51,7 +51,7 @@ class Item:
     # Recipe to produce this item.
     production_recipe: Recipe
     # If this `Item` is mineable, this is a list of components that can mine it.
-    mining_recipes: List[MiningRecipe] = annotate(ListFieldOptions(max_length=3))
+    mining_recipes: List[MiningRecipe] = annotate(ListFieldOptions(max_length=4))
     # How many of this item stack in a single slot.
     stack_size: int = 1
 

@@ -9,3 +9,4 @@ class Race(Enum):
     HUMAN = "Human"
     VIRUS = "Virus"
     BLIGHT = "Blight"
+    ANOMALY = "Anomaly"

@@ -9,6 +9,7 @@ class ArgType(Enum):
     IN = "Input"
     OUT = "Output"
     EXEC = "Exec"
+    TARGET = "Target"
 
 
 @desynced_object

@@ -4,8 +4,8 @@ from typing import Optional, Type
 
 @dataclass
 class FieldOptions:
-    # If not None, overrides all rules that use the field name to this value.
-    name_override: str = None
+    # If not empty, overrides all rules that use the field name to this value.
+    name_override: str = ""
     # If true, don't include this field at all in the cargo definition or storage.
     skip_field: bool = False
 
@@ -25,8 +25,7 @@ class ListFieldOptions(FieldOptions):
     # If true, the items in this list will not be numbered.
     skip_suffix: bool = False
     # If the element in a list is a dataclass, should the name be prefixed.
-    dataclass_options: DataClassFieldOptions = DataClassFieldOptions()
-
+    dataclass_options: DataClassFieldOptions = field(default_factory=lambda: DataClassFieldOptions())
 
 def annotate(options: FieldOptions) -> Field:
     """Shortcut for setting options in the metadata in a known location."""
@@ -36,7 +35,7 @@ def annotate(options: FieldOptions) -> Field:
     )
 
 
-def get_field_options(f: Field) -> Optional[FieldOptions]:
+def get_field_options(f: Field) -> Optional[ListFieldOptions|DataClassFieldOptions|FieldOptions]:
     """Retrive the field annotations if they exist.
 
     Args:

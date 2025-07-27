@@ -30,7 +30,7 @@ class RecipeProducer:
 @desynced_object
 class Recipe:
     items: List[RecipeItem] = annotate(ListFieldOptions(max_length=4))
-    producers: List[RecipeProducer] = annotate(ListFieldOptions(max_length=3))
+    producers: List[RecipeProducer] = annotate(ListFieldOptions(max_length=4))
     recipe_type: RecipeType
     # For production recipes, the type produced may be greater than one.
     num_produced: int

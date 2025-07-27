@@ -1,5 +1,6 @@
 import logging
 import os
+from pprint import pprint
 from typing import Optional
 
 import lupa
@@ -9,32 +10,31 @@ logger = logging.getLogger("lua_util.py")
 
 
 # Five ticks per second
-def per_tick_to_per_second(ticks: int) -> int:
+def per_tick_to_per_second(ticks: int) -> Optional[int]:
     return ticks * 5 if ticks else None
 
-
-def tick_duration_to_seconds(ticks: int) -> float:
+def tick_duration_to_seconds(ticks: int) -> Optional[float]:
     return ticks / 5 if ticks else None
 
 
 # Set of lua files that are executed in the runtime for `load_lua_runtime`
 TARGET_FILES: list[str] = [
-    "data.lua",
-    "frames.lua",
-    "visuals.lua",
-    "components.lua",
-    "items.lua",
-    "instructions.lua",
-    "techs.lua",
-    "tech_alien.lua",
-    "tech_blight.lua",
-    "tech_human.lua",
-    "tech_robots.lua",
-    "tech_virus.lua",
+    "data/data.lua",
+    "data/frames.lua",
+    "data/visuals.lua",
+    "data/components.lua",
+    "data/items.lua",
+    "data/instructions.lua",
+    "data/techs.lua",
+    "data/tech/tech_alien.lua",
+    "data/tech/tech_blight.lua",
+    "data/tech/tech_human.lua",
+    "data/tech/tech_robots.lua",
+    "data/tech/tech_virus.lua",
 ]
 
 
-def load_lua_runtime(game_data_dir="game_data/main/data") -> LuaRuntime:
+def load_lua_runtime(game_data_dir) -> LuaRuntime:
     """Creates a lua runtime and executes files in `dir`.
 
     Only loads specific files.
@@ -60,6 +60,7 @@ def load_lua_runtime(game_data_dir="game_data/main/data") -> LuaRuntime:
         tech_categories = {}
     }
 
+    UIMsg = {}
     Map = {}
     EntityAction = {}
     FactionAction = {}
@@ -95,17 +96,35 @@ def load_lua_runtime(game_data_dir="game_data/main/data") -> LuaRuntime:
         return miners
     end
 
+    TICKS_PER_SECOND = 5
     """
 
-    lua = LuaRuntime(unpack_returned_tuples=True)
+    lua = LuaRuntime(unpack_returned_tuples=True) # (ignoreit?) pyright: ignore[reportCallIssue]
     lua.execute(preamble)
 
-    for root, _, files in os.walk(game_data_dir):
-        for file in files:
-            if file.endswith(".lua") and file in TARGET_FILES:
-                with open(os.path.join(root, file), "r", encoding="utf-8") as readfile:
-                    logger.info("Executing lua file: %s", readfile.name)
-                    lua.execute(readfile.read().replace("local package = ...", ""))
+    # Check if game_data_dir exists
+    if not os.path.exists(game_data_dir):
+        raise FileNotFoundError(
+            f"Game data directory '{game_data_dir}' does not exist."
+        )
+
+    for file in TARGET_FILES:
+        file_path = os.path.join(game_data_dir, file)
+        if not os.path.isfile(file_path):
+            raise FileNotFoundError(
+                f"Lua file was not found: '{file_path}'."
+            )
+            continue
+
+        with open(file_path, "r", encoding="utf-8") as readfile:
+            logger.info("Executing lua file: %s", readfile.name)
+            file_content = readfile.read()
+            # remove special lines
+            file_content = file_content.replace(
+                "local package = ...", "package = {}"
+            )
+            lua.execute(file_content)
+
     return lua
 
 

@@ -14,7 +14,7 @@ Place the lua files into a directory called `game_data`, or alternatively change
 
 ## Game Data Extraction
 
-### Pull game data from steam
+### Pull game data from steam (currently broken)
 See: `fetch_main_from_steam.py`
 
 1) Prompts user to log in from CLI

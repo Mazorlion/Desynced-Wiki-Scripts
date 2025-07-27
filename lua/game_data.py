@@ -169,12 +169,16 @@ class GameData:
             args: List[InstructionArg] = []
             if ins["args"]:
                 for _, arg_tbl in ins["args"].items():
+                    type = arg_tbl[1].upper()
+                    name = arg_tbl[2]
+                    description = arg_tbl[3]
+                    data_type = arg_tbl[4]
                     args.append(
                         InstructionArg(
-                            type=ArgType[arg_tbl[1].upper()],
-                            name=arg_tbl[2],
-                            description=arg_tbl[3],
-                            data_type=arg_tbl[4],
+                            type=ArgType[type],
+                            name=name,
+                            description=description,
+                            data_type=data_type,
                         )
                     )
             instructions.append(

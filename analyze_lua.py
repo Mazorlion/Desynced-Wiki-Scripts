@@ -25,7 +25,7 @@ from models.tech import (
     TechnologyCategory,
     TechnologyUnlock,
 )
-from wiki.cargo.analyze_type import analyze_type
+from wiki.cargo.analyze_type import DataClassTypeInfo, analyze_type
 from wiki.cargo.cargo_printer import CargoPrinter
 from wiki.templates.templater import WikiTemplate, render_template
 
@@ -58,18 +58,23 @@ class LuaAnalyzer:
         with open(
             os.path.join(template_dir, f"{table_name}"), "w", encoding="utf-8"
         ) as tabledef_file:
+            type = analyze_type(template_type)
+            if not isinstance(type, DataClassTypeInfo):
+                logger.error(f"Trying to process table template {table_name} of wrong type {type}. Expected DataClassTypeInfo.")
+                return
+        
             content: str = render_template(
                 WikiTemplate.CARGO_DECLARE,
                 {
                     "table_name": table_name,
                     "declare_args": "\n".join(
                         CargoPrinter(CargoPrinter.Mode.DECLARATIONS).print_dataclass(
-                            dc_obj=None, type_info=analyze_type(template_type)
+                            dc_obj=None, type_info=type
                         )
                     ),
                     "store_args": "\n".join(
                         CargoPrinter(CargoPrinter.Mode.TEMPLATE).print_dataclass(
-                            dc_obj=None, type_info=analyze_type(template_type)
+                            dc_obj=None, type_info=type
                         )
                     ),
                 },
@@ -105,18 +110,24 @@ class LuaAnalyzer:
             return
 
         # Then write out the storage templates.
-        output_dir: str = os.path.join(output_dir, "Data", table_name)
-        Path(output_dir).mkdir(parents=True, exist_ok=True)
+        output_path: Path = Path(os.path.join(output_dir, "Data", table_name))
+        output_path.mkdir(parents=True, exist_ok=True)
         for desynced_object in objects:
             if should_filter and self.should_skip(desynced_object):
                 continue
             with open(
                 os.path.join(
-                    output_dir, desynced_object.name.replace("/", "_").replace("*", "")
+                    output_path, desynced_object.name.replace("/", "_").replace("*", "")
                 ),
                 "w",
                 encoding="utf-8",
             ) as storage_file:
+                type = analyze_type(desynced_object_type)
+                
+                if not isinstance(type, DataClassTypeInfo):
+                    logger.error(f"Trying to process object {desynced_object.name} of wrong type {type}. Expected DataClassTypeInfo.")
+                    continue
+
                 content: str = render_template(
                     WikiTemplate.CARGO_STORE,
                     {
@@ -126,7 +137,7 @@ class LuaAnalyzer:
                         "name": desynced_object.name,
                         "args": "\n".join(
                             CargoPrinter().print_dataclass(
-                                desynced_object, analyze_type(desynced_object_type)
+                                desynced_object, type
                             )
                         ),
                     },
@@ -229,5 +240,7 @@ if __name__ == "__main__":
         default=False,
     )
 
+
     parsed_args = parser.parse_args()
+    logger.info(f"Running with args: {parsed_args}")
     LuaAnalyzer(parsed_args).main()
