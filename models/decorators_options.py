@@ -1,5 +1,5 @@
 from dataclasses import Field, dataclass, field, fields, is_dataclass
-from typing import Optional, Type
+from typing import Optional, Type, Any
 
 
 @dataclass
@@ -30,9 +30,12 @@ class ListFieldOptions(FieldOptions):
     )
 
 
-def annotate(options: FieldOptions) -> Field:
-    """Shortcut for setting options in the metadata in a known location."""
-    #  # pylint: disable=invalid-field-call
+def annotate(options: FieldOptions) -> Any:
+    """Shortcut for setting options in the metadata in a known location.
+
+    Returns:
+        Any: A field that has the options set in the metadata.
+    """
     return field(
         metadata={"desynced_field_options": options},
     )

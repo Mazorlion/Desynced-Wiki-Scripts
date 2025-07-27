@@ -21,7 +21,7 @@
             "justMyCode": true
         },
         {
-            "name": "Analyze Lua",
+            "name": "Generate Wiki",
             "type": "debugpy",
             "request": "launch",
             "program": "generate_wiki.py",
@@ -34,7 +34,7 @@
             "justMyCode": true
         },
         {
-            "name": "Import",
+            "name": "Upload Wiki",
             "type": "debugpy",
             "request": "launch",
             "program": "upload_wiki.py",
