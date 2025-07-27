@@ -82,6 +82,10 @@ class LuaAnalyzer:
                 },
             )
 
+            if self.args.dry_run:
+                logger.info(f"Skipped writing {tabledef_file.name} due to `--dry-run`.")
+                return
+
             logger.debug(f"File: {table_name}. Content: {content}\n")
             tabledef_file.write(content)
 
@@ -223,6 +227,12 @@ if __name__ == "__main__":
         type=str,
         help="Path to the directory containing the output wiki files for gamedata.",
         default="Output",
+    )
+    parser.add_argument(
+        "--dry-run",
+        action=argparse.BooleanOptionalAction,
+        help="If True, prevents any changes to the wiki. Default: True.",
+        default=True,
     )
     parser.add_argument(
         "--table-filter",
