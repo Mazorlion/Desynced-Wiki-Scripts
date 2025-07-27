@@ -1,4 +1,5 @@
 """File for hosting enums and types shared across many different objects."""
+
 from enum import Enum
 
 

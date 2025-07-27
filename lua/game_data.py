@@ -46,9 +46,9 @@ class GameData:
         self.instructions: List[Instruction] = self._parse_instructions()
         self.tech_unlocks: List[TechnologyUnlock] = []
         self.technologies: List[Technology] = self._parse_technologies()
-        self.technology_categories: List[
-            TechnologyCategory
-        ] = self._parse_technology_categories()
+        self.technology_categories: List[TechnologyCategory] = (
+            self._parse_technology_categories()
+        )
 
     def _parse_technology_categories(self) -> List[TechnologyCategory]:
         categories: List[TechnologyCategory] = []

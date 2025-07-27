@@ -17,10 +17,12 @@ logger = logging.getLogger("import.py")
 # 90 calls per minute.
 rate_limiter = AsyncLimiter(max_rate=3, time_period=2)
 
+
 async def rate_limited_call(func, *args, **kwargs):
     async with rate_limiter:
         return await asyncio.to_thread(func, *args, **kwargs)
-    
+
+
 async def run(input_dir: str, dry_run: bool):
     # TODO(maz): Compare content to existing page to avoid unecessary edits
 

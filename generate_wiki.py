@@ -60,9 +60,11 @@ class LuaAnalyzer:
         ) as tabledef_file:
             type = analyze_type(template_type)
             if not isinstance(type, DataClassTypeInfo):
-                logger.error(f"Trying to process table template {table_name} of wrong type {type}. Expected DataClassTypeInfo.")
+                logger.error(
+                    f"Trying to process table template {table_name} of wrong type {type}. Expected DataClassTypeInfo."
+                )
                 return
-        
+
             content: str = render_template(
                 WikiTemplate.CARGO_DECLARE,
                 {
@@ -120,9 +122,11 @@ class LuaAnalyzer:
                 encoding="utf-8",
             ) as storage_file:
                 type = analyze_type(desynced_object_type)
-                
+
                 if not isinstance(type, DataClassTypeInfo):
-                    logger.error(f"Trying to process object {desynced_object.name} of wrong type {type}. Expected DataClassTypeInfo.")
+                    logger.error(
+                        f"Trying to process object {desynced_object.name} of wrong type {type}. Expected DataClassTypeInfo."
+                    )
                     continue
 
                 content: str = render_template(
@@ -133,9 +137,7 @@ class LuaAnalyzer:
                         "template_table_index": "DataTableIndex",
                         "name": desynced_object.name,
                         "args": "\n".join(
-                            CargoPrinter().print_dataclass(
-                                desynced_object, type
-                            )
+                            CargoPrinter().print_dataclass(desynced_object, type)
                         ),
                     },
                 )
@@ -206,7 +208,10 @@ class LuaAnalyzer:
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Analyze extracted game files and generate wiki files.", formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    parser = argparse.ArgumentParser(
+        description="Analyze extracted game files and generate wiki files.",
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+    )
     parser.add_argument(
         "--game-data-directory",
         type=str,
@@ -230,7 +235,6 @@ if __name__ == "__main__":
         help="If True, only produces templates and no data. Default: False.",
         default=False,
     )
-
 
     parsed_args = parser.parse_args()
     logger.info(f"Running with args: {parsed_args}")

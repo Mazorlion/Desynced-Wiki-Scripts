@@ -25,7 +25,10 @@ class ListFieldOptions(FieldOptions):
     # If true, the items in this list will not be numbered.
     skip_suffix: bool = False
     # If the element in a list is a dataclass, should the name be prefixed.
-    dataclass_options: DataClassFieldOptions = field(default_factory=lambda: DataClassFieldOptions())
+    dataclass_options: DataClassFieldOptions = field(
+        default_factory=lambda: DataClassFieldOptions()
+    )
+
 
 def annotate(options: FieldOptions) -> Field:
     """Shortcut for setting options in the metadata in a known location."""
@@ -35,7 +38,9 @@ def annotate(options: FieldOptions) -> Field:
     )
 
 
-def get_field_options(f: Field) -> Optional[ListFieldOptions|DataClassFieldOptions|FieldOptions]:
+def get_field_options(
+    f: Field,
+) -> Optional[ListFieldOptions | DataClassFieldOptions | FieldOptions]:
     """Retrive the field annotations if they exist.
 
     Args:
