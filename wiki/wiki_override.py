@@ -1,14 +1,10 @@
 from typing import Dict
 
 from pwiki.wiki import WAction, Wiki
-
-try:
-    from wiki.wiki_credentials import password, username
-except ImportError:
-    pass
+from util.config import GetCredentials
 
 DESYNCED_WIKI_URL = "wiki.desyncedgame.com"
-
+CONFIG_SECTION = 'wiki'
 
 class DesyncedWiki(Wiki):
     """Overrides the regular `pwiki.Wiki` to intercept the endpoint.
@@ -24,12 +20,16 @@ class DesyncedWiki(Wiki):
     def __init__(
         self,
     ):
+        username, password = GetCredentials(CONFIG_SECTION)
         self.endpoint = f"https://{DESYNCED_WIKI_URL}/api.php"
         super().__init__(
             DESYNCED_WIKI_URL,
             username,
             password,
         )
+        if not super().is_logged_in:
+            raise RuntimeError(f"Could not log in to {DESYNCED_WIKI_URL} with provided credentials.")
+
         # Override bot status even without the "bot" permission.
         self.is_bot = True
 
