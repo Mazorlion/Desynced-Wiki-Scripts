@@ -1,6 +1,7 @@
 import argparse
-from ratelimiter import RateLimiter
+import asyncio
 
+from wiki.ratelimiter import limiter
 from wiki.wiki_override import DesyncedWiki
 
 
@@ -31,14 +32,9 @@ def should_prune(page: str) -> bool:
     return False
 
 
-def run(dry_run: bool):
-    # 90 calls per minute.
-    rate_limiter = RateLimiter(max_calls=3, period=2)
+async def run(dry_run: bool):
     # Logs in and initializes wiki connection.
     wiki = DesyncedWiki()
-
-    # 90 calls per minute.
-    rate_limiter = RateLimiter(max_calls=3, period=2)
 
     for cat in wiki.category_members("Category:Data:Storage"):
         for page in wiki.category_members(cat):
@@ -46,8 +42,8 @@ def run(dry_run: bool):
                 print(f"Deleting {page}")
                 if dry_run:
                     continue
-                with rate_limiter:
-                    wiki.edit(page, "Pruned hidden game data.")
+
+                await limiter(wiki.edit)(page, "Pruned hidden game data.")
 
 
 if __name__ == "__main__":
@@ -61,4 +57,4 @@ if __name__ == "__main__":
     )
 
     args = parser.parse_args()
-    run(args.dry_run)
+    asyncio.run(run(args.dry_run))
