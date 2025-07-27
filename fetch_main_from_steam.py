@@ -5,6 +5,7 @@ If 2FA is enabled, you will be prompted to provide a code.
 """
 import os
 from zipfile import ZipFile
+import argparse
 
 # Apply patches before importing.
 import steam.monkey
@@ -19,8 +20,9 @@ from steam.client.cdn import CDNClient
 DESYNCED_APP_ID = 1450900
 
 
-def fetch_main(output_zip_file: str, output_game_data_dir: str):
+def fetch_main(output_zip_file: str, output_game_data_dir: str, branch: str = "public"):
     """Does the things."""
+    
     # Validate we won't run into any existing files.
     assert not os.path.isfile(output_zip_file), "output file already exists"
     assert not os.path.isdir(output_game_data_dir), "output dir already exists"
@@ -33,7 +35,7 @@ def fetch_main(output_zip_file: str, output_game_data_dir: str):
     # Grab the main zip.
     # TODO(maz): Add toggle for downloading from `experimental` branch.
     files = list(
-        cdn_client.iter_files(DESYNCED_APP_ID, "Desynced\Content\mods\main.zip")
+        cdn_client.iter_files(DESYNCED_APP_ID, "Desynced/Content/mods/main.zip", branch=branch)
     )
     assert len(files) == 1, f"Found invalid number of main files {len(files)}: {files}"
     main_zip = files.pop()
@@ -50,7 +52,10 @@ def fetch_main(output_zip_file: str, output_game_data_dir: str):
 
 
 if __name__ == "__main__":
-    # TODO(maz): Make this arguments.
-    OUT_DIR = "fetched_game_data"
-    OUT_FILE = "fetch_main.zip"
-    fetch_main(OUT_FILE, OUT_DIR)
+    parser = argparse.ArgumentParser(description="Download and extract Desynced main mod from Steam.")
+    parser.add_argument("--output-dir", default="fetched_game_data", help="Directory to extract game data to.")
+    parser.add_argument("--output-zip", default="fetch_main.zip", help="Temporary zip file to download.")
+    parser.add_argument("--branch", default="public", help="Steam branch to download from (e.g., public, experimental).")
+    args = parser.parse_args()
+
+    fetch_main(args.output_zip, args.output_dir, args.branch)
