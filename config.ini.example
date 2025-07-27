@@ -1,7 +1,3 @@
-[steam]
-username = myuser ; Steam account must have a valid purchase of desynced.
-password = mypass
-
 [wiki]
 username = myuser
 password = mypass

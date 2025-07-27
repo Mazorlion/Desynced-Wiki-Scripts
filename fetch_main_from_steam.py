@@ -13,7 +13,6 @@ import argparse
 # Apply patches before importing.
 import steam.monkey
 
-from util.config import GetCredentials
 from util.constants import DESYNCED_APP_ID, FETCHED_GAME_DATA_DIR
 
 steam.monkey.patch_minimal()
@@ -28,11 +27,9 @@ def fetch_main(output_zip_file: str, output_game_data_dir: str, branch: str = "p
     assert not os.path.isfile(output_zip_file), "output file already exists"
     assert not os.path.isdir(output_game_data_dir), "output dir already exists"
 
-    username, password = GetCredentials(CONFIG_SECTION)
-
     # Log in to steam (will prompt on CLI).
     client = SteamClient()
-    client.login(username, password)
+    client.cli_login()
     cdn_client: CDNClient = CDNClient(client)
 
     # Grab the main zip.
