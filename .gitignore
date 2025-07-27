@@ -19,6 +19,6 @@ apicache-py3/*
 
 # Output wiki pages
 Output/*
-output_files/*
+wiki_output/*
 
 config.ini

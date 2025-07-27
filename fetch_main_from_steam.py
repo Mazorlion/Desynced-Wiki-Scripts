@@ -52,21 +52,21 @@ def fetch_main(output_zip_file: str, output_game_data_dir: str, branch: str = "p
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
-        description="Download and extract Desynced main mod from Steam.",
+        description="Download and extract Desynced main mod from Steam",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
     parser.add_argument(
         "--output-dir",
         default=FETCHED_GAME_DATA_DIR,
-        help="Directory to extract game data to.",
+        help="Directory to extract game data to",
     )
     parser.add_argument(
-        "--output-zip", default="fetch_main.zip", help="Temporary zip file to download."
+        "--output-zip", default="fetch_main.zip", help="Temporary zip file to download"
     )
     parser.add_argument(
         "--branch",
         default="public",
-        help="Steam branch to download from (e.g., public, experimental).",
+        help="Steam branch to download from (e.g., public, experimental)",
     )
     args = parser.parse_args()
 

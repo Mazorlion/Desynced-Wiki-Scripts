@@ -104,19 +104,19 @@ async def run(input_dir: str, dry_run: bool):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
-        description="Upload previously generated wiki files to Desynced Wiki.",
+        description="Upload previously generated wiki files to Desynced Wiki",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
     parser.add_argument(
         "--input-directory",
         type=str,
-        help="Path to the directory containing wiki files for gamedata recipes.",
+        help="Path to the directory containing wiki files for gamedata recipes",
         default=DEFAULT_OUTPUT_DIR,
     )
     parser.add_argument(
         "--dry-run",
         action=argparse.BooleanOptionalAction,
-        help="If True, prevents any changes to the wiki. Default: True.",
+        help="If True, prevents any changes to the wiki",
         default="True",
     )
 

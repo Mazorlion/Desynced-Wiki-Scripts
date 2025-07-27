@@ -32,7 +32,9 @@ from wiki.cargo.cargo_printer import CargoPrinter
 from wiki.templates.templater import WikiTemplate, render_template
 
 logging.basicConfig(level=logging.INFO, stream=sys.stdout)
-logger = logging.getLogger("analyze_lua.py")
+# Get current filename for logging
+current_file = os.path.basename(__file__)
+logger = logging.getLogger(current_file)
 
 
 class LuaAnalyzer:
@@ -164,7 +166,7 @@ class LuaAnalyzer:
         if not self.args.overwrite and Path(output_directory).exists():
             # prompt user to confirm deletion
             confirm = input(
-                f"Output directory {output_directory} already exists. Do you want to delete it? (y/n): "
+                f"Output directory {output_directory} already exists. Do you want to overwrite it? (y/n): "
             )
             if confirm.lower() != "y":
                 logger.info("Exiting without deleting output directory.")
@@ -210,39 +212,42 @@ class LuaAnalyzer:
                 should_filter=table_def.should_filter,
             )
 
+        logger.info("Finished writing wiki files to %s directory", output_directory)
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
-        description="Analyze extracted game files and generate wiki files.",
+        description="Analyze extracted game files and generate wiki files",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
     parser.add_argument(
-        "--game-data-directory",
+        "game_data_directory",
+        nargs="?",
         type=str,
-        help="Path to the directory containing the lua game data files.",
+        help="Path to the directory containing the lua game data files (= root of main mod)",
         default=FETCHED_GAME_DATA_DIR,
     )
     parser.add_argument(
         "--output-directory",
         type=str,
-        help="Path to the directory containing the output wiki files for gamedata.",
+        help="Path to the directory containing the output wiki files for gamedata",
         default=DEFAULT_OUTPUT_DIR,
     )
     parser.add_argument(
         "--overwrite",
         action=argparse.BooleanOptionalAction,
-        help="If True, will clean the output directory without prompting.",
+        help="If True, will clean the output directory without prompting",
         default=False,
     )
     parser.add_argument(
         "--table-filter",
         type=str,
-        help="If set, only produces data for tables specified. Separator: ,",
+        help="If set, only produces data for tables specified. Comma separated list",
     )
     parser.add_argument(
         "--template-only",
         action=argparse.BooleanOptionalAction,
-        help="If True, only produces templates and no data.",
+        help="If True, only produces templates and no data",
         default=False,
     )
 

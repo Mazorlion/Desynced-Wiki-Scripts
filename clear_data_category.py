@@ -47,12 +47,14 @@ async def run(dry_run: bool):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter
+    )
 
     parser.add_argument(
         "--dry-run",
         action=argparse.BooleanOptionalAction,
-        help="If True, prevents any changes to the wiki. Default: True.",
+        help="If True, prevents any changes to the wiki",
         default="True",
     )
 
