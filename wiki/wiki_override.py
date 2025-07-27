@@ -1,7 +1,7 @@
 from typing import Dict
 
 from pwiki.wiki import WAction, Wiki
-from util.config import GetCredentials
+from util.config import CONFIG_FILE, GetCredentials
 
 DESYNCED_WIKI_URL = "wiki.desyncedgame.com"
 CONFIG_SECTION = "wiki"
@@ -28,9 +28,9 @@ class DesyncedWiki(Wiki):
             username,
             password,
         )
-        if not super().is_logged_in:
+        if not self.is_logged_in:
             raise RuntimeError(
-                f"Could not log in to {DESYNCED_WIKI_URL} with provided credentials."
+                f"Could not log in to {DESYNCED_WIKI_URL} with provided credentials (see {CONFIG_FILE})."
             )
 
         # Override bot status even without the "bot" permission.

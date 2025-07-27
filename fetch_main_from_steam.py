@@ -13,12 +13,9 @@ import argparse
 # Apply patches before importing.
 import steam.monkey
 
+from util.constants import DESYNCED_APP_ID, FETCHED_GAME_DATA_DIR
+
 steam.monkey.patch_minimal()
-
-# pylint: disable=wrong-import-position
-
-
-DESYNCED_APP_ID = 1450900
 
 
 def fetch_main(output_zip_file: str, output_game_data_dir: str, branch: str = "public"):
@@ -34,7 +31,6 @@ def fetch_main(output_zip_file: str, output_game_data_dir: str, branch: str = "p
     cdn_client: CDNClient = CDNClient(client)
 
     # Grab the main zip.
-    # TODO(maz): Add toggle for downloading from `experimental` branch.
     files = list(
         cdn_client.iter_files(
             DESYNCED_APP_ID, "Desynced/Content/mods/main.zip", branch=branch
@@ -61,7 +57,7 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "--output-dir",
-        default="fetched_game_data",
+        default=FETCHED_GAME_DATA_DIR,
         help="Directory to extract game data to.",
     )
     parser.add_argument(

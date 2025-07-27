@@ -26,6 +26,7 @@ from models.tech import (
     TechnologyCategory,
     TechnologyUnlock,
 )
+from util.constants import DEFAULT_OUTPUT_DIR, FETCHED_GAME_DATA_DIR
 from wiki.cargo.analyze_type import DataClassTypeInfo, analyze_type
 from wiki.cargo.cargo_printer import CargoPrinter
 from wiki.templates.templater import WikiTemplate, render_template
@@ -219,13 +220,13 @@ if __name__ == "__main__":
         "--game-data-directory",
         type=str,
         help="Path to the directory containing the lua game data files.",
-        default="fetched_game_data",
+        default=FETCHED_GAME_DATA_DIR,
     )
     parser.add_argument(
         "--output-directory",
         type=str,
         help="Path to the directory containing the output wiki files for gamedata.",
-        default="Output",
+        default=DEFAULT_OUTPUT_DIR,
     )
     parser.add_argument(
         "--overwrite",

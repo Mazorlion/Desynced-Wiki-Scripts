@@ -1,0 +1,4 @@
+DEFAULT_OUTPUT_DIR = "wiki_output"
+FETCHED_GAME_DATA_DIR = "fetched_game_data"
+
+DESYNCED_APP_ID = 1450900

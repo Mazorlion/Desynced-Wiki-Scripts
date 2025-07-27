@@ -6,27 +6,18 @@ import sys
 from typing import List
 
 import asyncio
-from aiolimiter import AsyncLimiter
+from util.constants import DEFAULT_OUTPUT_DIR
 from util.logging_util import PrefixAdapter
 
+from wiki.ratelimiter import limiter
 from wiki.wiki_override import DesyncedWiki
 
 logging.basicConfig(level=logging.DEBUG, stream=sys.stdout)
 logger = logging.getLogger("import.py")
 
-# 90 calls per minute.
-rate_limiter = AsyncLimiter(max_rate=3, time_period=2)
-
-
-async def rate_limited_call(func, *args, **kwargs):
-    async with rate_limiter:
-        return await asyncio.to_thread(func, *args, **kwargs)
-
 
 async def run(input_dir: str, dry_run: bool):
     # TODO(maz): Compare content to existing page to avoid unecessary edits
-
-    limiter = lambda f: (lambda *a, **kw: rate_limited_call(f, *a, **kw))
 
     # Logs in and initializes wiki connection.
     wiki = DesyncedWiki()
@@ -112,12 +103,15 @@ async def run(input_dir: str, dry_run: bool):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(
+        description="Upload previously generated wiki files to Desynced Wiki.",
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+    )
     parser.add_argument(
         "--input-directory",
         type=str,
         help="Path to the directory containing wiki files for gamedata recipes.",
-        default="Output",
+        default=DEFAULT_OUTPUT_DIR,
     )
     parser.add_argument(
         "--dry-run",
