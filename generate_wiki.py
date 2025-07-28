@@ -22,7 +22,6 @@ from models.entity import Entity
 from models.instructions import Instruction
 from models.item import Item
 from models.tech import (
-    TechCategorization,
     Technology,
     TechnologyCategory,
     TechnologyUnlock,
@@ -177,7 +176,7 @@ class LuaAnalyzer:
 
         # Identify objects that can be unlocked via tech as allowed to upload to the wiki.
         # TODO(maz): Upload bug enemies and stuff.
-        self.unlockable_names = set([x.name for x in game.tech_categorizations])
+        self.unlockable_names = game.unlockable_names
 
         # Delete outdated wiki files.
         Path(output_directory).mkdir(parents=True, exist_ok=True)
@@ -208,9 +207,6 @@ class LuaAnalyzer:
             "tech": TableData(Technology, game.technologies),
             "techUnlock": TableData(TechnologyUnlock, game.tech_unlocks),
             "techCategory": TableData(TechnologyCategory, game.technology_categories),
-            "objectTechCategory": TableData(
-                TechCategorization, game.tech_categorizations
-            ),
         }
 
         # Apply filtering

@@ -14,7 +14,6 @@ from models.item import Item, ItemSlotType, ItemType, MiningRecipe
 from models.recipe import Recipe, RecipeItem, RecipeProducer, RecipeType
 from models.sockets import Sockets, SocketSize
 from models.tech import (
-    TechCategorization,
     Technology,
     TechnologyCategory,
     TechnologyUnlock,
@@ -38,6 +37,8 @@ class GameData:
         lua.execute(...)
         data = GameData(lua)
     """
+
+    unlockable_names: set[str] = set()
 
     def __init__(self, lua: LuaRuntime):
         self.lua: LuaRuntime = lua
@@ -158,7 +159,6 @@ class GameData:
                 )
             )
 
-        cats: list[TechCategorization] = []
         while len(queue) > 0:
             current_node: TechNode = queue.popleft()
             # Traverse the tree and ad child techs for future processing.
@@ -174,14 +174,7 @@ class GameData:
                 if not unlock_name:
                     continue
 
-                tech = TechCategorization(
-                    name=unlock_name,
-                    category=current_node.category,
-                )
-
-                if tech not in cats:
-                    cats.append(tech)
-        self.tech_categorizations: List[TechCategorization] = cats
+                self.unlockable_names.add(unlock_name)
 
         return techs
 
