@@ -1,11 +1,15 @@
 import logging
 from dataclasses import dataclass
 from enum import Enum
+import os
 from typing import Dict
 
 from jinja2 import Environment, FileSystemLoader, Template
 
-logger = logging.getLogger("templater.py")
+from util.logger import initLogger
+
+current_file = os.path.basename(__file__)
+logger = initLogger(current_file)
 
 
 class WikiTemplate(Enum):

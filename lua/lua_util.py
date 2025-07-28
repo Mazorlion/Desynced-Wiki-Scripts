@@ -6,7 +6,10 @@ from typing import Optional
 import lupa
 from lupa import LuaRuntime
 
-logger = logging.getLogger("lua_util.py")
+from util.logger import initLogger
+
+current_file = os.path.basename(__file__)
+logger = initLogger(current_file)
 
 
 # Five ticks per second

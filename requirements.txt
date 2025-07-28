@@ -3,3 +3,4 @@ lupa==2.5
 pwiki==1.3
 aiolimiter
 steam[client]
+colorlog

@@ -128,9 +128,9 @@ _table=tech
 ```
 
 Notice a few things:
-1) The `Recipe` in `uplink_recipe` was automatically flattened into the main structure, and the lists inside were expanded into their own fields.
+1) The `Recipe` in `uplink_recipe` was automatically flattened into the main structure, and the lists inside were expanded into their own fields.  
 2) The list of techs in `required_tech` was expanded to have an entry for each field.
-    - The number of entries for each list is described by a field annotation
+    - The number of entries for each list is described by a field annotation  
 
 ```python
     required_tech: List[str] = annotate(ListFieldOptions(max_length=3))
@@ -153,15 +153,19 @@ See: `upload_wiki.py`
 
 ## Schema Change Process
 
-`upload_wiki.py` now does all of the following steps for you, though you must have the correct permissions on the wiki.
+`upload_wiki.py` does all of the following steps for you, though you must have the correct permissions on the wiki.
 
 1) Upload the templates
-2) For each template that changed (or all of them) trigger recreate of the table on the wiki, using a new table
+2) For each template that changed (or all of them), trigger recreate of the table on the wiki, using a new table
 3) Upload the data using the new templates
 
 New tables/data must be swapped in at https://wiki.desyncedgame.com/Special:CargoTables manually. If it didn't work, delete the temporary table and try again.
 
 TODO(maz): Add specific flags for force recreating data.
+
+### Extra manual things
+
+Many pages like https://wiki.desyncedgame.com/Instructions will need to be edited if a new category is added.  
 
 ### Steam & Wiki Credentials
 

@@ -5,15 +5,16 @@ On game update, the `lua` library may require changes.
 
 """
 
+from dataclasses import dataclass
 import pprint
 import argparse
 import logging
 import os
-import sys
-from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Dict, List, Type
 
+from util.logger import initLogger
+from wiki.wiki_name_overrides import get_name_collisions
 import lua.lua_util as lua_util
 from lua.game_data import GameData
 from models.component import Component
@@ -31,19 +32,16 @@ from wiki.cargo.analyze_type import DataClassTypeInfo, analyze_type
 from wiki.cargo.cargo_printer import CargoPrinter
 from wiki.templates.templater import WikiTemplate, render_template
 
-logging.basicConfig(level=logging.INFO, stream=sys.stdout)
-current_file = os.path.basename(__file__)
-logger = logging.getLogger(current_file)
-
 
 class LuaAnalyzer:
     def __init__(self, args) -> None:
         self.args = args
+        self.confirmed_overwrite = self.args.overwrite
 
     def should_skip(self, desynced_object: Any) -> bool:
         return desynced_object.name not in self.unlockable_names
 
-    def clean_output_dir(self, output_dir: str):
+    def clean_output_dir(self, output_dir: Path):
         """Recursively deletes all files in `dir`. Doesn't touch directories.
 
         Args:
@@ -94,7 +92,6 @@ class LuaAnalyzer:
         table_name: str,
         desynced_object_type: Type,
         objects: list,
-        should_filter: bool,
     ):
         """Fills in both table definition and data storage templates.
 
@@ -105,6 +102,7 @@ class LuaAnalyzer:
             objects (list): List of filled in objects, from game data, of Type `type`.
             should_filter (bool, optional): If True, attempts to filter for spoilers or fake data.
         """
+
         # First write out the table definition.
         self.write_declaration(output_dir, table_name, desynced_object_type)
 
@@ -114,13 +112,34 @@ class LuaAnalyzer:
         # Then write out the storage templates.
         output_path: Path = Path(os.path.join(output_dir, "Data", table_name))
         output_path.mkdir(parents=True, exist_ok=True)
+        if output_path.exists():
+            # prompt only once for overwriting
+            if not self.confirmed_overwrite:
+                # prompt user to confirm deletion
+                confirm = input(
+                    f"Output directory {output_dir} already contains some data. Do you want to overwrite it? (y/n): "
+                )
+                if confirm.lower() != "y":
+                    logger.info("Exiting without deleting output directory.")
+                    return
+                self.confirmed_overwrite = True
+
+            self.clean_output_dir(output_path)
+
         for desynced_object in objects:
-            if should_filter and self.should_skip(desynced_object):
-                continue
+            output_file_path = os.path.join(
+                output_path, desynced_object.name.replace("/", "_").replace("*", "")
+            )
+
+            # File should not exist, otherwise we have a name conflict, or some data generated twice.
+            # In any case it's good to have, instead of overwriting silently.
+            if os.path.isfile(output_file_path):
+                raise ValueError(
+                    f"File {output_file_path} already exists. Missing name override?"
+                )
+
             with open(
-                os.path.join(
-                    output_path, desynced_object.name.replace("/", "_").replace("*", "")
-                ),
+                output_file_path,
                 "w",
                 encoding="utf-8",
             ) as storage_file:
@@ -162,36 +181,44 @@ class LuaAnalyzer:
 
         # Delete outdated wiki files.
         Path(output_directory).mkdir(parents=True, exist_ok=True)
-        if not self.args.overwrite and Path(output_directory).exists():
-            # prompt user to confirm deletion
-            confirm = input(
-                f"Output directory {output_directory} already exists. Do you want to overwrite it? (y/n): "
-            )
-            if confirm.lower() != "y":
-                logger.info("Exiting without deleting output directory.")
-                return
+        if Path(output_directory).exists() and not self.args.table_filter:
+            if not self.args.overwrite:
+                # prompt user to confirm deletion
+                confirm = input(
+                    f"Output directory {output_directory} already exists. Do you want to overwrite it? (y/n): "
+                )
+                if confirm.lower() != "y":
+                    logger.info("Exiting without deleting output directory.")
+                    return
 
             self.clean_output_dir(output_directory)
 
         @dataclass
-        class TD:
+        class TableData:
             type: Type
             objects: List
             should_filter: bool = False
 
         # Mapping of cargo table name to the type and list of actual game data objects
-        tables_by_name: Dict[str, TD] = {
-            "entity": TD(Entity, game.entities, True),
-            "component": TD(Component, game.components, True),
-            "item": TD(Item, game.items, True),
-            "instruction": TD(Instruction, game.instructions),
-            "tech": TD(Technology, game.technologies),
-            "techUnlock": TD(TechnologyUnlock, game.tech_unlocks),
-            "techCategory": TD(TechnologyCategory, game.technology_categories),
-            "objectTechCategory": TD(TechCategorization, game.tech_categorizations),
+        tables_by_name: Dict[str, TableData] = {
+            "entity": TableData(Entity, game.entities, True),
+            "component": TableData(Component, game.components, True),
+            "item": TableData(Item, game.items, True),
+            "instruction": TableData(Instruction, game.instructions),
+            "tech": TableData(Technology, game.technologies),
+            "techUnlock": TableData(TechnologyUnlock, game.tech_unlocks),
+            "techCategory": TableData(TechnologyCategory, game.technology_categories),
+            "objectTechCategory": TableData(
+                TechCategorization, game.tech_categorizations
+            ),
         }
 
-        if self.args.table_filter and len(self.args.table_filter) > 0:
+        # Apply filtering
+        for table_name, td in tables_by_name.items():
+            if td.should_filter:
+                td.objects = [obj for obj in td.objects if not self.should_skip(obj)]
+
+        if self.args.table_filter:
             filtered_tables = {
                 k: tables_by_name[k]
                 for k in self.args.table_filter.split(",")
@@ -202,13 +229,30 @@ class LuaAnalyzer:
                 return
             tables_by_name = filtered_tables
 
+        if not self.args.template_only:
+            hasError = False
+            for name, table in tables_by_name.items():
+                if collisions := get_name_collisions(table.objects):
+                    # transform Dict[str, list[str]] to Dict[str, str] with ', '.join(ids)
+                    formatted_collisions = {
+                        name: ",".join(ids) for name, ids in collisions.items()
+                    }
+                    logger.error(
+                        f"Name collisions found in table {name}:\n{pprint.pformat(formatted_collisions, indent=4)}",
+                    )
+                    hasError = True
+            if hasError:
+                logger.error(
+                    "Name collisions found. Please resolve them before proceeding. (search WIKI_NAME_OVERRIDES)"
+                )
+                return
+
         for table_name, table_def in tables_by_name.items():
             self.fill_templates(
                 output_dir=self.args.output_directory,
                 table_name=table_name,
                 desynced_object_type=table_def.type,
                 objects=table_def.objects,
-                should_filter=table_def.should_filter,
             )
 
         logger.info("Finished writing wiki files to %s directory", output_directory)
@@ -249,8 +293,17 @@ if __name__ == "__main__":
         help="If True, only produces templates and no data",
         default=False,
     )
+    parser.add_argument(
+        "--debug",
+        action="store_true",
+        help="Enable debug output (sets logging level to DEBUG)",
+        default=False,
+    )
 
-    parsed_args = parser.parse_args()
+    args = parser.parse_args()
 
-    logger.info(f"Running with args: {pprint.pformat(vars(parsed_args))}")
-    LuaAnalyzer(parsed_args).main()
+    current_file = os.path.basename(__file__)
+    logger = initLogger(current_file, logging.DEBUG if args.debug else logging.INFO)
+
+    logger.info(f"Running with args:\n{pprint.pformat(vars(args))}")
+    LuaAnalyzer(args).main()

@@ -7,21 +7,13 @@ from collections import defaultdict
 
 import asyncio
 from util.constants import DEFAULT_OUTPUT_DIR
-from util.logging_util import PrefixAdapter
+from util.logger import PrefixAdapter, initLogger
 
 from wiki.ratelimiter import limiter
 from wiki.wiki_override import DesyncedWiki
 
-current_file = os.path.basename(__file__)
 
-
-async def run(input_dir: str, dry_run: bool, debug: bool):
-    logger = logging.getLogger(current_file)
-    logging.basicConfig(
-        level=logging.DEBUG if debug else logging.INFO,
-        format="%(levelname)s:%(name)s:%(message)s",
-    )
-
+async def run(logger, input_dir: str, dry_run: bool):
     logger.info("Starting upload of wiki files from %s", input_dir)
 
     # really yucky but whatever I'm lazy
@@ -44,6 +36,7 @@ async def run(input_dir: str, dry_run: bool, debug: bool):
         if subcategory != "Template":
             continue
 
+        # Update templates
         for file in files:
             with open(os.path.join(root, file), "r", encoding="utf-8") as f:
                 template_title = f"Data{file[0].upper() + file[1:]}"
@@ -155,4 +148,7 @@ if __name__ == "__main__":
         default=False,
     )
     args = parser.parse_args()
-    asyncio.run(run(args.input_directory, args.dry_run, args.debug))
+
+    current_file = os.path.basename(__file__)
+    logger = initLogger(current_file, logging.DEBUG if args.debug else logging.INFO)
+    asyncio.run(run(logger, args.input_directory, args.dry_run))

@@ -27,9 +27,8 @@
             "program": "generate_wiki.py",
             "console": "integratedTerminal",
             "args": [
-                "--game-data-dir",
                 "../main",
-                "--no-dry-run",
+                "--overwrite",
             ],
             "justMyCode": true
         },

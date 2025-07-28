@@ -20,8 +20,11 @@ from models.tech import (
     TechnologyUnlock,
 )
 from models.types import Race
+from util.logger import initLogger
+from wiki.wiki_name_overrides import get_name_override
 
-logger = logging.getLogger("GameData")
+current_file = os.path.basename(__file__)
+logger = initLogger(current_file)
 
 
 class GameData:
@@ -38,7 +41,7 @@ class GameData:
 
     def __init__(self, lua: LuaRuntime):
         self.lua: LuaRuntime = lua
-        self.data = self.globals().data
+        self.data = self.globals().data  # type: ignore
         self.frames = self.data.frames
         self.components: List[Component] = self._parse_components()
         self.items: list[Item] = self._parse_items()
@@ -56,6 +59,7 @@ class GameData:
             sub_cats: List[str] = []
             for _, sub_cat in cat["sub_categories"].items():
                 sub_cats.append(sub_cat)
+
             categories.append(
                 TechnologyCategory(
                     name=cat["name"],
@@ -152,12 +156,14 @@ class GameData:
                 # Skip codex entries, menus, visuals, etc...
                 if not unlock_name:
                     continue
-                cats.append(
-                    TechCategorization(
-                        name=unlock_name,
-                        category=current_node.category,
-                    )
+
+                tech = TechCategorization(
+                    name=unlock_name,
+                    category=current_node.category,
                 )
+
+                if tech not in cats:
+                    cats.append(tech)
         self.tech_categorizations: List[TechCategorization] = cats
 
         return techs
@@ -229,7 +235,7 @@ class GameData:
             components.append(
                 Component(
                     lua_id=component_id,
-                    name=c_tbl["name"],
+                    name=get_name_override(component_id) or c_tbl["name"],
                     description=c_tbl["desc"],
                     attachment_size=(
                         SocketSize[c_tbl["attachment_size"].upper()]
@@ -272,7 +278,7 @@ class GameData:
             items.append(
                 Item(
                     lua_id=item_id,
-                    name=item["name"],
+                    name=get_name_override(item_id) or item["name"],
                     description=item["desc"],
                     type=ItemType[item["tag"].upper()],
                     slot_type=ItemSlotType[item["slot_type"].upper()],
@@ -312,10 +318,12 @@ class GameData:
 
             recipe = self._parse_recipe_from_table(frame_tbl)
 
+            name = frame_tbl["name"]  # "Transport Bot"
+
             entities.append(
                 Entity(
                     lua_id=frame_id,
-                    name=frame_tbl["name"],
+                    name=get_name_override(frame_id) or frame_tbl["name"],
                     description=frame_tbl["desc"],
                     health=frame_tbl["health_points"],
                     power_usage_per_second=(
