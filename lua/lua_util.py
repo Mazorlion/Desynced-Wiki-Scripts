@@ -103,9 +103,7 @@ def load_lua_runtime(game_data_dir) -> LuaRuntime:
     TICKS_PER_SECOND = 5
     """
 
-    lua = LuaRuntime(
-        unpack_returned_tuples=True
-    )  # (ignoreit?) pyright: ignore[reportCallIssue]
+    lua = LuaRuntime(unpack_returned_tuples=True)  # pyright: ignore[reportCallIssue]
     lua.execute(preamble)
 
     # Check if game_data_dir exists

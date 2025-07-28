@@ -177,6 +177,16 @@ class LuaAnalyzer:
         # Identify objects that can be unlocked via tech as allowed to upload to the wiki.
         # TODO(maz): Upload bug enemies and stuff.
         self.unlockable_names = game.unlockable_names
+        self.unlockable_names.update(
+            {
+                "Command Center",
+                "Trilobyte",
+                "Malika",
+                "Mothika",
+                "Scale Worm",
+                "Ravager",
+            }
+        )
 
         # Delete outdated wiki files.
         Path(output_directory).mkdir(parents=True, exist_ok=True)

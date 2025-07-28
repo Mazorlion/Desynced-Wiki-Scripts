@@ -38,7 +38,10 @@
             "request": "launch",
             "program": "upload_wiki.py",
             "console": "integratedTerminal",
-            "justMyCode": true
+            "justMyCode": true,
+            "args": [
+                "--debug",
+            ],
         },
     ]
 }

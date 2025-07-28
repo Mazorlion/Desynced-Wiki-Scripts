@@ -46,9 +46,7 @@ def length_check(cls) -> Type:
 
 
 # To check the max length of a given field:
-def get_max_length(
-    dataclass_instance: desynced_object, field_name: str
-) -> Optional[int]:
+def get_max_length(dataclass_instance, field_name: str) -> Optional[int]:
     """Utility function for getting the max length of a field.
 
     Args:

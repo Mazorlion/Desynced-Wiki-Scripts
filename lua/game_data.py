@@ -453,10 +453,10 @@ class GameData:
     #         ticks = ticks
     #     }
     # end
-    def _parse_recipe_construction(self, ticks) -> Optional[list[RecipeProducer]]:
+    def _parse_recipe_construction(self, ticks) -> list[RecipeProducer]:
         return [RecipeProducer("Construction", tick_duration_to_seconds(ticks))]
 
-    def _parse_recipe_uplink(self, ticks) -> Optional[list[RecipeProducer]]:
+    def _parse_recipe_uplink(self, ticks) -> list[RecipeProducer]:
         return [RecipeProducer("Uplink", tick_duration_to_seconds(ticks))]
 
     # function CreateProductionRecipe(recipe, production)
@@ -465,9 +465,10 @@ class GameData:
     #         producers = production
     #     }
     # end
-    def _parse_recipe_producers(self, tbl) -> Optional[list[RecipeProducer]]:
+    def _parse_recipe_producers(self, tbl) -> list[RecipeProducer]:
         if not tbl:
-            return None
+            return []
+
         ret = []
         for component_id, game_ticks in tbl.items():
             name: str = (
