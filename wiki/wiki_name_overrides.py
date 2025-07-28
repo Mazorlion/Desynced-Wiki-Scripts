@@ -16,8 +16,8 @@ WIKI_NAME_OVERRIDES: dict[str, str] = {
     "c_internal_transporter": "Item Transporter (Human Warehouse)",
     "f_building2x1d": "Building 2x1 (1M) (Stockpile)",
     "f_building2x1c": "Building 2x1 (2M) (Advanced Materials)",
-    "f_building2x2d": "Building 2x2 (2M1L) (Epic Structures) (A)",
-    "f_building2x2c": "Building 2x2 (2M1L) (Epic Structures) (B)",
+    "f_building2x2c": "Building 2x2 (2M1L) (Epic Structures) (A)",
+    "f_building2x2d": "Building 2x2 (2M1L) (Epic Structures) (B)",
 }
 
 

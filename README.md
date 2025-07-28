@@ -165,7 +165,10 @@ TODO(maz): Add specific flags for force recreating data.
 
 ### Extra manual things
 
-Many pages like https://wiki.desyncedgame.com/Instructions will need to be edited if a new category is added.  
+- You might have to handle new name collisions. Script should stop and error out if it detects one.  
+  Most of that should be handled by adding entries to `WIKI_NAME_OVERRIDES`.  
+- Many pages like https://wiki.desyncedgame.com/Instructions will need to be edited if a new category is added.  
+- Currently new images are not added automatically.
 
 ### Steam & Wiki Credentials
 

@@ -42,6 +42,7 @@ class GameData:
     def __init__(self, lua: LuaRuntime):
         self.lua: LuaRuntime = lua
         self.data = self.globals().data  # type: ignore
+        self._apply_renames()  # before everything else
         self.frames = self.data.frames
         self.components: List[Component] = self._parse_components()
         self.items: list[Item] = self._parse_items()
@@ -52,6 +53,16 @@ class GameData:
         self.technology_categories: List[TechnologyCategory] = (
             self._parse_technology_categories()
         )
+
+    def _apply_renames(self):
+        def apply_overrides(collection):
+            for obj_id, obj in collection.items():
+                if override := get_name_override(obj_id):
+                    obj["name"] = override
+
+        apply_overrides(self.data.components)
+        apply_overrides(self.data["items"])
+        apply_overrides(self.data.frames)
 
     def _parse_technology_categories(self) -> List[TechnologyCategory]:
         categories: List[TechnologyCategory] = []
@@ -116,16 +127,22 @@ class GameData:
             if tech["unlocks"]:
                 # Keep track of unlocks by object ID.
                 unlocked_ids = tech_id_to_unlock_id.setdefault(technology_id, [])
-                for _, unlock in tech["unlocks"].items():
-                    unlocked_ids.append(unlock)
-                    if unlock and self.lookup_name(unlock):
-                        self.tech_unlocks.append(
-                            TechnologyUnlock(
-                                name=tech["name"] + "_" + self.lookup_name(unlock),
-                                tech_name=tech["name"],
-                                unlocks=self.lookup_name(unlock),
+                for _, unlock_id in tech["unlocks"].items():
+                    unlocked_ids.append(unlock_id)
+                    if unlock_id:
+                        # Skip hidden components unlocks
+                        if comp := self.data_lookup("components", unlock_id):
+                            if comp["attachment_size"] == "Hidden":
+                                continue
+
+                        if unlocked_name := self.lookup_name(unlock_id):
+                            self.tech_unlocks.append(
+                                TechnologyUnlock(
+                                    name=f"{tech["name"]}_{unlocked_name}",
+                                    tech_name=tech["name"],
+                                    unlocks=unlocked_name,
+                                )
                             )
-                        )
             techs.append(
                 Technology(
                     name=tech["name"],
@@ -235,7 +252,7 @@ class GameData:
             components.append(
                 Component(
                     lua_id=component_id,
-                    name=get_name_override(component_id) or c_tbl["name"],
+                    name=c_tbl["name"],
                     description=c_tbl["desc"],
                     attachment_size=(
                         SocketSize[c_tbl["attachment_size"].upper()]
@@ -278,7 +295,7 @@ class GameData:
             items.append(
                 Item(
                     lua_id=item_id,
-                    name=get_name_override(item_id) or item["name"],
+                    name=item["name"],
                     description=item["desc"],
                     type=ItemType[item["tag"].upper()],
                     slot_type=ItemSlotType[item["slot_type"].upper()],
@@ -323,7 +340,7 @@ class GameData:
             entities.append(
                 Entity(
                     lua_id=frame_id,
-                    name=get_name_override(frame_id) or frame_tbl["name"],
+                    name=frame_tbl["name"],
                     description=frame_tbl["desc"],
                     health=frame_tbl["health_points"],
                     power_usage_per_second=(
@@ -504,7 +521,7 @@ class GameData:
 
         recipe = None
         recipe_type = None
-        producers: Optional[list[RecipeProducer]] = None
+        # producers: Optional[list[RecipeProducer]]
         num_produced: int = 1
         if tbl[CONSTRUCTION_RECIPE]:
             recipe_type = RecipeType.Construction
