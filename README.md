@@ -178,6 +178,14 @@ Wiki credentials are needed for the import process.
 
 This file is already ignored by git.
 
+### Useful links
+
+- Cargo tables list: https://wiki.desyncedgame.com/Special:CargoTables
+- Browse all cargo tables data: https://wiki.desyncedgame.com/Special:Drilldown/  
+- One data page example: https://wiki.desyncedgame.com/index.php?title=Data:Item:Infected_Circuit_Board&redirect=no
+- Special pages: https://wiki.desyncedgame.com/Special:SpecialPages
+- List all templates: https://wiki.desyncedgame.com/Special:PrefixIndex?prefix=Template%3A&namespace=0
+
 ## Disclaimer
 
 Please note that this repository and its contents are not officially related to or endorsed by Desynced or Stage Games.

@@ -13,6 +13,10 @@ from wiki.ratelimiter import limiter
 from wiki.wiki_override import DesyncedWiki
 
 
+def get_template_title(category: str):
+    return f"Data{category[0].upper() + category[1:]}"  # "component" -> "DataComponent"
+
+
 async def run(logger, input_dir: str, dry_run: bool):
     logger.info("Starting upload of wiki files from %s", input_dir)
 
@@ -24,12 +28,12 @@ async def run(logger, input_dir: str, dry_run: bool):
     # Logs in and initializes wiki connection.
     wiki = DesyncedWiki()
 
-    @dataclass
+    @dataclass(frozen=True)
     class CargoTable:
         template_title: str
         table: str
 
-    updated_tables: List[CargoTable] = []
+    updated_tables: set[CargoTable] = set()
     # Walk the recipes directory and upload each file there.
     for root, _, files in os.walk(input_dir):
         subcategory = os.path.basename(root)
@@ -39,7 +43,7 @@ async def run(logger, input_dir: str, dry_run: bool):
         # Update templates
         for file in files:
             with open(os.path.join(root, file), "r", encoding="utf-8") as f:
-                template_title = f"Data{file[0].upper() + file[1:]}"
+                template_title = get_template_title(file)
                 title = f"Template:{template_title}"
                 content: str = f.read()
 
@@ -50,7 +54,7 @@ async def run(logger, input_dir: str, dry_run: bool):
                 if content == existing_content:
                     continue
 
-                updated_tables.append(
+                updated_tables.add(
                     CargoTable(template_title=template_title, table=file)
                 )
                 logger.debug("Updating %s because content changed", title)
@@ -64,7 +68,9 @@ async def run(logger, input_dir: str, dry_run: bool):
 
     # Recreate cargo tables here.
     for changed_table in updated_tables:
-        logger.debug("Recreating cargo table for %s", changed_table.template_title)
+        logger.info(
+            "Triggering recreating cargo TABLE for %s", changed_table.template_title
+        )
         if dry_run:
             continue
 
@@ -75,12 +81,13 @@ async def run(logger, input_dir: str, dry_run: bool):
     # Update data files.
     updated_files = defaultdict(list)  # key: category, value: list of titles
     for root, _, files in os.walk(input_dir):
-        subcategory = os.path.basename(root)
-        if subcategory == "Template":
+        table = os.path.basename(root)
+        if table == "Template":
             continue
+        template_title = get_template_title(table)
         for file in files:
             with open(os.path.join(root, file), "r", encoding="utf-8") as f:
-                title = f"Data:{subcategory}:{file}"
+                title = f"Data:{table}:{file}"
                 content: str = f.read()
 
                 existing_content = await limiter(wiki.page_text)(title)
@@ -90,7 +97,12 @@ async def run(logger, input_dir: str, dry_run: bool):
                     continue
 
                 logger.debug("Updating page %s", title)
-                updated_files[subcategory].append(title)
+                updated_files[table].append(title)
+
+                updated_tables.add(
+                    CargoTable(template_title=template_title, table=table)
+                )
+
                 if dry_run:
                     continue
 
@@ -102,9 +114,12 @@ async def run(logger, input_dir: str, dry_run: bool):
 
     # Recreate cargo data here.
     for changed_table in updated_tables:
-        logger.debug("Recreating cargo data for %s", changed_table.template_title)
+        logger.info(
+            f"Triggering recreating cargo DATA for table {changed_table.table} template {changed_table.template_title}"
+        )
         if dry_run:
             continue
+
         assert await limiter(wiki.recreate_cargo_data)(
             changed_table.template_title, changed_table.table
         ), f"Failed to recreate data for {changed_table.template_title}"
