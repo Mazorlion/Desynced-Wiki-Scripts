@@ -19,11 +19,9 @@ from models.tech import (
     TechnologyUnlock,
 )
 from models.types import Race
-from util.logger import initLogger
 from wiki.wiki_name_overrides import get_name_override
 
-current_file = os.path.basename(__file__)
-logger = initLogger(current_file)
+logger = logging.getLogger()
 
 
 class GameData:

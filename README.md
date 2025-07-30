@@ -32,9 +32,10 @@ Script will:
 ### Generate wiki files
 See: `generate_wiki.py`.
 
-1) Evaluates a subset of game files in `--game-data-directory` in a lua environment.
+The script will:
+1) Evaluates a subset of game files (path provided in argument) in a lua environment.
 2) Traverses the `data` tree to parse out necessary information.
-3) Outputs wiki templates to `--output-directory` structured by category.
+3) Outputs wiki templates and data to `--wiki-output-directory` structured by category.
 
 #### Workflow
 

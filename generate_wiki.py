@@ -13,7 +13,9 @@ import os
 from pathlib import Path
 from typing import Any, Dict, List, Type
 
+from models.decorators import DesyncedObject
 from util.logger import initLogger
+from wiki.data_categories import DataCategory
 from wiki.wiki_name_overrides import get_name_collisions
 import lua.lua_util as lua_util
 from lua.game_data import GameData
@@ -26,7 +28,11 @@ from models.tech import (
     TechnologyCategory,
     TechnologyUnlock,
 )
-from util.constants import DEFAULT_OUTPUT_DIR, FETCHED_GAME_DATA_DIR
+from util.constants import (
+    DEFAULT_WIKI_OUTPUT_DIR,
+    FETCHED_GAME_DATA_DIR,
+    FORCE_INCLUDE_NAMES,
+)
 from wiki.cargo.analyze_type import DataClassTypeInfo, analyze_type
 from wiki.cargo.cargo_printer import CargoPrinter
 from wiki.templates.templater import WikiTemplate, render_template
@@ -52,7 +58,9 @@ class LuaAnalyzer:
                 logger.debug(f"Deleting: {file_path}")
                 os.remove(file_path)
 
-    def write_declaration(self, output_dir: str, table_name: str, template_type: Type):
+    def write_declaration(
+        self, output_dir: str, table_name: str, template_type: Type[DesyncedObject]
+    ):
         template_dir: str = os.path.join(output_dir, "Template")
         Path(template_dir).mkdir(parents=True, exist_ok=True)
         with open(
@@ -89,7 +97,7 @@ class LuaAnalyzer:
         self,
         output_dir: str,
         table_name: str,
-        desynced_object_type: Type,
+        desynced_object_type: Type[DesyncedObject],
         objects: list,
     ):
         """Fills in both table definition and data storage templates.
@@ -168,7 +176,7 @@ class LuaAnalyzer:
 
     def main(self):
         game_data_directory = self.args.game_data_directory
-        output_directory = self.args.output_directory
+        output_directory = self.args.wiki_output_directory
 
         lua = lua_util.load_lua_runtime(game_data_directory)
         game = GameData(lua)
@@ -177,16 +185,8 @@ class LuaAnalyzer:
         # Identify objects that can be unlocked via tech as allowed to upload to the wiki.
         # TODO(maz): Upload bug enemies and stuff.
         self.unlockable_names = game.unlockable_names
-        self.unlockable_names.update(
-            {
-                "Command Center",
-                "Trilobyte",
-                "Malika",
-                "Mothika",
-                "Scale Worm",
-                "Ravager",
-            }
-        )
+        # Todo: move that elsewhere
+        self.unlockable_names.update(FORCE_INCLUDE_NAMES)
 
         # Delete outdated wiki files.
         Path(output_directory).mkdir(parents=True, exist_ok=True)
@@ -204,19 +204,21 @@ class LuaAnalyzer:
 
         @dataclass
         class TableData:
-            type: Type
+            type: Type[DesyncedObject]  # object type from models
             objects: List
             should_filter: bool = False
 
         # Mapping of cargo table name to the type and list of actual game data objects
-        tables_by_name: Dict[str, TableData] = {
-            "entity": TableData(Entity, game.entities, True),
-            "component": TableData(Component, game.components, True),
-            "item": TableData(Item, game.items, True),
-            "instruction": TableData(Instruction, game.instructions),
-            "tech": TableData(Technology, game.technologies),
-            "techUnlock": TableData(TechnologyUnlock, game.tech_unlocks),
-            "techCategory": TableData(TechnologyCategory, game.technology_categories),
+        tables_by_name: Dict[DataCategory, TableData] = {
+            DataCategory.entity: TableData(Entity, game.entities, True),
+            DataCategory.component: TableData(Component, game.components, True),
+            DataCategory.item: TableData(Item, game.items, True),
+            DataCategory.instruction: TableData(Instruction, game.instructions),
+            DataCategory.tech: TableData(Technology, game.technologies),
+            DataCategory.techUnlock: TableData(TechnologyUnlock, game.tech_unlocks),
+            DataCategory.techCategory: TableData(
+                TechnologyCategory, game.technology_categories
+            ),
         }
 
         # Apply filtering
@@ -255,7 +257,7 @@ class LuaAnalyzer:
 
         for table_name, table_def in tables_by_name.items():
             self.fill_templates(
-                output_dir=self.args.output_directory,
+                output_dir=output_directory,
                 table_name=table_name,
                 desynced_object_type=table_def.type,
                 objects=table_def.objects,
@@ -277,10 +279,10 @@ if __name__ == "__main__":
         default=FETCHED_GAME_DATA_DIR,
     )
     parser.add_argument(
-        "--output-directory",
+        "--wiki-output-directory",
         type=str,
         help="Path to the directory containing the output wiki files for gamedata",
-        default=DEFAULT_OUTPUT_DIR,
+        default=DEFAULT_WIKI_OUTPUT_DIR,
     )
     parser.add_argument(
         "--overwrite",
@@ -308,8 +310,7 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    current_file = os.path.basename(__file__)
-    logger = initLogger(current_file, logging.DEBUG if args.debug else logging.INFO)
+    logger = initLogger(logging.DEBUG if args.debug else logging.INFO)
 
     logger.info(f"Running with args:\n{pprint.pformat(vars(args))}")
     LuaAnalyzer(args).main()

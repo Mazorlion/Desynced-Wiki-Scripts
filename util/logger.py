@@ -1,11 +1,9 @@
 import logging
-import os
-import sys
 import colorlog
 from logging import LoggerAdapter
 
 
-def initLogger(name="DesyncedWiki", level=logging.INFO):
+def initLogger(level=logging.INFO):
     handler = colorlog.StreamHandler()
     handler.setFormatter(
         colorlog.ColoredFormatter(
@@ -20,7 +18,7 @@ def initLogger(name="DesyncedWiki", level=logging.INFO):
         )
     )
 
-    logger = colorlog.getLogger(name)
+    logger = colorlog.getLogger()
     logger.setLevel(level)
     logger.addHandler(handler)
     return logger

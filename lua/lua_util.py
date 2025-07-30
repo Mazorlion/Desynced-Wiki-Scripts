@@ -1,15 +1,11 @@
 import logging
 import os
-from pprint import pprint
 from typing import Optional
 
 import lupa
 from lupa import LuaRuntime
 
-from util.logger import initLogger
-
-current_file = os.path.basename(__file__)
-logger = initLogger(current_file)
+logger = logging.getLogger()
 
 
 # Five ticks per second

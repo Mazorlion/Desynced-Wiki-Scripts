@@ -6,7 +6,7 @@ from typing import List
 from collections import defaultdict
 
 import asyncio
-from util.constants import DEFAULT_OUTPUT_DIR
+from util.constants import DEFAULT_WIKI_OUTPUT_DIR
 from util.logger import PrefixAdapter, initLogger
 
 from wiki.ratelimiter import limiter
@@ -148,7 +148,7 @@ if __name__ == "__main__":
         "--input-directory",
         type=str,
         help="Path to the directory containing wiki files for gamedata recipes",
-        default=DEFAULT_OUTPUT_DIR,
+        default=DEFAULT_WIKI_OUTPUT_DIR,
     )
     parser.add_argument(
         "--dry-run",
@@ -164,6 +164,5 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
 
-    current_file = os.path.basename(__file__)
-    logger = initLogger(current_file, logging.DEBUG if args.debug else logging.INFO)
+    logger = initLogger(logging.DEBUG if args.debug else logging.INFO)
     asyncio.run(run(logger, args.input_directory, args.dry_run))

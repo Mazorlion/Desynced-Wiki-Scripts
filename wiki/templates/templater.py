@@ -6,10 +6,7 @@ from typing import Dict
 
 from jinja2 import Environment, FileSystemLoader, Template
 
-from util.logger import initLogger
-
-current_file = os.path.basename(__file__)
-logger = initLogger(current_file)
+logger = logging.getLogger()
 
 
 class WikiTemplate(Enum):

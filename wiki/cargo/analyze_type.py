@@ -5,6 +5,7 @@ from dataclasses import dataclass, field, fields, is_dataclass
 from enum import Enum
 from typing import Dict, Type, Union, Optional, cast
 
+from models.decorators import DesyncedObject
 from models.decorators_options import (
     DataClassFieldOptions,
     FieldOptions,
@@ -28,7 +29,7 @@ class TypeInfo:
         LIST = 1
         DATACLASS = 2
 
-    type: Optional[Union[Type, TypeInfo]]
+    type: Optional[Union[Type[DesyncedObject], TypeInfo]]
     options: FieldOptions = field(default_factory=lambda: FieldOptions())
     kind: Kind = Kind.SCALAR
 
@@ -53,7 +54,7 @@ class DataClassTypeInfo(TypeInfo):
         self.kind = TypeInfo.Kind.DATACLASS
 
 
-def analyze_type(obj_type: Type) -> TypeInfo | DataClassTypeInfo:
+def analyze_type(obj_type: Type[DesyncedObject]) -> TypeInfo | DataClassTypeInfo:
     """Returns a dictionary containing fields and types for all fields in obj_type.
 
     Args:
@@ -70,8 +71,8 @@ def analyze_type(obj_type: Type) -> TypeInfo | DataClassTypeInfo:
     for field_info in fields(obj_type):
         field_type = field_info.type
 
-        if hasattr(field_type, "__origin__") and field_type.__origin__ is list:
-            list_field = ListTypeInfo(analyze_type(field_type.__args__[0]))
+        if hasattr(field_type, "__origin__") and field_type.__origin__ is list:  # type: ignore
+            list_field = ListTypeInfo(analyze_type(field_type.__args__[0]))  # type: ignore
             list_field.list_options = cast(
                 ListFieldOptions, get_field_options(f=field_info)
             )
@@ -81,7 +82,7 @@ def analyze_type(obj_type: Type) -> TypeInfo | DataClassTypeInfo:
             ), f"{field_info.name} in {obj_type} is missing max_length"
             ret.fields[field_info.name] = list_field
         elif is_dataclass(field_type):
-            field_type = cast(Type, field_type)
+            field_type = cast(Type[DesyncedObject], field_type)
             dataclass_field: DataClassTypeInfo = cast(
                 DataClassTypeInfo, analyze_type(field_type)
             )
