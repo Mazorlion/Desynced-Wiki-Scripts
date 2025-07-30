@@ -18,6 +18,12 @@ WIKI_NAME_OVERRIDES: dict[str, str] = {
     "f_building2x1c": "Building 2x1 (2M) (Advanced Materials)",
     "f_building2x2c": "Building 2x2 (2M1L) (Epic Structures) (A)",
     "f_building2x2d": "Building 2x2 (2M1L) (Epic Structures) (B)",
+    "c_trilobyte_attack1": "Trilobyte Attack (1)",
+    "c_trilobyte_attack2": "Trilobyte Attack (2)",
+    "c_trilobyte_attack3": "Trilobyte Attack (3)",
+    "c_trilobyte_attack4": "Trilobyte Attack (4)",
+    "c_trilobyte_attack_t2": "Trilobyte Attack (T2)",
+    "c_trilobyte_attack_t3": "Trilobyte Attack (T3)",
 }
 
 
