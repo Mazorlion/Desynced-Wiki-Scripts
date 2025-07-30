@@ -62,6 +62,12 @@ class WeaponStats:
     projectile_delay_sec: float
     # Splash radius of the hit.
     splash_range: int
+    #
+    damage_type: str
+    #
+    extra_effect_name: str
+    #
+    disruptor: int
 
 
 @desynced_object

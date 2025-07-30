@@ -238,6 +238,9 @@ class GameData:
                 charge_duration_sec=tick_duration_to_seconds(c_tbl["duration"]),
                 projectile_delay_sec=tick_duration_to_seconds(c_tbl["shoot_speed"]),
                 splash_range=c_tbl["blast"],
+                damage_type=c_tbl["damage_type"],
+                extra_effect_name=c_tbl["extra_effect_name"],
+                disruptor=c_tbl["disruptor"],
             )
 
             components.append(
