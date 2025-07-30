@@ -34,3 +34,4 @@ class Instruction:
             dataclass_options=DataClassFieldOptions(prefix_name=True),
         )
     )
+    explaination: str

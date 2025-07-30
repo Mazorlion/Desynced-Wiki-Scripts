@@ -203,6 +203,7 @@ class GameData:
                     category=ins["category"],
                     icon=os.path.basename(ins["icon"]),
                     args=args,
+                    explaination=ins["explain"] or "",
                 )
             )
 
