@@ -33,6 +33,17 @@
             "justMyCode": true
         },
         {
+            "name": "Create missing pages (module)",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "cli_tools.create_missing_pages",
+            "console": "integratedTerminal",
+            "args": [
+                "--debug"
+            ],
+            "justMyCode": true
+        },
+        {
             "name": "Upload Wiki",
             "type": "debugpy",
             "request": "launch",
