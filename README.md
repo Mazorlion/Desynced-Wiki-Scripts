@@ -140,10 +140,6 @@ TODO(maz): Make this dynamically figure out list length from the longest list th
 
 There are a number of other useful decorator options in `models/decorators_options.py`.
 
-### Prune hidden data script
-
-Used to prune hidden game data? Like bugs units. Is that generated atm?    
-
 ## Wiki Upload
 
 See: `upload_wiki.py`
@@ -168,6 +164,7 @@ TODO(maz): Add specific flags for force recreating data.
 
 - You might have to handle new name collisions. Script should stop and error out if it detects one.  
   Most of that should be handled by adding entries to `WIKI_NAME_OVERRIDES`.  
+- By default, only entities that are unlockable by players are included. You can force extra inclusions by adding names in `FORCE_INCLUDE_NAMES`.  
 - Many pages like https://wiki.desyncedgame.com/Instructions will need to be edited if a new category is added.  
 - Currently new images are not added automatically.
 
@@ -179,7 +176,12 @@ Wiki credentials are needed for the import process.
 
 This file is already ignored by git.
 
-### Useful links
+## Helper scripts
+
+- `python -m cli_tools/create_missing_pages`
+- 
+
+## Useful links
 
 - Cargo tables list: https://wiki.desyncedgame.com/Special:CargoTables
 - Browse all cargo tables data: https://wiki.desyncedgame.com/Special:Drilldown/  

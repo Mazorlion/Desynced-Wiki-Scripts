@@ -307,6 +307,8 @@ class GameData:
     def _parse_entities(self):
         entities: list[Entity] = []
         for frame_id, frame_tbl in self.frames.items():
+            name = frame_tbl["name"]  # "Transport Bot"
+
             # Skip frames that don't have visuals
             visual_key = frame_tbl["visual"]
             if not visual_key:
@@ -318,12 +320,10 @@ class GameData:
                 logger.debug(f"Skipping {frame_id} due to missing visual table.")
                 continue
 
-            if not visual_tbl["sockets"]:
-                continue
-
             sockets: Sockets = Sockets()
-            for _, socket in visual_tbl["sockets"].items():
-                sockets.increment_socket(socket[2])
+            if visual_tbl["sockets"]:
+                for _, socket in visual_tbl["sockets"].items():
+                    sockets.increment_socket(socket[2])
 
             types = []
             if frame_tbl["trigger_channels"]:
@@ -331,8 +331,6 @@ class GameData:
                     types.append(EntityType[channel_type.upper()])
 
             recipe = self._parse_recipe_from_table(frame_tbl)
-
-            name = frame_tbl["name"]  # "Transport Bot"
 
             entities.append(
                 Entity(
