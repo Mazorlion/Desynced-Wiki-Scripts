@@ -4,7 +4,7 @@ from logging import LoggerAdapter
 
 
 def get_logger(level=logging.INFO):
-    logger = colorlog.getLogger()
+    logger = colorlog.getLogger("DesyncedWiki")
     if not logger.hasHandlers():
         handler = colorlog.StreamHandler()
         handler.setFormatter(
