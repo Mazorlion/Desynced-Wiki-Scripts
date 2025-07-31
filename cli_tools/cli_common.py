@@ -17,58 +17,67 @@ logger = logging.getLogger()
 ApplyFuncType = Callable[[DesyncedWiki, str, str, str], Awaitable[bool]]
 
 
-async def process_all_pages(
-    wiki_output_path: Path,
-    only_one_change: bool,
-    resume_helper: ResumeHelper,
-    applyFunc: ApplyFuncType,
-):
-    """Iterate on every non-data wiki page related to our data and apply given function"""
+class CliTools:
 
-    wiki = DesyncedWiki()
-    data_root_dir = Path(wiki_output_path / "Data")
-    if not os.path.isdir(data_root_dir):
-        logger.error(f"Data directory not found: {data_root_dir}")
-        return
+    async def process_all_pages(
+        self,
+        wiki_output_path: Path,
+        only_one_change: bool,
+        resume_helper: ResumeHelper,
+        only_categories: list[DataCategory],
+        applyFunc: ApplyFuncType,
+    ):
+        """Iterate on every non-data wiki page related to our data and apply given function"""
 
-    @dataclass
-    class ToProcess:
-        category: DataCategory
-        page: str
+        wiki = DesyncedWiki()
+        data_root_dir = Path(wiki_output_path / "Data")
+        if not os.path.isdir(data_root_dir):
+            logger.error(f"Data directory not found: {data_root_dir}")
+            return
 
-    to_process: list[Resumable] = []
+        @dataclass
+        class ToProcess:
+            category: DataCategory
+            page: str
 
-    for category_dir in data_root_dir.iterdir():
-        if not category_dir.is_dir():
-            continue
-        try:
-            category = DataCategory(category_dir.name)
-        except ValueError:
-            logger.error(f"Unknown category directory: {category_dir.name}, skipping.")
-            continue
+        to_process: list[Resumable] = []
 
-        if not CategoryHasPage(category):
-            continue
-
-        for file_path in category_dir.iterdir():
-            if not file_path.is_file():
+        for category_dir in data_root_dir.iterdir():
+            if not category_dir.is_dir():
                 continue
-            title = file_path.stem
-            to_process.append(Resumable(title, ToProcess(category, title)))
+            try:
+                category = DataCategory(category_dir.name)
+            except ValueError:
+                logger.error(
+                    f"Unknown category directory: {category_dir.name}, skipping."
+                )
+                continue
 
-    current_index = resume_helper.init_resume_index(to_process)
+            if only_categories and category not in only_categories:
+                continue
 
-    for idx in range(current_index, len(to_process)):
-        obj: ToProcess = to_process[idx].obj
-        category = obj.category
-        title = obj.page
-        logger.debug(f"Checking page {title} ({category})")
+            if not CategoryHasPage(category):
+                continue
 
-        full_title = GetPagePrefix(category) + title
-        existing_content = await limiter(wiki.page_text)(full_title)
-        made_change = await applyFunc(wiki, category, full_title, existing_content)
+            for file_path in category_dir.iterdir():
+                if not file_path.is_file():
+                    continue
+                title = file_path.stem
+                to_process.append(Resumable(title, ToProcess(category, title)))
 
-        resume_helper.update_progress(title)
+        current_index = resume_helper.init_resume_index(to_process)
 
-        if made_change and only_one_change:
-            break
+        for idx in range(current_index, len(to_process)):
+            obj: ToProcess = to_process[idx].obj
+            category = obj.category
+            title = obj.page
+            logger.debug(f"Checking page {title} ({category})")
+
+            full_title = GetPagePrefix(category) + title
+            existing_content = await limiter(wiki.page_text)(full_title)
+            made_change = await applyFunc(wiki, category, full_title, existing_content)
+
+            resume_helper.update_progress(title)
+
+            if made_change and only_one_change:
+                break

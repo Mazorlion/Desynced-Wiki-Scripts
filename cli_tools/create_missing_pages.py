@@ -5,7 +5,7 @@ import os
 import pprint
 import sys
 
-from cli_tools.cli_common import process_all_pages
+from cli_tools.cli_common import CliTools
 from cli_tools.resume import ResumeHelper
 from wiki.data_categories import DataCategory
 from wiki.page_template import GetCategoryTemplate
@@ -34,6 +34,7 @@ async def find_missing_pages(
     wiki_output_path: Path,
     create: bool,
     only_one_create: bool,
+    only_categories: list[DataCategory],
     resume_helper: ResumeHelper,
 ):
     """Loop through pages found from the output dir and print a list of the missing ones from the wiki."""
@@ -59,8 +60,12 @@ async def find_missing_pages(
 
         return False
 
-    await process_all_pages(
-        wiki_output_path, only_one_create, resume_helper, find_and_create_missing
+    await CliTools().process_all_pages(
+        wiki_output_path,
+        only_one_create,
+        resume_helper,
+        only_categories,
+        find_and_create_missing,
     )
 
     if missing_pages:
@@ -82,8 +87,21 @@ def main(args):
     wiki_output_path = Path(args.wiki_output_directory)
     resume_helper = ResumeHelper(Path(args.resume_file), args.restart)
 
+    try:
+        only_categories = [
+            DataCategory[name.strip()]
+            for name in (
+                args.only_categories.split(",") if args.only_categories else []
+            )
+        ]
+    except KeyError as e:
+        logger.error(f"Invalid category name in {args.only_categories}")
+        raise e
+
     asyncio.run(
-        find_missing_pages(wiki_output_path, args.create, args.one, resume_helper)
+        find_missing_pages(
+            wiki_output_path, args.create, args.one, only_categories, resume_helper
+        )
     )
 
 
@@ -130,6 +148,12 @@ if __name__ == "__main__":
         action="store_true",
         help="Stop after one create",
         default=False,
+    )
+    data_categories = {e.value for e in DataCategory}
+    parser.add_argument(
+        "--only-categories",
+        type=str,
+        help=f"If set, only produces data for categories specified. Comma separated list. Possible values: {data_categories}",
     )
 
     args = parser.parse_args()

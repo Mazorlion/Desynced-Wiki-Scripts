@@ -43,17 +43,12 @@ class LuaAnalyzer:
         game_data_directory: str,
         overwrite: bool,
         only_templates: bool,
-        table_filter: str,
-    ) -> None:
+        only_categories: list[DataCategory],
+    ):
         self.wiki_output_directory = wiki_output_dir
         self.confirmed_overwrite: bool = overwrite
         self.only_templates = only_templates
-        try:
-            self.table_filter = [
-                DataCategory[name.strip()] for name in table_filter or []
-            ]
-        except KeyError as e:
-            raise ValueError(f"Invalid category name: {e.args[0]}")
+        self.only_categories = only_categories
 
         lua = lua_util.load_lua_runtime(game_data_directory)
         self.game: GameData = GameData(lua)
@@ -189,7 +184,7 @@ class LuaAnalyzer:
                 logger.debug(f"File: {desynced_object.name}. Content: {content}\n")
                 storage_file.write(content)
 
-    def main(self):
+    def build(self):
         output_directory = Path(self.wiki_output_directory)
 
         # Identify objects that can be unlocked via tech as allowed to upload to the wiki.
@@ -197,7 +192,7 @@ class LuaAnalyzer:
 
         # Delete outdated wiki files.
         output_directory.mkdir(parents=True, exist_ok=True)
-        if output_directory.exists() and not self.table_filter:
+        if output_directory.exists() and not self.only_categories:
             if not self.confirmed_overwrite:
                 # prompt user to confirm deletion
                 confirm = input(
@@ -235,9 +230,11 @@ class LuaAnalyzer:
             if td.should_filter:
                 td.objects = [obj for obj in td.objects if not self.should_skip(obj)]
 
-        if self.table_filter:
+        if self.only_categories:
             filtered_tables = {
-                k: tables_by_name[k] for k in self.table_filter if k in tables_by_name
+                k: tables_by_name[k]
+                for k in self.only_categories
+                if k in tables_by_name
             }
             if len(filtered_tables) == 0:
                 logger.error("--table-filter filtered all tables.")
@@ -273,6 +270,28 @@ class LuaAnalyzer:
         logger.info(f"Finished writing wiki files to {output_directory} directory")
 
 
+def main(args):
+    logger.info(f"Running with args:\n{pprint.pformat(vars(args))}")
+
+    try:
+        only_categories = [
+            DataCategory[name.strip()]
+            for name in (
+                args.only_categories.split(",") if args.only_categories else []
+            )
+        ]
+    except KeyError as e:
+        raise ValueError(f"Invalid category name: {e.args[0]}")
+
+    LuaAnalyzer(
+        args.wiki_output_directory,
+        args.game_data_directory,
+        args.overwrite,
+        args.template_only,
+        only_categories,
+    ).build()
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description="Analyze extracted game files and generate wiki files",
@@ -297,10 +316,11 @@ if __name__ == "__main__":
         help="If True, will clean the output directory without prompting",
         default=False,
     )
+    data_categories = {e.value for e in DataCategory}
     parser.add_argument(
-        "--table-filter",
+        "--only-categories",
         type=str,
-        help="If set, only produces data for tables specified. Comma separated list",
+        help=f"If set, only produces data for categories specified. Comma separated list. Possible values: {data_categories}",
     )
     parser.add_argument(
         "--template-only",
@@ -316,16 +336,7 @@ if __name__ == "__main__":
     )
 
     args = parser.parse_args()
-
     logger = get_logger(logging.DEBUG if args.debug else logging.INFO)
-
-    logger.info(f"Running with args:\n{pprint.pformat(vars(args))}")
-    LuaAnalyzer(
-        args.wiki_output_directory,
-        args.game_data_directory,
-        args.overwrite,
-        args.template_only,
-        args.table_filter,
-    ).main()
+    main(args)
 else:
     logger = get_logger()
