@@ -90,7 +90,7 @@ class ResumeHelper:
                 with open(self._resume_file_path, "r", encoding="utf-8") as f:
                     data = json.load(f)
                     return ResumeData(**data)
-                logger.info(f"Loaded resume file: {_resume_file_path}")
+                logger.info(f"Loaded resume file: {self._resume_file_path}")
             except Exception as e:
                 logger.warning(f"Failed to load resume file, starting fresh: {e}")
                 return ResumeData()

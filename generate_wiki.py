@@ -13,6 +13,7 @@ import os
 from pathlib import Path
 from typing import Any, Dict, List, Type
 
+from util.constants import FETCHED_GAME_DATA_DIR, DEFAULT_WIKI_OUTPUT_DIR
 from util.logger import get_logger
 from wiki.data_categories import DataCategory
 from wiki.wiki_name_overrides import get_name_collisions

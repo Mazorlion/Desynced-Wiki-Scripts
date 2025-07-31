@@ -36,8 +36,8 @@ def annotate(options: FieldOptions) -> Any:
     Returns:
         Any: A field that has the options set in the metadata.
     """
-    return field(
-        metadata={"desynced_field_options": options},
+    return field(  # pylint: disable=invalid-field-call
+        metadata={"desynced_field_options": options}
     )
 
 
