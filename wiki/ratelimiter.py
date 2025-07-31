@@ -3,8 +3,8 @@ __all__ = ["limiter"]
 from aiolimiter import AsyncLimiter
 import asyncio
 
-# 90 calls per minute.
-rate_limiter = AsyncLimiter(max_rate=3, time_period=2)
+# 180 calls per minute.
+rate_limiter = AsyncLimiter(max_rate=6, time_period=2)
 
 
 async def rate_limited_call(func, *args, **kwargs):
