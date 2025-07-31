@@ -13,12 +13,21 @@ import os
 from pathlib import Path
 from typing import Any, Dict, List, Type
 
-from models.decorators import DesyncedObject
-from util.logger import initLogger
+from util.logger import get_logger
+from util.constants import (
+    DEFAULT_WIKI_OUTPUT_DIR,
+    FETCHED_GAME_DATA_DIR,
+    FORCE_INCLUDE_NAMES,
+)
 from wiki.data_categories import DataCategory
 from wiki.wiki_name_overrides import get_name_collisions
+from wiki.cargo.analyze_type import DataClassTypeInfo, analyze_type
+from wiki.cargo.cargo_printer import CargoPrinter
+from wiki.templates.templater import WikiTemplate, render_template
+
 import lua.lua_util as lua_util
 from lua.game_data import GameData
+from models.decorators import DesyncedObject
 from models.component import Component
 from models.entity import Entity
 from models.instructions import Instruction
@@ -28,23 +37,33 @@ from models.tech import (
     TechnologyCategory,
     TechnologyUnlock,
 )
-from util.constants import (
-    DEFAULT_WIKI_OUTPUT_DIR,
-    FETCHED_GAME_DATA_DIR,
-    FORCE_INCLUDE_NAMES,
-)
-from wiki.cargo.analyze_type import DataClassTypeInfo, analyze_type
-from wiki.cargo.cargo_printer import CargoPrinter
-from wiki.templates.templater import WikiTemplate, render_template
 
 
 class LuaAnalyzer:
-    def __init__(self, args) -> None:
-        self.args = args
-        self.confirmed_overwrite = self.args.overwrite
+
+    def __init__(
+        self,
+        wiki_output_dir: str,
+        game_data_directory: str,
+        overwrite: bool,
+        only_templates: bool,
+        table_filter: str,
+    ) -> None:
+        self.wiki_output_directory = wiki_output_dir
+        self.confirmed_overwrite: bool = overwrite
+        self.only_templates = only_templates
+        try:
+            self.table_filter = [
+                DataCategory[name.strip()] for name in table_filter or []
+            ]
+        except KeyError as e:
+            raise ValueError(f"Invalid category name: {e.args[0]}")
+
+        lua = lua_util.load_lua_runtime(game_data_directory)
+        self.game: GameData = GameData(lua)
 
     def should_skip(self, desynced_object: Any) -> bool:
-        return desynced_object.name not in self.unlockable_names
+        return desynced_object.name not in self.game.unlockable_names
 
     def clean_output_dir(self, output_dir: Path):
         """Recursively deletes all files in `dir`. Doesn't touch directories.
@@ -59,17 +78,17 @@ class LuaAnalyzer:
                 os.remove(file_path)
 
     def write_declaration(
-        self, output_dir: str, table_name: str, template_type: Type[DesyncedObject]
+        self, output_dir: Path, table_name: str, template_type: Type[DesyncedObject]
     ):
         template_dir: str = os.path.join(output_dir, "Template")
         Path(template_dir).mkdir(parents=True, exist_ok=True)
         with open(
             os.path.join(template_dir, f"{table_name}"), "w", encoding="utf-8"
         ) as tabledef_file:
-            type = analyze_type(template_type)
-            if not isinstance(type, DataClassTypeInfo):
+            object_type = analyze_type(template_type)
+            if not isinstance(object_type, DataClassTypeInfo):
                 logger.error(
-                    f"Trying to process table template {table_name} of wrong type {type}. Expected DataClassTypeInfo."
+                    f"Trying to process table template {table_name} of wrong type {object_type}. Expected DataClassTypeInfo."
                 )
                 return
 
@@ -79,12 +98,12 @@ class LuaAnalyzer:
                     "table_name": table_name,
                     "declare_args": "\n".join(
                         CargoPrinter(CargoPrinter.Mode.DECLARATIONS).print_dataclass(
-                            dc_obj=None, type_info=type
+                            dc_obj=None, type_info=object_type
                         )
                     ),
                     "store_args": "\n".join(
                         CargoPrinter(CargoPrinter.Mode.TEMPLATE).print_dataclass(
-                            dc_obj=None, type_info=type
+                            dc_obj=None, type_info=object_type
                         )
                     ),
                 },
@@ -95,7 +114,7 @@ class LuaAnalyzer:
 
     def fill_templates(
         self,
-        output_dir: str,
+        output_dir: Path,
         table_name: str,
         desynced_object_type: Type[DesyncedObject],
         objects: list,
@@ -113,7 +132,7 @@ class LuaAnalyzer:
         # First write out the table definition.
         self.write_declaration(output_dir, table_name, desynced_object_type)
 
-        if self.args.template_only:
+        if self.only_templates:
             return
 
         # Then write out the storage templates.
@@ -150,11 +169,11 @@ class LuaAnalyzer:
                 "w",
                 encoding="utf-8",
             ) as storage_file:
-                type = analyze_type(desynced_object_type)
+                object_type = analyze_type(desynced_object_type)
 
-                if not isinstance(type, DataClassTypeInfo):
+                if not isinstance(object_type, DataClassTypeInfo):
                     logger.error(
-                        f"Trying to process object {desynced_object.name} of wrong type {type}. Expected DataClassTypeInfo."
+                        f"Trying to process object {desynced_object.name} of wrong type {object_type}. Expected DataClassTypeInfo."
                     )
                     continue
 
@@ -166,32 +185,24 @@ class LuaAnalyzer:
                         "template_table_index": "DataTableIndex",
                         "name": desynced_object.name,
                         "args": "\n".join(
-                            CargoPrinter().print_dataclass(desynced_object, type)
+                            CargoPrinter().print_dataclass(desynced_object, object_type)
                         ),
                     },
                 )
 
-                logger.debug("File: %s. Content: %s\n", desynced_object.name, content)
+                logger.debug(f"File: {desynced_object.name}. Content: {content}\n")
                 storage_file.write(content)
 
     def main(self):
-        game_data_directory = self.args.game_data_directory
-        output_directory = self.args.wiki_output_directory
-
-        lua = lua_util.load_lua_runtime(game_data_directory)
-        game = GameData(lua)
-        self.game = game
+        output_directory = Path(self.wiki_output_directory)
 
         # Identify objects that can be unlocked via tech as allowed to upload to the wiki.
         # TODO(maz): Upload bug enemies and stuff.
-        self.unlockable_names = game.unlockable_names
-        # Todo: move that elsewhere
-        self.unlockable_names.update(FORCE_INCLUDE_NAMES)
 
         # Delete outdated wiki files.
-        Path(output_directory).mkdir(parents=True, exist_ok=True)
-        if Path(output_directory).exists() and not self.args.table_filter:
-            if not self.args.overwrite:
+        output_directory.mkdir(parents=True, exist_ok=True)
+        if output_directory.exists() and not self.table_filter:
+            if not self.confirmed_overwrite:
                 # prompt user to confirm deletion
                 confirm = input(
                     f"Output directory {output_directory} already exists. Do you want to overwrite it? (y/n): "
@@ -210,14 +221,16 @@ class LuaAnalyzer:
 
         # Mapping of cargo table name to the type and list of actual game data objects
         tables_by_name: Dict[DataCategory, TableData] = {
-            DataCategory.entity: TableData(Entity, game.entities, True),
-            DataCategory.component: TableData(Component, game.components, True),
-            DataCategory.item: TableData(Item, game.items, True),
-            DataCategory.instruction: TableData(Instruction, game.instructions),
-            DataCategory.tech: TableData(Technology, game.technologies),
-            DataCategory.techUnlock: TableData(TechnologyUnlock, game.tech_unlocks),
+            DataCategory.entity: TableData(Entity, self.game.entities, True),
+            DataCategory.component: TableData(Component, self.game.components, True),
+            DataCategory.item: TableData(Item, self.game.items, True),
+            DataCategory.instruction: TableData(Instruction, self.game.instructions),
+            DataCategory.tech: TableData(Technology, self.game.technologies),
+            DataCategory.techUnlock: TableData(
+                TechnologyUnlock, self.game.tech_unlocks
+            ),
             DataCategory.techCategory: TableData(
-                TechnologyCategory, game.technology_categories
+                TechnologyCategory, self.game.technology_categories
             ),
         }
 
@@ -226,19 +239,17 @@ class LuaAnalyzer:
             if td.should_filter:
                 td.objects = [obj for obj in td.objects if not self.should_skip(obj)]
 
-        if self.args.table_filter:
+        if self.table_filter:
             filtered_tables = {
-                k: tables_by_name[k]
-                for k in self.args.table_filter.split(",")
-                if k in tables_by_name
+                k: tables_by_name[k] for k in self.table_filter if k in tables_by_name
             }
             if len(filtered_tables) == 0:
                 logger.error("--table-filter filtered all tables.")
                 return
             tables_by_name = filtered_tables
 
-        if not self.args.template_only:
-            hasError = False
+        if not self.only_templates:
+            has_error = False
             for name, table in tables_by_name.items():
                 if collisions := get_name_collisions(table.objects):
                     # transform Dict[str, list[str]] to Dict[str, str] with ', '.join(ids)
@@ -248,8 +259,8 @@ class LuaAnalyzer:
                     logger.error(
                         f"Name collisions found in table {name}:\n{pprint.pformat(formatted_collisions, indent=4)}",
                     )
-                    hasError = True
-            if hasError:
+                    has_error = True
+            if has_error:
                 logger.error(
                     "Name collisions found. Please resolve them before proceeding. (search WIKI_NAME_OVERRIDES)"
                 )
@@ -263,7 +274,7 @@ class LuaAnalyzer:
                 objects=table_def.objects,
             )
 
-        logger.info("Finished writing wiki files to %s directory", output_directory)
+        logger.info(f"Finished writing wiki files to {output_directory} directory")
 
 
 if __name__ == "__main__":
@@ -310,7 +321,15 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    logger = initLogger(logging.DEBUG if args.debug else logging.INFO)
+    logger = get_logger(logging.DEBUG if args.debug else logging.INFO)
 
     logger.info(f"Running with args:\n{pprint.pformat(vars(args))}")
-    LuaAnalyzer(args).main()
+    LuaAnalyzer(
+        args.wiki_output_directory,
+        args.game_data_directory,
+        args.overwrite,
+        args.template_only,
+        args.table_filter,
+    ).main()
+else:
+    logger = get_logger()

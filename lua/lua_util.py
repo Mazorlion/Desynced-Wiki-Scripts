@@ -3,7 +3,7 @@ import os
 from typing import Optional
 
 import lupa
-from lupa import LuaRuntime
+from lupa import LuaRuntime  # pylint: disable=no-name-in-module
 
 logger = logging.getLogger()
 
@@ -115,7 +115,7 @@ def load_lua_runtime(game_data_dir) -> LuaRuntime:
             continue
 
         with open(file_path, "r", encoding="utf-8") as readfile:
-            logger.info("Executing lua file: %s", readfile.name)
+            logger.info(f"Executing lua file: {readfile.name}")
             file_content = readfile.read()
             # remove special lines
             file_content = file_content.replace("local package = ...", "package = {}")

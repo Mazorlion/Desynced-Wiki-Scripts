@@ -1,15 +1,19 @@
 import argparse
 import asyncio
-from dataclasses import dataclass
 import logging
 import os
 import pprint
 import sys
 
 from cli_tools.cli_common import process_all_pages
-from cli_tools.resume import Resumable, ResumeHelper
-from wiki.data_categories import CategoryHasPage, DataCategory, GetPagePrefix
+from cli_tools.resume import ResumeHelper
+from wiki.data_categories import DataCategory
 from wiki.page_template import GetCategoryTemplate
+
+if __name__ != "__main__":
+    raise RuntimeError(
+        "This script is intended to be executed as a module, not imported."
+    )
 
 if __package__ is None or __package__ == "":
     current_file = os.path.basename(__file__)
@@ -21,9 +25,8 @@ if __package__ is None or __package__ == "":
     )
 
 from util.constants import DEFAULT_WIKI_OUTPUT_DIR
-from util.logger import initLogger
+from util.logger import get_logger
 from wiki.ratelimiter import limiter
-from wiki.wiki_override import DesyncedWiki
 from pathlib import Path
 
 
@@ -73,6 +76,17 @@ async def find_missing_pages(
         logger.info("No missing pages found.")
 
 
+def main(args):
+    logger.info(f"Running with args:\n{pprint.pformat(vars(args))}")
+
+    wiki_output_path = Path(args.wiki_output_directory)
+    resume_helper = ResumeHelper(Path(args.resume_file), args.restart)
+
+    asyncio.run(
+        find_missing_pages(wiki_output_path, args.create, args.one, resume_helper)
+    )
+
+
 if __name__ == "__main__":
 
     print(__package__)
@@ -119,13 +133,7 @@ if __name__ == "__main__":
     )
 
     args = parser.parse_args()
-
-    logger = initLogger(logging.DEBUG if args.debug else logging.INFO)
-    logger.info(f"Running with args:\n{pprint.pformat(vars(args))}")
-
-    wiki_output_path = Path(args.wiki_output_directory)
-    resume_helper = ResumeHelper(Path(args.resume_file), args.restart)
-
-    asyncio.run(
-        find_missing_pages(wiki_output_path, args.create, args.one, resume_helper)
-    )
+    logger = get_logger(logging.DEBUG if args.debug else logging.INFO)
+    main(args)
+else:
+    logger = get_logger()

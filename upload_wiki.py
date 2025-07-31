@@ -7,7 +7,7 @@ from collections import defaultdict
 
 import asyncio
 from util.constants import DEFAULT_WIKI_OUTPUT_DIR
-from util.logger import PrefixAdapter, initLogger
+from util.logger import PrefixAdapter, get_logger
 
 from wiki.ratelimiter import limiter
 from wiki.wiki_override import DesyncedWiki
@@ -17,13 +17,8 @@ def get_template_title(category: str):
     return f"Data{category[0].upper() + category[1:]}"  # "component" -> "DataComponent"
 
 
-async def run(logger, input_dir: str, dry_run: bool):
-    logger.info("Starting upload of wiki files from %s", input_dir)
-
-    # really yucky but whatever I'm lazy
-    # TODO(maz): Make this into a class.
-    if dry_run:
-        logger = PrefixAdapter(logger, {"prefix": "DRY_RUN"})
+async def run(input_dir: str, dry_run: bool):
+    logger.info(f"Starting upload of wiki files from {input_dir}")
 
     # Logs in and initializes wiki connection.
     wiki = DesyncedWiki()
@@ -57,7 +52,7 @@ async def run(logger, input_dir: str, dry_run: bool):
                 updated_tables.add(
                     CargoTable(template_title=template_title, table=file)
                 )
-                logger.debug("Updating %s because content changed", title)
+                logger.debug(f"Updating {title} because content changed")
                 if dry_run:
                     continue
 
@@ -69,7 +64,7 @@ async def run(logger, input_dir: str, dry_run: bool):
     # Recreate cargo tables here.
     for changed_table in updated_tables:
         logger.info(
-            "Triggering recreating cargo TABLE for %s", changed_table.template_title
+            f"Triggering recreating cargo TABLE for {changed_table.template_title}"
         )
         if dry_run:
             continue
@@ -96,7 +91,7 @@ async def run(logger, input_dir: str, dry_run: bool):
                 if content == existing_content:
                     continue
 
-                logger.debug("Updating page %s", title)
+                logger.debug(f"Updating page {title}")
                 updated_files[table].append(title)
 
                 updated_tables.add(
@@ -125,7 +120,7 @@ async def run(logger, input_dir: str, dry_run: bool):
         ), f"Failed to recreate data for {changed_table.template_title}"
 
     logger.info(
-        "Updated tables: %s", ", ".join(t.template_title for t in updated_tables)
+        f"Updated tables: {", ".join(t.template_title for t in updated_tables)}"
     )
     logger.info(f"Updated {len(updated_files)} files:")
 
@@ -164,5 +159,12 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
 
-    logger = initLogger(logging.DEBUG if args.debug else logging.INFO)
-    asyncio.run(run(logger, args.input_directory, args.dry_run))
+    logger = get_logger(logging.DEBUG if args.debug else logging.INFO)
+    # really yucky but whatever I'm lazy
+    # TODO(maz): Make this into a class.
+    if args.dry_run:
+        logger = PrefixAdapter(logger, {"prefix": "DRY_RUN"})
+
+    asyncio.run(run(args.input_directory, args.dry_run))
+else:
+    logger = get_logger()

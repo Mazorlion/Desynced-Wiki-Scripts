@@ -4,7 +4,7 @@ import logging
 import os
 from typing import Dict, List, Optional
 
-from lupa import LuaRuntime
+from lupa import LuaRuntime  # pylint: disable=no-name-in-module
 
 from lua.lua_util import tick_duration_to_seconds, per_tick_to_per_second
 from models.component import Component, PowerStats, Register, WeaponStats
@@ -19,6 +19,7 @@ from models.tech import (
     TechnologyUnlock,
 )
 from models.types import Race
+from util.constants import FORCE_INCLUDE_NAMES
 from wiki.wiki_name_overrides import get_name_override
 
 logger = logging.getLogger()
@@ -174,6 +175,7 @@ class GameData:
 
                 self.unlockable_names.add(unlock_name)
 
+        self.unlockable_names.update(FORCE_INCLUDE_NAMES)
         return techs
 
     def _parse_instructions(self) -> List[Instruction]:
@@ -308,12 +310,12 @@ class GameData:
             # Skip frames that don't have visuals
             visual_key = frame_tbl["visual"]
             if not visual_key:
-                logger.debug("Skipping %s due to missing visual table.", frame_id)
+                logger.debug(f"Skipping {frame_id} due to missing visual table.")
                 continue
             # Map to visuals
             visual_tbl = self.lookup_visual(visual_key)
             if not visual_tbl:
-                logger.debug("Skipping %s due to missing visual table.", frame_id)
+                logger.debug(f"Skipping {frame_id} due to missing visual table.")
                 continue
 
             if not visual_tbl["sockets"]:

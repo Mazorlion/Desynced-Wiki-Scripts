@@ -3,24 +3,26 @@ import colorlog
 from logging import LoggerAdapter
 
 
-def initLogger(level=logging.INFO):
-    handler = colorlog.StreamHandler()
-    handler.setFormatter(
-        colorlog.ColoredFormatter(
-            "%(log_color)s%(levelname)s:%(name)s:%(message)s",
-            log_colors={
-                "DEBUG": "cyan",
-                "INFO": "white",
-                "WARNING": "yellow",
-                "ERROR": "red",
-                "CRITICAL": "bold_red",
-            },
-        )
-    )
-
+def get_logger(level=logging.INFO):
     logger = colorlog.getLogger()
-    logger.setLevel(level)
-    logger.addHandler(handler)
+    if not logger.hasHandlers():
+        handler = colorlog.StreamHandler()
+        handler.setFormatter(
+            colorlog.ColoredFormatter(
+                "%(log_color)s%(levelname)s:%(name)s:%(message)s",
+                log_colors={
+                    "DEBUG": "cyan",
+                    "INFO": "white",
+                    "WARNING": "yellow",
+                    "ERROR": "red",
+                    "CRITICAL": "bold_red",
+                },
+            )
+        )
+
+        logger.setLevel(level)
+        logger.addHandler(handler)
+
     return logger
 
 
