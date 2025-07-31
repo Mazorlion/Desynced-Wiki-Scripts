@@ -119,9 +119,8 @@ async def run(input_dir: str, dry_run: bool):
             changed_table.template_title, changed_table.table
         ), f"Failed to recreate data for {changed_table.template_title}"
 
-    logger.info(
-        f"Updated tables: {", ".join(t.template_title for t in updated_tables)}"
-    )
+    updated_table_list = ", ".join(t.template_title for t in updated_tables)
+    logger.info(f"Updated tables: {updated_table_list}")
     logger.info(f"Updated {len(updated_files)} files:")
 
     logger.info(f"{'Category':<20} | {'Updated Files':>13}")

@@ -14,11 +14,6 @@ from pathlib import Path
 from typing import Any, Dict, List, Type
 
 from util.logger import get_logger
-from util.constants import (
-    DEFAULT_WIKI_OUTPUT_DIR,
-    FETCHED_GAME_DATA_DIR,
-    FORCE_INCLUDE_NAMES,
-)
 from wiki.data_categories import DataCategory
 from wiki.wiki_name_overrides import get_name_collisions
 from wiki.cargo.analyze_type import DataClassTypeInfo, analyze_type

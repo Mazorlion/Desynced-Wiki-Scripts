@@ -138,7 +138,7 @@ class GameData:
                         if unlocked_name := self.lookup_name(unlock_id):
                             self.tech_unlocks.append(
                                 TechnologyUnlock(
-                                    name=f"{tech["name"]}_{unlocked_name}",
+                                    name=f"{tech['name']}_{unlocked_name}",
                                     tech_name=tech["name"],
                                     unlocks=unlocked_name,
                                 )
