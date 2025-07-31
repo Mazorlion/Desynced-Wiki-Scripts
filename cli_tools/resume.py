@@ -91,8 +91,14 @@ class ResumeHelper:
                     data = json.load(f)
                     return ResumeData(**data)
                 logger.info(f"Loaded resume file: {self._resume_file_path}")
-            except Exception as e:
-                logger.warning(f"Failed to load resume file, starting fresh: {e}")
+            except FileNotFoundError as e:
+                logger.warning(f"Resume file not found, starting fresh: {e}")
+                return ResumeData()
+            except json.JSONDecodeError as e:
+                logger.warning(f"Invalid JSON in resume file, starting fresh: {e}")
+                return ResumeData()
+            except TypeError as e:
+                logger.warning(f"Invalid data in resume file, starting fresh: {e}")
                 return ResumeData()
         else:
             if self._resume_file_path.exists():

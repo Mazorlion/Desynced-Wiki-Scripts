@@ -133,6 +133,8 @@ async def run(input_dir: str, dry_run: bool):
         logger.info("To commit those changes, run with --no-dry-run")
 
 
+logger = get_logger()
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description="Upload previously generated wiki files to Desynced Wiki",
@@ -158,12 +160,10 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
 
-    logger = get_logger(logging.DEBUG if args.debug else logging.INFO)
+    logger.setLevel(logging.DEBUG if args.debug else logging.INFO)
     # really yucky but whatever I'm lazy
     # TODO(maz): Make this into a class.
     if args.dry_run:
         logger = PrefixAdapter(logger, {"prefix": "DRY_RUN"})
 
     asyncio.run(run(args.input_directory, args.dry_run))
-else:
-    logger = get_logger()
