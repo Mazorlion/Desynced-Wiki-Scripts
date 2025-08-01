@@ -2,7 +2,6 @@ import argparse
 from dataclasses import dataclass
 import logging
 import os
-from typing import List
 from collections import defaultdict
 
 import asyncio

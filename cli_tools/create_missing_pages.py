@@ -1,27 +1,11 @@
-import argparse
-import os
-import sys
-
 from cli_tools.cli_common import CliTools
 from wiki.data_categories import DataCategory
-from wiki.page_template import GetCategoryTemplate
-
-if __name__ != "__main__":
-    raise RuntimeError(
-        "This script is intended to be executed as a module, not imported."
-    )
-
-if __package__ is None or __package__ == "":
-    current_file = os.path.basename(__file__)
-    print(
-        f"WARNING: This script is intended to be run as a module:\n"
-        f"    python -m cli_tools.{current_file}\n"
-        f"Running directly may cause import errors.",
-        file=sys.stderr,
-    )
-
-from util.logger import get_logger
+from wiki.page_template import get_category_template
 from wiki.ratelimiter import limiter
+from util.logger import get_logger
+
+
+logger = get_logger()
 
 
 class CreateMissingPages(CliTools):
@@ -43,7 +27,7 @@ class CreateMissingPages(CliTools):
                 logger.info(f"Creating page {full_title}")
                 await limiter(self.wiki.edit)(
                     title=full_title,
-                    text=GetCategoryTemplate(DataCategory(category)),
+                    text=get_category_template(DataCategory(category)),
                 )
                 return True
 
@@ -65,13 +49,7 @@ class CreateMissingPages(CliTools):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(
-        description="For all previously generated cargo data pages, find if their the non-data counterpart exists.",
-        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+    cli = CreateMissingPages(
+        "For all previously generated cargo data pages, find if their the non-data counterpart exists."
     )
-
-    cli = CreateMissingPages("Create Missing Pages", parser)
     cli.run()
-
-
-logger = get_logger()

@@ -13,6 +13,7 @@ import os
 from pathlib import Path
 from typing import Any, Dict, List, Type
 
+from models.category_filters import CategoryFilter
 from util.constants import FETCHED_GAME_DATA_DIR, DEFAULT_WIKI_OUTPUT_DIR
 from util.logger import get_logger
 from wiki.data_categories import DataCategory
@@ -33,6 +34,8 @@ from models.tech import (
     TechnologyCategory,
     TechnologyUnlock,
 )
+
+logger = get_logger()
 
 
 class LuaAnalyzer:
@@ -223,6 +226,9 @@ class LuaAnalyzer:
             DataCategory.techCategory: TableData(
                 TechnologyCategory, self.game.technology_categories
             ),
+            DataCategory.categoryFilter: TableData(
+                CategoryFilter, self.game.category_filters
+            ),
         }
 
         # Apply filtering
@@ -281,7 +287,8 @@ def main(args):
             )
         ]
     except KeyError as e:
-        raise ValueError(f"Invalid category name: {e.args[0]}")
+        logger.error(f"Invalid category name: {e.args[0]}")
+        raise e
 
     LuaAnalyzer(
         args.wiki_output_directory,
@@ -335,8 +342,6 @@ if __name__ == "__main__":
         default=False,
     )
 
-    args = parser.parse_args()
-    logger = get_logger(logging.DEBUG if args.debug else logging.INFO)
-    main(args)
-else:
-    logger = get_logger()
+    parsed_args = parser.parse_args()
+    logger.setLevel(logging.DEBUG if parsed_args.debug else logging.INFO)
+    main(parsed_args)

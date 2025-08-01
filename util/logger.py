@@ -1,6 +1,5 @@
-import logging
-import colorlog
 from logging import LoggerAdapter
+import colorlog
 
 
 def get_logger():

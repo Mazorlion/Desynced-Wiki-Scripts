@@ -1,7 +1,9 @@
+"""Module rate limiter call support"""
+
 __all__ = ["limiter"]
 
-from aiolimiter import AsyncLimiter
 import asyncio
+from aiolimiter import AsyncLimiter
 
 # 180 calls per minute.
 rate_limiter = AsyncLimiter(max_rate=6, time_period=2)
@@ -20,4 +22,10 @@ async def rate_limited_call(func, *args, **kwargs):
 
 # Example usage:
 #   existing_content = await limiter(wiki.page_text)(title)
-limiter = lambda f: (lambda *a, **kw: rate_limited_call(f, *a, **kw))
+def limiter(f):
+    """Create a rate-limited version of the given function."""
+
+    def rate_limited_function(*args, **kwargs):
+        return rate_limited_call(f, *args, **kwargs)
+
+    return rate_limited_function

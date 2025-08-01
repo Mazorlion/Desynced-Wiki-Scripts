@@ -3,13 +3,14 @@ from enum import StrEnum, auto
 
 
 class DataCategory(StrEnum):
-    entity = auto()
-    component = auto()
-    item = auto()
-    instruction = auto()
-    tech = auto()
-    techUnlock = auto()
-    techCategory = auto()
+    entity = auto()  # pylint: disable=invalid-name
+    component = auto()  # pylint: disable=invalid-name
+    item = auto()  # pylint: disable=invalid-name
+    instruction = auto()  # pylint: disable=invalid-name
+    tech = auto()  # pylint: disable=invalid-name
+    techUnlock = auto()  # pylint: disable=invalid-name
+    techCategory = auto()  # pylint: disable=invalid-name
+    categoryFilter = auto()  # pylint: disable=invalid-name
 
 
 @dataclass
@@ -28,15 +29,16 @@ DATA_CATEGORY_INFO: dict[DataCategory, DataCategoryInfo] = {
     DataCategory.tech: DataCategoryInfo(has_page=True, subpage_of="Technology"),
     DataCategory.techUnlock: DataCategoryInfo(has_page=False),
     DataCategory.techCategory: DataCategoryInfo(has_page=False),
+    DataCategory.categoryFilter: DataCategoryInfo(has_page=False),
 }
 
 
-def CategoryHasPage(cat: DataCategory) -> bool:
+def category_has_page(cat: DataCategory) -> bool:
     info = DATA_CATEGORY_INFO.get(cat)
     return info.has_page if info is not None else False
 
 
-def GetPagePrefix(cat: DataCategory) -> str:
+def get_page_prefix(cat: DataCategory) -> str:
     info = DATA_CATEGORY_INFO.get(cat)
     if info and info.subpage_of:
         return f"{info.subpage_of}/"

@@ -19,46 +19,49 @@ ResumableId: TypeAlias = str
 
 @dataclass
 class ResumeData:
-    lastProcessed: str = ""  # can be whatever
-    totalProcessed: int = 0  # minimal consistency check
+    last_processed: str = ""  # can be whatever
+    total_processed: int = 0  # minimal consistency check
 
 
 class ResumeHelper:
     _resume_data: ResumeData
     _resume_file_path: Path
 
-    def __init__(self, resume_file_path: Path, restart: bool):
+    def __init__(self, resume_file_path: Path, resume: bool):
         self._resume_file_path = resume_file_path
-        self._resume_data = self._init_resume_data(restart)
+        self._resume_data = self._init_resume_data(resume)
 
     def init_resume_index(self, to_process: list[Resumable]) -> int:
         """
-        Looks in the list at the saved totalProcessed index and checks if the text there matches our lastProcessed.
+        Looks in the list at the saved totalProcessed index and checks if the text there matches our last_processed.
         If so, we can return the index, else, warn and reset resume at 0.
 
         Returns at which index to start
         """
 
-        if self._resume_data.totalProcessed > 0:
-            lastProcessedIndex = self._resume_data.totalProcessed - 1
-            if self._resume_data.totalProcessed == len(to_process):
-                logger.info(f"Resume found last run finished execution. Starting over.")
-            elif lastProcessedIndex >= len(to_process):
+        if self._resume_data.total_processed > 0:
+            last_processed_index = self._resume_data.total_processed - 1
+            if self._resume_data.total_processed == len(to_process):
+                logger.info("Resume found last run finished execution. Starting over.")
+            elif last_processed_index >= len(to_process):
                 logger.warning(
-                    f"Resume mismatch: lastProcessedIndex is bigger than our dataset. Resetting resume to 0."
+                    "Resume mismatch: last_processed_index is bigger than our dataset. Resetting resume to 0."
                 )
-            elif to_process[lastProcessedIndex].id == self._resume_data.lastProcessed:
+            elif (
+                to_process[last_processed_index].id == self._resume_data.last_processed
+            ):
                 logger.info(
-                    f"Resuming at index {lastProcessedIndex} ({self._resume_data.lastProcessed})"
+                    f"Resuming at index {last_processed_index} ({self._resume_data.last_processed})"
                 )
                 self._resume_data = ResumeData(
-                    to_process[lastProcessedIndex].id, self._resume_data.totalProcessed
+                    to_process[last_processed_index].id,
+                    self._resume_data.total_processed,
                 )
-                return lastProcessedIndex + 1  # start on the next one
+                return last_processed_index + 1  # start on the next one
             else:
                 logger.warning(
-                    f"Resume mismatch: expected '{self._resume_data.lastProcessed}' at index {lastProcessedIndex}, "
-                    f"but found '{to_process[lastProcessedIndex]}'. Resetting resume to 0."
+                    f"Resume mismatch: expected '{self._resume_data.last_processed}' at index {last_processed_index}, "
+                    f"but found '{to_process[last_processed_index]}'. Resetting resume to 0."
                 )
                 # Reset resume if mismatch or out of bounds
         else:
@@ -70,8 +73,8 @@ class ResumeHelper:
 
     def update_progress(self, finished: str):
         """Update resume file with last file and increase totalProcessed by 1, then write it immediately."""
-        self._resume_data.lastProcessed = finished
-        self._resume_data.totalProcessed += 1
+        self._resume_data.last_processed = finished
+        self._resume_data.total_processed += 1
         self._write_resume_file(self._resume_data)
 
     def _write_resume_file(self, resume: ResumeData):
@@ -84,8 +87,8 @@ class ResumeHelper:
             logger.error(f"Failed to write resume file: {e}")
             raise
 
-    def _init_resume_data(self, restart: bool) -> ResumeData:
-        if self._resume_file_path.exists() and not restart:
+    def _init_resume_data(self, resume: bool) -> ResumeData:
+        if self._resume_file_path.exists() and resume:
             try:
                 with open(self._resume_file_path, "r", encoding="utf-8") as f:
                     data = json.load(f)
@@ -102,7 +105,7 @@ class ResumeHelper:
                 return ResumeData()
         else:
             if self._resume_file_path.exists():
-                if restart:
+                if not resume:
                     logger.info(
                         f"Restart requested, ignoring and overwriting existing resume file: {self._resume_file_path}"
                     )

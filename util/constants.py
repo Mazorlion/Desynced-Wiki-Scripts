@@ -3,6 +3,8 @@ FETCHED_GAME_DATA_DIR = "fetched_game_data"
 
 DESYNCED_APP_ID = 1450900
 
+WIKI_BASE_URL = "https://wiki.desyncedgame.com"
+
 FORCE_INCLUDE_NAMES = {
     "Command Center",
     "Trilobyte",

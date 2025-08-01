@@ -33,6 +33,17 @@
             "justMyCode": true
         },
         {
+            "name": "Upload Wiki",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "upload_wiki.py",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "args": [
+                "--debug",
+            ],
+        },
+        {
             "name": "Create missing pages (module)",
             "type": "debugpy",
             "request": "launch",
@@ -44,15 +55,15 @@
             "justMyCode": true
         },
         {
-            "name": "Upload Wiki",
+            "name": "Cleanup page templates (module)",
             "type": "debugpy",
             "request": "launch",
-            "program": "upload_wiki.py",
+            "module": "cli_tools.cleanup_page_templates",
             "console": "integratedTerminal",
-            "justMyCode": true,
             "args": [
-                "--debug",
+                "--debug"
             ],
+            "justMyCode": true
         },
     ]
 }

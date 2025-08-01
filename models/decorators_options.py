@@ -26,7 +26,7 @@ class ListFieldOptions(FieldOptions):
     skip_suffix: bool = False
     # If the element in a list is a dataclass, should the name be prefixed.
     dataclass_options: DataClassFieldOptions = field(
-        default_factory=lambda: DataClassFieldOptions()
+        default_factory=lambda: DataClassFieldOptions()  # pylint: disable=unnecessary-lambda
     )
 
 
@@ -78,7 +78,7 @@ def require_field_options(cls: Type) -> Type:
         Type: `cls` from input, no changes.
     """
     for f in fields(class_or_instance=cls):
-        if hasattr(f.type, "__origin__") and f.type.__origin__ is list:
+        if hasattr(f.type, "__origin__") and f.type.__origin__ is list:  # type: ignore
             if "desynced_field_options" not in f.metadata:
                 raise ValueError(f"'{f.name}' in {cls} must have ListFieldOptions set.")
             if not isinstance(f.metadata["desynced_field_options"], ListFieldOptions):

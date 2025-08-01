@@ -5,21 +5,17 @@ from dataclasses import dataclass
 import logging
 import os
 from pathlib import Path
-from typing import Awaitable, Callable, final
+from typing import final
 from abc import ABC, abstractmethod
 
 from cli_tools.resume import Resumable, ResumeHelper
 from util.constants import DEFAULT_WIKI_OUTPUT_DIR
 from util.logger import get_logger
-from wiki.data_categories import CategoryHasPage, DataCategory, GetPagePrefix
+from wiki.data_categories import category_has_page, DataCategory, get_page_prefix
 from wiki.ratelimiter import limiter
 from wiki.wiki_override import DesyncedWiki
 
 logger = get_logger()
-
-# Function applied to each page.
-# Should take (wiki, category, full_title: str, current_content: str) and return True if changes were made.
-apply_func_type = Callable[[DesyncedWiki, str, str, str], Awaitable[bool]]
 
 
 @dataclass
@@ -28,7 +24,7 @@ class CliCommonArgs:
 
     output_directory: Path
     resume_file: Path
-    restart: bool
+    resume: bool
     apply: bool
     only_one_change: bool
     only_categories: list[DataCategory]
@@ -59,9 +55,9 @@ class CliToolsArgs:
             default=".missing_page_resume",
         )
         parser.add_argument(
-            "--restart",
+            "--resume",
             action="store_true",
-            help="Force starting again, ignoring saved progress from resume file",
+            help="If true, will try to resume progress",
             default=False,
         )
         parser.add_argument(
@@ -101,7 +97,7 @@ class CliToolsArgs:
         return CliCommonArgs(
             Path(args.wiki_output_directory),
             Path(args.resume_file),
-            restart=args.restart,
+            resume=args.resume,
             apply=args.apply,
             only_one_change=args.one,
             only_categories=only_categories,
@@ -112,25 +108,33 @@ class CliToolsArgs:
 class CliTools(ABC):
     """Common asbtract class for cli tools to inherit from"""
 
-    cli_name: str
+    parser: argparse.ArgumentParser
     args: CliCommonArgs
     resume: ResumeHelper
     wiki: DesyncedWiki
 
-    def __init__(self, name: str, parser: argparse.ArgumentParser):
-        self.cli_name = name
-        CliToolsArgs.add_common_args(parser)
-        self.add_args(parser)
+    def __init__(self, description: str):
+        self.parser = argparse.ArgumentParser(
+            description=description,
+            formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+        )
 
-        self.args = CliToolsArgs.process_common_args(parser.parse_args())
-        self.resume = ResumeHelper(self.args.resume_file, self.args.restart)
+        CliToolsArgs.add_common_args(self.parser)
+        self.add_args(self.parser)
+
+        self.args = CliToolsArgs.process_common_args(self.parser.parse_args())
+        self.resume = ResumeHelper(self.args.resume_file, self.args.resume)
         self.wiki = DesyncedWiki()
 
-    def add_args(self, parser: argparse.ArgumentParser):  # type: ignore
+    def add_args(
+        self, parser: argparse.ArgumentParser  # pylint: disable=unused-argument
+    ):
         """(To override) Add command-specific command-line arguments to the parser."""
         logger.debug("Command did not add any specific args")
 
-    def process_args(self, parser: argparse.ArgumentParser):  # type: ignore
+    def process_args(
+        self, parser: argparse.ArgumentParser  # pylint: disable=unused-argument
+    ):
         """(To override) Process command-specific command-line arguments to the parser."""
 
     @abstractmethod
@@ -146,7 +150,6 @@ class CliTools(ABC):
     @abstractmethod
     async def main(self):
         """Your main method, to implement"""
-        pass
 
     @final
     def run(self):
@@ -183,7 +186,7 @@ class CliTools(ABC):
             if self.args.only_categories and category not in self.args.only_categories:
                 continue
 
-            if not CategoryHasPage(category):
+            if not category_has_page(category):
                 continue
 
             for file_path in category_dir.iterdir():
@@ -198,9 +201,9 @@ class CliTools(ABC):
             obj: ToProcess = to_process[idx].obj
             category = obj.category
             title = obj.page
-            logger.debug(f"Checking page {title} ({category})")
+            logger.debug(f"Processing page {title} ({category})")
 
-            full_title = GetPagePrefix(category) + title
+            full_title = get_page_prefix(category) + title
             existing_content = await limiter(self.wiki.page_text)(full_title)
             made_change = await self.process_page(
                 category, full_title, existing_content
