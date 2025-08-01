@@ -2,11 +2,12 @@ import collections
 from dataclasses import dataclass
 import logging
 import os
-from typing import Dict, List, Optional
+from typing import Optional
 
 from lupa import LuaRuntime  # pylint: disable=no-name-in-module
 
 from lua.lua_util import tick_duration_to_seconds, per_tick_to_per_second
+from models.category_filters import CategoryFilter
 from models.component import Component, PowerStats, Register, WeaponStats
 from models.entity import Entity, EntityType, SlotType
 from models.instructions import ArgType, Instruction, InstructionArg
@@ -44,15 +45,16 @@ class GameData:
         self.data = self.globals().data  # type: ignore
         self._apply_renames()  # before everything else
         self.frames = self.data.frames
-        self.components: List[Component] = self._parse_components()
+        self.components: list[Component] = self._parse_components()
         self.items: list[Item] = self._parse_items()
         self.entities: list[Entity] = self._parse_entities()
-        self.instructions: List[Instruction] = self._parse_instructions()
-        self.tech_unlocks: List[TechnologyUnlock] = []
-        self.technologies: List[Technology] = self._parse_technologies()
-        self.technology_categories: List[TechnologyCategory] = (
+        self.instructions: list[Instruction] = self._parse_instructions()
+        self.tech_unlocks: list[TechnologyUnlock] = []
+        self.technologies: list[Technology] = self._parse_technologies()
+        self.technology_categories: list[TechnologyCategory] = (
             self._parse_technology_categories()
         )
+        self.category_filters = self._parse_category_filters()
 
     def _apply_renames(self):
         def apply_overrides(collection):
@@ -64,10 +66,27 @@ class GameData:
         apply_overrides(self.data["items"])
         apply_overrides(self.data.frames)
 
-    def _parse_technology_categories(self) -> List[TechnologyCategory]:
-        categories: List[TechnologyCategory] = []
+    def _parse_category_filters(self) -> list[CategoryFilter]:
+        categories = []
+
+        for _, cat in self.data.categories.items():
+            tab = cat["tab"]
+            if tab == "item" or tab == "frame":
+                categories.append(
+                    CategoryFilter(
+                        name=str(cat["name"]).replace("?", "Alien"),
+                        tab=cat["tab"],
+                        filter_field=cat["filter_field"],
+                        filter_val=cat["filter_val"],
+                    )
+                )
+
+        return categories
+
+    def _parse_technology_categories(self) -> list[TechnologyCategory]:
+        categories: list[TechnologyCategory] = []
         for _, cat in self.data.tech_categories.items():
-            sub_cats: List[str] = []
+            sub_cats: list[str] = []
             for _, sub_cat in cat["sub_categories"].items():
                 sub_cats.append(sub_cat)
 
@@ -86,13 +105,13 @@ class GameData:
 
     SEED_TECHS = ["t_assembly", "t_robot_tech_basic"]
 
-    def _parse_technologies(self) -> List[Technology]:
+    def _parse_technologies(self) -> list[Technology]:
         # Return list of tech objects.
-        techs: List[Technology] = []
+        techs: list[Technology] = []
         # Tech Lua ID to Lua ID of techs it unlocks.
-        tech_id_to_unlocked_tech_ids: Dict[str, List[str]] = {}
+        tech_id_to_unlocked_tech_ids: dict[str, list[str]] = {}
         # Lua ID of technology to object (non-tech) lua IDs.
-        tech_id_to_unlock_id: Dict[str, List[str]] = {}
+        tech_id_to_unlock_id: dict[str, list[str]] = {}
 
         @dataclass
         class TechNode:
@@ -178,11 +197,11 @@ class GameData:
         self.unlockable_names.update(FORCE_INCLUDE_NAMES)
         return techs
 
-    def _parse_instructions(self) -> List[Instruction]:
+    def _parse_instructions(self) -> list[Instruction]:
         instructions = []
 
         for instruction_id, ins in self.data.instructions.items():
-            args: List[InstructionArg] = []
+            args: list[InstructionArg] = []
             if ins["args"]:
                 for _, arg_tbl in ins["args"].items():
                     type = arg_tbl[1].upper()
@@ -215,7 +234,7 @@ class GameData:
         components = []
 
         for component_id, c_tbl in self.data.components.items():
-            registers: List[Register] = []
+            registers: list[Register] = []
             if c_tbl["registers"]:
                 for register in c_tbl["registers"].values():
                     registers.append(
@@ -272,7 +291,7 @@ class GameData:
 
         return components
 
-    def _parse_mining_recipes(self, item) -> Optional[List[MiningRecipe]]:
+    def _parse_mining_recipes(self, item) -> Optional[list[MiningRecipe]]:
         if not item or not item["mining_recipe"]:
             return None
 
@@ -299,6 +318,7 @@ class GameData:
                     production_recipe=recipe,
                     mining_recipes=self._parse_mining_recipes(item),
                     stack_size=item["stack_size"],
+                    tag=item["tag"],
                 )
             )
 
@@ -307,8 +327,6 @@ class GameData:
     def _parse_entities(self):
         entities: list[Entity] = []
         for frame_id, frame_tbl in self.frames.items():
-            name = frame_tbl["name"]  # "Transport Bot"
-
             # Skip frames that don't have visuals
             visual_key = frame_tbl["visual"]
             if not visual_key:

@@ -31,6 +31,7 @@ TARGET_FILES: list[str] = [
     "data/tech/tech_human.lua",
     "data/tech/tech_robots.lua",
     "data/tech/tech_virus.lua",
+    "ui/skin.lua",
 ]
 
 
