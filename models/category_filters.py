@@ -13,3 +13,5 @@ class CategoryFilter:
     filter_field: str
     # The value that needs to match (exact match)
     filter_val: str
+    # the game relies on the order the categories are defined, we need to save that information somehow. Lower is first.
+    ordering: int

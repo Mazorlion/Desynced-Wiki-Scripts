@@ -1,11 +1,22 @@
-from enum import Enum
+from enum import StrEnum
 from typing import List
 
 from models.decorators import desynced_object
 from models.decorators_options import ListFieldOptions, annotate
 
 
-class RecipeType(Enum):
+class RecipeTypeGame(StrEnum):
+    """Value matches the field names used in game."""
+
+    CONSTRUCTION = "construction_recipe"
+    PRODUCTION = "production_recipe"
+    UPLINK = "uplink_recipe"
+    ITEMS = "items"
+    PRODUCERS = "producers"
+    CONSTRUCTION_TICKS = "ticks"
+
+
+class RecipeType(StrEnum):
     Construction = "Construction"
     Production = "Production"
     Uplink = "Uplink"

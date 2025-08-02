@@ -9,6 +9,7 @@ logger = get_logger()
 DEFAULT = """\
 {{Infobox}}
 
+__NOEDITSECTION__
 {{Recipe cargo|{{PAGENAME}}}}"""
 
 INSTRUCTION = """\

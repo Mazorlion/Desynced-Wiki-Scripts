@@ -12,7 +12,13 @@ from models.component import Component, PowerStats, Register, WeaponStats
 from models.entity import Entity, EntityType, SlotType
 from models.instructions import ArgType, Instruction, InstructionArg
 from models.item import Item, ItemSlotType, ItemType, MiningRecipe
-from models.recipe import Recipe, RecipeItem, RecipeProducer, RecipeType
+from models.recipe import (
+    Recipe,
+    RecipeItem,
+    RecipeProducer,
+    RecipeTypeGame,
+    RecipeType,
+)
 from models.sockets import Sockets, SocketSize
 from models.tech import (
     Technology,
@@ -75,11 +81,12 @@ class GameData:
                 categories.append(
                     CategoryFilter(
                         name=str(cat["name"]).replace(
-                            "?", "Alien"
-                        ),  # Game does the same
+                            "?", "Alien"  # Game does the same
+                        ),
                         tab=cat["tab"],
                         filter_field=cat["filter_field"],
                         filter_val=cat["filter_val"],
+                        ordering=len(categories),
                     )
                 )
 
@@ -351,6 +358,7 @@ class GameData:
                     types.append(EntityType[channel_type.upper()])
 
             recipe = self._parse_recipe_from_table(frame_tbl)
+            id = frame_tbl["id"]
 
             entities.append(
                 Entity(
@@ -528,41 +536,34 @@ class GameData:
             Optional[Recipe]: Recipe for this object or else None.
         """
         # Lua table fields
-        CONSTRUCTION_RECIPE = "construction_recipe"
-        PRODUCTION_RECIPE = "production_recipe"
-        UPLINK_RECIPE = "uplink_recipe"
-        RECIPE_ITEMS = "items"
-        RECIPE_PRODUCERS = "producers"
-        RECIPE_CONSTRUCTION_TICKS = "ticks"
-
         recipe = None
         recipe_type = None
         # producers: Optional[list[RecipeProducer]]
         num_produced: int = 1
-        if tbl[CONSTRUCTION_RECIPE]:
+        if tbl[RecipeTypeGame.CONSTRUCTION]:
             recipe_type = RecipeType.Construction
-            recipe = tbl[CONSTRUCTION_RECIPE]
+            recipe = tbl[RecipeTypeGame.CONSTRUCTION]
             producers: list[RecipeProducer] = self._parse_recipe_construction(
-                recipe[RECIPE_CONSTRUCTION_TICKS]
+                recipe[RecipeTypeGame.CONSTRUCTION_TICKS]
             )
-        elif tbl[PRODUCTION_RECIPE]:
+        elif tbl[RecipeTypeGame.PRODUCTION]:
             recipe_type = RecipeType.Production
-            recipe = tbl[PRODUCTION_RECIPE]
+            recipe = tbl[RecipeTypeGame.PRODUCTION]
             producers: list[RecipeProducer] = self._parse_recipe_producers(
-                recipe[RECIPE_PRODUCERS]
+                recipe[RecipeTypeGame.PRODUCERS]
             )
             num_produced = recipe["num_produced"]
-        elif tbl[UPLINK_RECIPE]:
+        elif tbl[RecipeTypeGame.UPLINK]:
             recipe_type = RecipeType.Uplink
-            recipe = tbl[UPLINK_RECIPE]
+            recipe = tbl[RecipeTypeGame.UPLINK]
             producers: list[RecipeProducer] = self._parse_recipe_uplink(
-                recipe[RECIPE_CONSTRUCTION_TICKS]
+                recipe[RecipeTypeGame.CONSTRUCTION_TICKS]
             )
 
         else:
             return None
 
-        items: list[RecipeItem] = self._parse_recipe_items(recipe[RECIPE_ITEMS])
+        items: list[RecipeItem] = self._parse_recipe_items(recipe[RecipeTypeGame.ITEMS])
         return Recipe(
             items=items,
             producers=producers,

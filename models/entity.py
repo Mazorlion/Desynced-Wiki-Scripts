@@ -1,8 +1,8 @@
-from enum import Enum
+from enum import Enum, StrEnum
 
 from models.decorators import desynced_object, length_check
 from models.decorators_options import ListFieldOptions, annotate
-from models.recipe import Recipe
+from models.recipe import Recipe, RecipeTypeGame
 from models.sockets import Sockets
 from models.types import Race
 
