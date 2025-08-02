@@ -1,7 +1,8 @@
 import argparse
 import asyncio
 from asyncio.log import logger
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+from enum import Flag, auto
 import logging
 import os
 from pathlib import Path
@@ -11,8 +12,9 @@ from abc import ABC, abstractmethod
 from cli_tools.resume import Resumable, ResumeHelper
 from util.constants import DEFAULT_WIKI_OUTPUT_DIR
 from util.logger import get_logger
-from wiki.data_categories import category_has_page, DataCategory, get_page_prefix
+from wiki.data_categories import category_has_human_pages, DataCategory, get_page_prefix
 from wiki.ratelimiter import limiter
+from wiki.titles import get_data_page_title
 from wiki.wiki_override import DesyncedWiki
 
 logger = get_logger()
@@ -105,24 +107,35 @@ class CliToolsArgs:
         )
 
 
+class PageMode(Flag):
+    HUMAN = auto()
+    DATA = auto()
+
+
+@dataclass
 class CliTools(ABC):
     """Common asbtract class for cli tools to inherit from"""
 
-    parser: argparse.ArgumentParser
-    args: CliCommonArgs
-    resume: ResumeHelper
-    wiki: DesyncedWiki
+    description: str
+    page_mode: PageMode = PageMode.HUMAN
 
-    def __init__(self, description: str):
+    parser: argparse.ArgumentParser = field(init=False)  # excluded from __init__
+    args: CliCommonArgs = field(init=False)  # excluded from __init__
+    resume: ResumeHelper = field(init=False)  # excluded from __init__
+    wiki: DesyncedWiki = field(init=False)  # excluded from __init__
+
+    def __post_init__(self):
         self.parser = argparse.ArgumentParser(
-            description=description,
+            description=self.description,
             formatter_class=argparse.ArgumentDefaultsHelpFormatter,
         )
 
         CliToolsArgs.add_common_args(self.parser)
         self.add_args(self.parser)
 
-        self.args = CliToolsArgs.process_common_args(self.parser.parse_args())
+        parsed_args = self.parser.parse_args()
+        self.args = CliToolsArgs.process_common_args(parsed_args)
+        self.process_args(parsed_args)
         self.resume = ResumeHelper(self.args.resume_file, self.args.resume)
         self.wiki = DesyncedWiki()
 
@@ -132,10 +145,14 @@ class CliTools(ABC):
         """(To override) Add command-specific command-line arguments to the parser."""
         logger.debug("Command did not add any specific args")
 
-    def process_args(
-        self, parser: argparse.ArgumentParser  # pylint: disable=unused-argument
-    ):
+    def process_args(self, args: argparse.Namespace):  # pylint: disable=unused-argument
         """(To override) Process command-specific command-line arguments to the parser."""
+
+    def should_process_page(
+        self, cat: DataCategory, title: str  # pylint: disable=unused-argument
+    ) -> bool:
+        """Should given page be processed by process_all_pages?"""
+        return True
 
     @abstractmethod
     async def process_page(
@@ -186,30 +203,43 @@ class CliTools(ABC):
             if self.args.only_categories and category not in self.args.only_categories:
                 continue
 
-            if not category_has_page(category):
-                continue
-
             for file_path in category_dir.iterdir():
                 if not file_path.is_file():
                     continue
-                title = file_path.stem
-                to_process.append(Resumable(title, ToProcess(category, title)))
+
+                filename = file_path.stem
+                if not self.should_process_page(category, filename):
+                    continue
+
+                if (
+                    category_has_human_pages(category)
+                    and self.page_mode & PageMode.HUMAN
+                ):
+                    title = filename
+                    to_process.append(Resumable(filename, ToProcess(category, title)))
+
+                if self.page_mode & PageMode.DATA:
+                    table = category
+                    data_title = get_data_page_title(table, filename)
+                    to_process.append(
+                        Resumable(filename, ToProcess(category, data_title))
+                    )
 
         current_index = self.resume.init_resume_index(to_process)
 
         for idx in range(current_index, len(to_process)):
             obj: ToProcess = to_process[idx].obj
             category = obj.category
-            title = obj.page
-            logger.debug(f"Processing page {title} ({category})")
+            filename = obj.page
+            logger.debug(f"Processing page {filename} ({category})")
 
-            full_title = get_page_prefix(category) + title
+            full_title = get_page_prefix(category) + filename
             existing_content = await limiter(self.wiki.page_text)(full_title)
             made_change = await self.process_page(
                 category, full_title, existing_content
             )
 
-            self.resume.update_progress(title)
+            self.resume.update_progress(filename)
 
             if made_change and self.args.only_one_change:
                 break

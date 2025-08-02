@@ -2,9 +2,12 @@ from typing import Dict
 
 from pwiki.wiki import WAction, Wiki
 from util.config import CONFIG_FILE, GetCredentials
+from util.logger import get_logger
 
 DESYNCED_WIKI_URL = "wiki.desyncedgame.com"
 CONFIG_SECTION = "wiki"
+
+logger = get_logger()
 
 
 class DesyncedWiki(Wiki):
@@ -51,7 +54,11 @@ class DesyncedWiki(Wiki):
 
         # Private invocation, whatever.
         result = WAction._post_action(self, action="cargorecreatetables", form=form)
-        return result["success"] or False
+        success = "success" in result
+        if not success:
+            logger.error(f"recreate_cargo_table failed with: {result['error']}")
+
+        return success
 
     def recreate_cargo_data(self, template_name: str, table_name: str) -> bool:
         form: Dict = {"template": template_name, "table": table_name}

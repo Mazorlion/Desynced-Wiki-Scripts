@@ -74,7 +74,9 @@ class GameData:
             if tab == "item" or tab == "frame":
                 categories.append(
                     CategoryFilter(
-                        name=str(cat["name"]).replace("?", "Alien"),
+                        name=str(cat["name"]).replace(
+                            "?", "Alien"
+                        ),  # Game does the same
                         tab=cat["tab"],
                         filter_field=cat["filter_field"],
                         filter_val=cat["filter_val"],

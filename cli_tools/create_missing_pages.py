@@ -50,6 +50,6 @@ class CreateMissingPages(CliTools):
 
 if __name__ == "__main__":
     cli = CreateMissingPages(
-        "For all previously generated cargo data pages, find if their the non-data counterpart exists."
+        description="For all previously generated cargo data pages, find if their the non-data counterpart exists."
     )
     cli.run()

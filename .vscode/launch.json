@@ -44,6 +44,18 @@
             ],
         },
         {
+            "name": "Upload Wiki (for real)",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "upload_wiki.py",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "args": [
+                "--debug",
+                "--no-dry-run",
+            ],
+        },
+        {
             "name": "Create missing pages (module)",
             "type": "debugpy",
             "request": "launch",
@@ -62,6 +74,18 @@
             "console": "integratedTerminal",
             "args": [
                 "--debug"
+            ],
+            "justMyCode": true
+        },
+        {
+            "name": "Remove data pages (module)",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "cli_tools.remove_data_pages",
+            "console": "integratedTerminal",
+            "args": [
+                "--debug",
+                ".*"
             ],
             "justMyCode": true
         },

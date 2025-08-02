@@ -9,11 +9,8 @@ from util.constants import DEFAULT_WIKI_OUTPUT_DIR
 from util.logger import PrefixAdapter, get_logger
 
 from wiki.ratelimiter import limiter
+from wiki.titles import get_data_page_title, get_template_title
 from wiki.wiki_override import DesyncedWiki
-
-
-def get_template_title(category: str):
-    return f"Data{category[0].upper() + category[1:]}"  # "component" -> "DataComponent"
 
 
 async def run(input_dir: str, dry_run: bool):
@@ -51,7 +48,7 @@ async def run(input_dir: str, dry_run: bool):
                 updated_tables.add(
                     CargoTable(template_title=template_title, table=file)
                 )
-                logger.debug(f"Updating {title} because content changed")
+                logger.info(f"Updating {title} because content changed")
                 if dry_run:
                     continue
 
@@ -81,7 +78,7 @@ async def run(input_dir: str, dry_run: bool):
         template_title = get_template_title(table)
         for file in files:
             with open(os.path.join(root, file), "r", encoding="utf-8") as f:
-                title = f"Data:{table}:{file}"
+                title = get_data_page_title(table, file)
                 content: str = f.read()
 
                 existing_content = await limiter(wiki.page_text)(title)

@@ -212,6 +212,6 @@ class CleanupPageTemplates(CliTools):
 
 if __name__ == "__main__":
     cli = CleanupPageTemplates(
-        "Cleanup page templates, checking for missing templates for given category or wrong arg count."
+        description="Cleanup page templates, checking for missing templates for given category or wrong arg count."
     )
     cli.run()

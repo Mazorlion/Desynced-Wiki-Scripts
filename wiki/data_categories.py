@@ -33,7 +33,7 @@ DATA_CATEGORY_INFO: dict[DataCategory, DataCategoryInfo] = {
 }
 
 
-def category_has_page(cat: DataCategory) -> bool:
+def category_has_human_pages(cat: DataCategory) -> bool:
     info = DATA_CATEGORY_INFO.get(cat)
     return info.has_page if info is not None else False
 
