@@ -76,7 +76,7 @@ class MissingImages(CliTools):
         elif category == DataCategory.entity:
             search_table = data.frames
         elif category == DataCategory.tech:
-            search_table = data.tech
+            search_table = data.techs
         else:
             raise ValueError(f"Invalid category {category}")
 
@@ -143,14 +143,11 @@ class MissingImages(CliTools):
         if not self.args.apply:
             return True
 
-        ignored_codes = ["was-deleted"]
-
-        def ignore_warnings(errors):
-            # errors is a list of UploadError instances
-            return all(error.code in ignored_codes for error in errors)
+        ignored_codes = ["was-deleted", "duplicate-archive"]
 
         # code adapted from https://github.com/wikimedia/pywikibot/blob/master/pywikibot/specialbots/_upload.py#L26
         redirect_to: str | None = None
+        retry_ignore_warnings = False  # upload documentation say we can provide a list but it seems out of date and it's always treated as a bool
         while True:
             try:
                 if redirect_to:
@@ -161,26 +158,35 @@ class MissingImages(CliTools):
                     success = image_page.upload(
                         str(file_path),
                         comment="Auto imported from script",
-                        ignore_warnings=ignore_warnings,
+                        ignore_warnings=retry_ignore_warnings,
+                        report_success=True,
                     )
                     image_page.save()
                 redirect_to = None
+                retry_ignore_warnings = False
             except APIError as error:
                 if error.code == "uploaddisabled":
                     logger.error(
                         "Upload error: Local file uploads are disabled on wiki."
                     )
+                    raise error
+                elif error.code in ignored_codes:
+                    logger.debug(f"Encountered code {error.code}, retrying...")
+                    retry_ignore_warnings = True
+                    continue
                 elif error.code == "duplicate":
                     if redirect_to := self.extract_redirect_target(error.unicode):
                         logger.info(
                             f"Wiki reports the image we're trying to upload as duplicate of {redirect_to}. Creating a redirect to it."
                         )
                         continue
+                    else:
+                        logger.exception("Upload error: ")
                 else:
                     logger.exception("Upload error: ")
                     answer = (
                         input(
-                            "Do you want to retry, ignoring this warning for the rest of the executation? (y/n) "
+                            "Do you want to retry, ignoring this warning for the rest of the execution? Else, file is skipped. (y/n) "
                         )
                         .strip()
                         .lower()
@@ -191,14 +197,14 @@ class MissingImages(CliTools):
 
             except Exception:  # pylint: disable=broad-exception-caught
                 logger.exception("Upload error: ")
+
+            if success:
+                # No warning, upload complete.
+                logger.info(
+                    f"Upload of {image_page.full_url()} successful. Object page: {page.full_url()}"
+                )
             else:
-                if success:
-                    # No warning, upload complete.
-                    logger.info(
-                        f"Upload of {image_page.full_url()} successful. Object page: {page.full_url()}"
-                    )
-                else:
-                    logger.info("Upload aborted.")
+                logger.info("Upload aborted.")
 
             break
 
@@ -234,7 +240,7 @@ class MissingImages(CliTools):
 
 if __name__ == "__main__":
     cli = MissingImages(
-        description="Try to find missing images & upload them. Doesn't check mismatched images.",
+        description="Try to find missing images & upload them. Doesn't check mismatched images. Script might prompt you in some error cases",
         options=CliToolsOptions(page_mode=PageMode.HUMAN),
     )
     cli.run()

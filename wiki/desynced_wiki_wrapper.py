@@ -3,6 +3,7 @@ from typing import cast
 import pywikibot
 import pywikibot.login
 from pywikibot.site import APISite
+from pywikibot.throttle import Throttle
 
 from util.config import GetCredentials
 from util.logger import get_logger
@@ -36,8 +37,8 @@ class DesyncedWiki:
         )
         login_manager.login_to_site()
         self._site.login(user=username)
-        # throttle: Throttle = Throttle(site=self._site)
-        # self._site.throttle = throttle
+        throttle: Throttle = self._site.throttle
+        throttle.writedelay = 1
 
         logged_user = self._site.user()
         if not logged_user:
