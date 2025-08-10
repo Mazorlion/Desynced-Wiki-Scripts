@@ -15,14 +15,15 @@ class RemoveDataPages(CliTools):
     _to_remove: list[Page] = []
 
     @override
-    def should_process_page(self, _category: DataCategory, subpagename: str) -> bool:
-        matched = bool(re.search(self._match_pattern, subpagename))
+    def should_process_page(self, _category: DataCategory, page: Page) -> bool:
+        title = page.title()
+        matched = bool(re.search(self._match_pattern, title))
         if matched:
-            logger.debug(f"Page {subpagename} did match filter")
+            logger.debug(f"Page {title} did match filter")
         else:
-            logger.debug(f"Page {subpagename} did not match filter")
+            logger.debug(f"Page {title} did not match filter")
 
-        return bool(re.search(self._match_pattern, subpagename))
+        return matched
 
     @override
     def add_args(
@@ -41,14 +42,13 @@ class RemoveDataPages(CliTools):
     @override
     def process_page(
         self,
-        _: DataCategory,
-        title: str,
+        _category: DataCategory,
         page: Page,
-        file_content: str,
+        _file_content: str,
     ) -> bool:
         # seems an empty page returns empty string, rather than None as documented
-        if page.text:
-            logger.info(f"Add page to remove: {title}")
+        if page.exists():
+            logger.info(f"Add page to remove: {page.title()}")
             self._to_remove.append(page)
 
         return False
@@ -71,7 +71,7 @@ class RemoveDataPages(CliTools):
 
 if __name__ == "__main__":
     cli = RemoveDataPages(
-        description="For all previously generated cargo data pages, remove the one regex-matching given param.",
+        description="For all currently existing generated cargo data pages, remove the ones with wiki title regex-matching given param.",
         options=CliToolsOptions(page_mode=PageMode.DATA),
     )
     cli.run()

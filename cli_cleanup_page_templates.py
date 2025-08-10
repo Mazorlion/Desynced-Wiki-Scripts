@@ -169,7 +169,7 @@ class CleanupPageTemplates(CliTools):
         page: Page,
         file_content: str,
     ) -> bool:
-        if not page.text:
+        if not page.exists():
             logger.error(f"Page '{title}' did not exists -> {WikiUrl.get_page(title)}")
             return False
 

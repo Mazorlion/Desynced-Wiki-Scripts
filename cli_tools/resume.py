@@ -72,9 +72,9 @@ class ResumeHelper:
         self._write_resume_file(self._resume_data)
         return 0
 
-    def update_progress(self, finished: str):
+    def update_progress(self, finished_id: str):
         """Update resume file with last file and increase totalProcessed by 1, then write it immediately."""
-        self._resume_data.last_processed = finished
+        self._resume_data.last_processed = finished_id
         self._resume_data.total_processed += 1
         self._write_resume_file(self._resume_data)
 

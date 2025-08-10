@@ -27,12 +27,11 @@ class UploadWiki(CliTools):
     def process_page(
         self,
         category: DataCategory,
-        title: str,
         page: Page,
         file_content: str,
     ) -> bool:
-        if not page.text or page.text != file_content:
-            logger.info(f"Updating page {title}")
+        if not page.exists() or page.text != file_content:
+            logger.info(f"Updating page {page.title()}")
             self._updated_category_data.add(category)
 
             if self.args.apply:
@@ -80,6 +79,7 @@ class UploadWiki(CliTools):
             assert self.wiki.recreate_cargo_table(
                 table
             ), f"Failed to recreate table for {table}"
+        logger.info(f"Recreated tables: {self._updated_category_templates}")
 
         # Should not be needed! Updating a page should automatically update the cargo table data related to it
         # # Recreate cargo data here.
@@ -95,9 +95,7 @@ class UploadWiki(CliTools):
         #     assert self.wiki.recreate_cargo_data(
         #         template_title, table
         #     ), f"Failed to recreate data for {table}"
-
-        logger.info(f"Recreated tables: {self._updated_category_templates}")
-        logger.info(f"Regenerated data for tables: {self._updated_category_data}")
+        # logger.info(f"Regenerated data for tables: {self._updated_category_data}")
 
         logger.info(f"Updated {len(self._updated_data_files)} data files:")
 

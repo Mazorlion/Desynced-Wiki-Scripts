@@ -4,7 +4,7 @@
 
 import argparse
 from typing import override
-from cli_tools.common import CliTools, CliToolsOptions, PageMode
+from cli_tools.common import CliTools, CliToolsOptions, PageMode, Page
 from wiki.data_categories import DataCategory
 from util.logger import get_logger
 
@@ -18,7 +18,7 @@ class ExampleScript(CliTools):
     def should_process_page(
         self,
         category: DataCategory,
-        subpagename: str,
+        page: Page,
     ) -> bool:
         return True
 
@@ -39,19 +39,14 @@ class ExampleScript(CliTools):
     @override
     def process_page(
         self,
-        _: DataCategory,
-        title: str,
-        wiki_content: str | None,
-        file_content: str | None,
+        _category: DataCategory,
+        page: Page,
+        _file_content: str,
     ) -> bool:
-        if wiki_content:
-            logger.info(f"with content: {wiki_content}")
+        if page.exists():
+            logger.info(f"with content: {page.text}")
             if self.args.apply:
                 logger.info("Doing the thing")
-                # await limiter(self.wiki.edit)(
-                #     title=pagename,
-                #     text="Batch delete from script",
-                # )
 
         return False
 
@@ -64,7 +59,6 @@ class ExampleScript(CliTools):
 
         self.process_all_pages()
 
-        # Do whatever after
         logger.info("I did all the things.")
 
 

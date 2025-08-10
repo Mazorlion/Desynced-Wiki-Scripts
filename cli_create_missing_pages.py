@@ -15,13 +15,12 @@ class CreateMissingPages(CliTools):
     def process_page(
         self,
         category: DataCategory,
-        title: str,
         page: Page,
         _file_content: str,
     ) -> bool:
-        if not page.text:
-            logger.info(f"Creating page: {title}")
-            self.missing_pages.append((title))
+        if not page.exists():
+            logger.info(f"Creating page: {page.title()}")
+            self.missing_pages.append(page.title())
 
             if self.args.apply:
                 page.text = get_category_page_blueprint(DataCategory(category))

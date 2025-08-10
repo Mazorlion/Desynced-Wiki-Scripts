@@ -287,8 +287,7 @@ def main(args):
             )
         ]
     except KeyError as e:
-        logger.error(f"Invalid category name: {e.args[0]}")
-        raise e
+        logger.exception(f"Invalid category name: {e.args[0]}")
 
     LuaAnalyzer(
         args.wiki_output_directory,

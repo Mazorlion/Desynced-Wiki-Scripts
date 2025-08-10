@@ -17,7 +17,7 @@ from wiki.data_categories import (
     DataCategory,
 )
 from wiki.titles import get_data_page_title, get_human_page_title
-from wiki.wiki_override import DesyncedWiki
+from wiki.desynced_wiki_wrapper import DesyncedWiki
 
 
 logger = get_logger()
@@ -96,8 +96,7 @@ class CliToolsArgs:
                 )
             ]
         except KeyError as e:
-            logger.error(f"Invalid category name in {args.only_categories}")
-            raise e
+            logger.exception(f"Invalid category name in {args.only_categories}")
 
         return CliCommonArgs(
             Path(args.wiki_output_directory),
@@ -156,26 +155,24 @@ class CliTools(ABC):
         self.resume = ResumeHelper(self.args.resume_file, self.args.resume)
         self.wiki = DesyncedWiki()
 
-    def add_args(
-        self, parser: argparse.ArgumentParser  # pylint: disable=unused-argument
-    ):
+    def add_args(self, _parser: argparse.ArgumentParser):
         """(To override) Add tool-specific command-line arguments to the parser."""
         logger.debug("Command did not add any specific args")
 
-    def process_args(self, args: argparse.Namespace):  # pylint: disable=unused-argument
+    def process_args(self, _args: argparse.Namespace):
         """(To override) Process tool-specific command-line arguments to the parser."""
 
     def should_process_page(
         self,
-        category: DataCategory,  # pylint: disable=unused-argument
-        subpagename: str,  # pylint: disable=unused-argument
+        _category: DataCategory,
+        _page: Page,
     ) -> bool:
         """Should given page be processed by process_all_pages?"""
         return True
 
     @abstractmethod
     def process_page(
-        self, category: DataCategory, title: str, page: Page, file_content: str
+        self, category: DataCategory, page: Page, file_content: str
     ) -> bool:
         """(To override) Defines how to process one page. Must returns true if a change was made."""
         return False
@@ -200,8 +197,8 @@ class CliTools(ABC):
         @dataclass
         class ToProcess:
             category: DataCategory
-            title: str
-            path: Path
+            page: Page
+            filepath: Path
 
         to_process: list[Resumable] = []
 
@@ -210,11 +207,10 @@ class CliTools(ABC):
                 continue
             try:
                 category = DataCategory(category_dir.name)
-            except ValueError as e:
-                logger.error(
+            except ValueError:
+                logger.exception(
                     f"Unknown category directory: {category_dir.name}, skipping."
                 )
-                raise e
 
             if self.args.only_categories and category not in self.args.only_categories:
                 continue
@@ -224,25 +220,30 @@ class CliTools(ABC):
                     continue
 
                 subpagename = file_path.stem
-                if not self.should_process_page(category, subpagename):
-                    continue
 
                 if (
                     category_has_human_pages(category)
                     and self.options.page_mode & PageMode.HUMAN
                 ):
-                    title = get_human_page_title(category, subpagename)
-                    to_process.append(
-                        Resumable(title, ToProcess(category, title, file_path))
-                    )
+                    page = self.wiki.page(get_human_page_title(category, subpagename))
+                    if self.should_process_page(category, page):
+                        to_process.append(
+                            Resumable(
+                                page.title(), ToProcess(category, page, file_path)
+                            )
+                        )
 
                 if self.options.page_mode & PageMode.DATA:
-                    data_title = get_data_page_title(category, subpagename)
-                    to_process.append(
-                        Resumable(
-                            data_title, ToProcess(category, data_title, file_path)
-                        )
+                    data_page = self.wiki.page(
+                        get_data_page_title(category, subpagename)
                     )
+                    if self.should_process_page(category, data_page):
+                        to_process.append(
+                            Resumable(
+                                data_page.title(),
+                                ToProcess(category, data_page, file_path),
+                            )
+                        )
 
         current_index = (
             self.resume.init_resume_index(to_process) if self.args.resume else 0
@@ -251,14 +252,13 @@ class CliTools(ABC):
         for idx in range(current_index, len(to_process)):
             obj: ToProcess = to_process[idx].obj
 
-            logger.debug(f"Processing page {obj.title} ({obj.category})")
+            logger.debug(f"Processing page {obj.page.title()} ({obj.category})")
 
-            page: Page = self.wiki.page(obj.title)
             made_change = self.process_page(
-                category, obj.title, page, obj.path.read_text()
+                obj.category, obj.page, obj.filepath.read_text()
             )
 
-            self.resume.update_progress(subpagename)
+            self.resume.update_progress(obj.page.title())
 
             if made_change and self.args.only_one_change:
                 logger.info(

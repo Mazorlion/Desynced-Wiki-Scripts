@@ -1,11 +1,13 @@
-import logging
 import os
 from typing import Optional
 
 import lupa
-from lupa import LuaRuntime  # pylint: disable=no-name-in-module
+from lupa import LuaRuntime
 
-logger = logging.getLogger()
+from util.logger import get_logger
+
+
+logger = get_logger()
 
 
 # Five ticks per second
@@ -100,6 +102,8 @@ def load_lua_runtime(game_data_dir) -> LuaRuntime:
     TICKS_PER_SECOND = 5
     """
 
+    logger.info("Starting game lua files execution")
+
     lua = LuaRuntime(unpack_returned_tuples=True)  # pyright: ignore[reportCallIssue]
     lua.execute(preamble)
 
@@ -113,15 +117,15 @@ def load_lua_runtime(game_data_dir) -> LuaRuntime:
         file_path = os.path.join(game_data_dir, file)
         if not os.path.isfile(file_path):
             raise FileNotFoundError(f"Lua file was not found: '{file_path}'.")
-            continue
 
         with open(file_path, "r", encoding="utf-8") as readfile:
-            logger.info(f"Executing lua file: {readfile.name}")
+            logger.debug(f"Executing lua file: {readfile.name}")
             file_content = readfile.read()
             # remove special lines
             file_content = file_content.replace("local package = ...", "package = {}")
             lua.execute(file_content)
 
+    logger.info("Done executing game lua files")
     return lua
 
 
@@ -133,7 +137,7 @@ def print_lua_table(table, filter_keys=None, prefix=""):
         filter_keys (_type_, optional): If set, prints only these keys. Defaults to None.
         prefix (str, optional): If set, prefixes each print statement. Defaults to "".
     """
-    if table == None or not lupa.lua_type(table) == "table":
+    if table is None or not lupa.lua_type(table) == "table":
         return
     keys = list(table)
     for key in keys:
