@@ -36,11 +36,3 @@ DATA_CATEGORY_INFO: dict[DataCategory, DataCategoryInfo] = {
 def category_has_human_pages(cat: DataCategory) -> bool:
     info = DATA_CATEGORY_INFO.get(cat)
     return info.has_page if info is not None else False
-
-
-def get_wiki_page_path(cat: DataCategory, title: str) -> str:
-    info = DATA_CATEGORY_INFO.get(cat)
-    if info and info.subpage_of:
-        return f"{info.subpage_of}/{title}"
-    else:
-        return title

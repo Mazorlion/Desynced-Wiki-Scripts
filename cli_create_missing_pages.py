@@ -16,20 +16,20 @@ class CreateMissingPages(CliTools):
     async def process_page(
         self,
         category: DataCategory,
-        wiki_page_path: str,
+        title: str,
         wiki_content: str | None,
         file_content: str | None,
     ) -> bool:
         if (
             not wiki_content
         ):  # seems an empty page returns empty string, rather than None as documented
-            logger.info(f"Missing page: {wiki_page_path}")
-            self.missing_pages.append((wiki_page_path))
+            logger.info(f"Missing page: {title}")
+            self.missing_pages.append((title))
 
             if self.args.apply:
-                logger.info(f"Creating page {wiki_page_path}")
+                logger.info(f"Creating page {title}")
                 await limiter(self.wiki.edit)(
-                    title=wiki_page_path,
+                    title=title,
                     text=get_category_template(DataCategory(category)),
                 )
                 return True
@@ -41,11 +41,11 @@ class CreateMissingPages(CliTools):
 
         if self.missing_pages:
             logger.info("Found missing pages:")
-            for full_title in self.missing_pages:
-                print(f"- {full_title}")
+            for title in self.missing_pages:
+                print(f"- {title}")
 
             print(
-                f"Condensed list:\n {','.join(full_title for full_title in self.missing_pages)}"
+                f"Condensed list:\n {','.join(title for title in self.missing_pages)}"
             )
         else:
             logger.info("No missing pages found.")

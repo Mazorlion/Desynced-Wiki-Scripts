@@ -24,25 +24,21 @@ class UploadWiki(CliTools):
     _updated_data_files: dict[DataCategory, list] = defaultdict(list)
 
     @override
-    def should_process_page(self, _: DataCategory, title: str) -> bool:
-        return True
-
-    @override
     async def process_page(
         self,
         category: DataCategory,
-        wiki_page_path: str,
+        title: str,
         wiki_content: str | None,
         file_content: str | None,
     ) -> bool:
         if not wiki_content or wiki_content != file_content:
-            logger.info(f"Updating page {wiki_page_path}")
+            logger.info(f"Updating page {title}")
             self._updated_category_data.add(category)
 
             if self.args.apply:
                 # Upload the file.
                 await limiter(self.wiki.edit)(
-                    title=wiki_page_path,
+                    title=title,
                     text=file_content,
                 )
                 return True

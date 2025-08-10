@@ -64,7 +64,7 @@ def find_closing(content: str, start_pos: int) -> int:
     return next_close
 
 
-def cleanup_extra_arguments(content: str, full_title: str) -> str:
+def cleanup_extra_arguments(content: str, title: str) -> str:
     """Try to remove extra arguments from template when there are too many
     Mostly using logic from extract_templates_info_from_page"""
 
@@ -87,7 +87,7 @@ def cleanup_extra_arguments(content: str, full_title: str) -> str:
         template_content = content[start_pos:end_pos]
 
         # Process nested templates recursively
-        cleaned_content = cleanup_extra_arguments(template_content, full_title)
+        cleaned_content = cleanup_extra_arguments(template_content, title)
         if cleaned_content != template_content:
             content = replace_at_index(
                 content, start_pos, template_content, cleaned_content
@@ -103,7 +103,7 @@ def cleanup_extra_arguments(content: str, full_title: str) -> str:
             if expected_info := get_template_info(used_name):
                 if used_info.arg_count < expected_info.arg_count:
                     logger.error(
-                        f"Page {full_title} has template {used_name} with fewer args can expected, this needs manual fixing"
+                        f"Page {title} has template {used_name} with fewer args can expected, this needs manual fixing"
                     )
                 elif used_info.arg_count > expected_info.max_arg_count:
                     # Then we have too many args and we can try to remove some
@@ -126,14 +126,14 @@ SWAP_TEMPLATES: dict[DataCategory, dict[TemplateName, TemplateName]] = {
 }
 
 
-def swap_templates(category, content, full_title) -> str:
+def swap_templates(category, content, title) -> str:
     """Batch replace old template names with new ones"""
     if swaps := SWAP_TEMPLATES.get(category):
         for old, new in swaps.items():
             if content.find(old):
                 content = content.replace(old, new)
                 logger.info(
-                    f"Page '{full_title}' has old template '{old}', replacing with '{new}' -> {WikiUrl.get_page_history(full_title)}"
+                    f"Page '{title}' has old template '{old}', replacing with '{new}' -> {WikiUrl.get_page_history(title)}"
                 )
 
     return content
@@ -166,36 +166,34 @@ class CleanupPageTemplates(CliTools):
     async def process_page(
         self,
         category: DataCategory,
-        wiki_page_path: str,
+        title: str,
         wiki_content: str | None,
         file_content: str | None,
     ) -> bool:
         if not wiki_content:
-            logger.error(
-                f"Page '{wiki_page_path}' did not exists -> {WikiUrl.get_page(wiki_page_path)}"
-            )
+            logger.error(f"Page '{title}' did not exists -> {WikiUrl.get_page(title)}")
             return False
 
-        updated_content = swap_templates(category, wiki_content, wiki_page_path)
-        updated_content = cleanup_extra_arguments(updated_content, wiki_page_path)
+        updated_content = swap_templates(category, wiki_content, title)
+        updated_content = cleanup_extra_arguments(updated_content, title)
         # -> Extra cleanup checks go here <-
 
         missing_templates = find_missing_templates(category, updated_content)
         if missing_templates:
-            missing_str = ",".join(full_title for full_title in missing_templates)
+            missing_str = ",".join(title for title in missing_templates)
             logger.warning(
-                f"Page '{wiki_page_path}' is missing some templates: '{missing_str}' -> {WikiUrl.get_page(wiki_page_path)}"
+                f"Page '{title}' is missing some templates: '{missing_str}' -> {WikiUrl.get_page(title)}"
             )
 
         if updated_content != wiki_content:
             logger.info(
-                f"Updating content for page: '{wiki_page_path}' -> {WikiUrl.get_page_history(wiki_page_path)}"
+                f"Updating content for page: '{title}' -> {WikiUrl.get_page_history(title)}"
             )
-            self._update_pages.append((wiki_page_path))
+            self._update_pages.append((title))
 
             if self.args.apply:
                 await limiter(self.wiki.edit)(
-                    title=wiki_page_path,
+                    title=title,
                     text=updated_content,
                 )
                 return True
@@ -208,8 +206,8 @@ class CleanupPageTemplates(CliTools):
 
         if self._update_pages:
             logger.info("Updated pages:")
-            for full_title in self._update_pages:
-                print(f"- {full_title} -> {WikiUrl.get_page_history(full_title)}")
+            for title in self._update_pages:
+                print(f"- {title} -> {WikiUrl.get_page_history(title)}")
         else:
             logger.info("No pages were updated.")
 

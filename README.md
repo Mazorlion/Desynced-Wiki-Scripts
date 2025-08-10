@@ -63,7 +63,7 @@ This file is already ignored by git.
 
 ## Other helper scripts
 
-Some other scripts to help with wiki maintenance.
+Some other scripts to help with wiki maintenance. Most of those scripts can be resumed with `--resume`.
 
 - `python -m cli_create_missing_pages --help`
 - `python -m cli_cleanup_page_templates --help`

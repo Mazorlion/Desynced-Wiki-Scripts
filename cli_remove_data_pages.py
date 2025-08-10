@@ -16,14 +16,14 @@ class RemoveDataPages(CliTools):
     _to_remove = []
 
     @override
-    def should_process_page(self, _: DataCategory, title: str) -> bool:
-        matched = bool(re.search(self._match_pattern, title))
+    def should_process_page(self, _category: DataCategory, subpagename: str) -> bool:
+        matched = bool(re.search(self._match_pattern, subpagename))
         if matched:
-            logger.debug(f"Page {title} did match filter")
+            logger.debug(f"Page {subpagename} did match filter")
         else:
-            logger.debug(f"Page {title} did not match filter")
+            logger.debug(f"Page {subpagename} did not match filter")
 
-        return bool(re.search(self._match_pattern, title))
+        return bool(re.search(self._match_pattern, subpagename))
 
     @override
     def add_args(
@@ -43,14 +43,14 @@ class RemoveDataPages(CliTools):
     async def process_page(
         self,
         _: DataCategory,
-        wiki_page_path: str,
+        title: str,
         wiki_content: str | None,
         file_content: str | None,
     ) -> bool:
         # seems an empty page returns empty string, rather than None as documented
         if wiki_content:
-            logger.info(f"Add page to remove: {wiki_page_path}")
-            self._to_remove.append((wiki_page_path))
+            logger.info(f"Add page to remove: {title}")
+            self._to_remove.append((title))
 
         return False
 
@@ -59,8 +59,8 @@ class RemoveDataPages(CliTools):
 
         if self._to_remove:
             logger.info("Pages to remove:")
-            for full_title in self._to_remove:
-                print(f"- {full_title}")
+            for title in self._to_remove:
+                print(f"- {title}")
         else:
             logger.info("No pages removed.")
 

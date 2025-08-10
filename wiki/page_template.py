@@ -134,6 +134,11 @@ def extract_templates_from_page(content: str) -> list[TemplateName]:
     return [name for name, _ in templates_in_content]
 
 
+def page_has_template(content: str, template: str) -> bool:
+    templates = extract_templates_from_page(content)
+    return template in templates
+
+
 def __compute_mandatory_templates() -> dict[DataCategory, list[TemplateName]]:
     """Go through all CATEGORY_TEMPLATE categories. For each of those, we get the template (get_category_template),
     then parse the text to find all listed (mediawiki) templates. We make a list of them, then validate if we have info for all of

@@ -46,7 +46,7 @@ class ResumeHelper:
                 logger.info("Resume found last run finished execution. Starting over.")
             elif last_processed_index >= len(to_process):
                 logger.warning(
-                    "Resume mismatch: last_processed_index is bigger than our dataset. Resetting resume to 0."
+                    "Resume mismatch: last_processed_index is bigger than our dataset. Reseting resume to 0."
                 )
             elif (
                 to_process[last_processed_index].id == self._resume_data.last_processed
@@ -94,7 +94,7 @@ class ResumeHelper:
                 with open(self._resume_file_path, "r", encoding="utf-8") as f:
                     data = json.load(f)
                     return ResumeData(**data)
-                logger.info(f"Loaded resume file: {self._resume_file_path}")
+                logger.debug(f"Loaded resume file: {self._resume_file_path}")
             except FileNotFoundError as e:
                 logger.warning(f"Resume file not found, starting fresh: {e}")
                 return ResumeData()
@@ -105,9 +105,8 @@ class ResumeHelper:
                 logger.warning(f"Invalid data in resume file, starting fresh: {e}")
                 return ResumeData()
         else:
-            if self._resume_file_path.exists():
-                if not resume:
-                    logger.info(
-                        f"Restart requested, ignoring and overwriting existing resume file: {self._resume_file_path}"
-                    )
+            if not resume:
+                logger.debug(
+                    f"Resuming not requested, resume file ({self._resume_file_path}) will be overwritten"
+                )
             return ResumeData()

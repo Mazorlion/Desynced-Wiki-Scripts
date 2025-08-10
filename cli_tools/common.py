@@ -16,9 +16,8 @@ from util.ratelimiter import limiter
 from wiki.data_categories import (
     category_has_human_pages,
     DataCategory,
-    get_wiki_page_path,
 )
-from wiki.titles import get_data_page_title
+from wiki.titles import get_data_page_title, get_human_page_title
 from wiki.wiki_override import DesyncedWiki
 
 logger = get_logger()
@@ -151,6 +150,7 @@ class CliTools(ABC):
 
         parsed_args = self.parser.parse_args()
         self.args = CliToolsArgs.process_common_args(parsed_args)
+        logger.setLevel(logging.DEBUG if self.args.debug else logging.INFO)
         self.process_args(parsed_args)
         self.resume = ResumeHelper(self.args.resume_file, self.args.resume)
         self.wiki = DesyncedWiki()
@@ -165,7 +165,9 @@ class CliTools(ABC):
         """(To override) Process tool-specific command-line arguments to the parser."""
 
     def should_process_page(
-        self, category: DataCategory, title: str  # pylint: disable=unused-argument
+        self,
+        category: DataCategory,  # pylint: disable=unused-argument
+        subpagename: str,  # pylint: disable=unused-argument
     ) -> bool:
         """Should given page be processed by process_all_pages?"""
         return True
@@ -174,7 +176,7 @@ class CliTools(ABC):
     async def process_page(
         self,
         category: DataCategory,
-        wiki_page_path: str,
+        title: str,
         wiki_content: str | None,
         file_content: str | None,
     ) -> bool:
@@ -187,7 +189,6 @@ class CliTools(ABC):
 
     @final
     def run(self):
-        logger.setLevel(logging.DEBUG if self.args.debug else logging.INFO)
         asyncio.run(self.main())
 
     @final
@@ -225,40 +226,42 @@ class CliTools(ABC):
                 if not file_path.is_file():
                     continue
 
-                filename = file_path.stem
-                if not self.should_process_page(category, filename):
+                subpagename = file_path.stem
+                if not self.should_process_page(category, subpagename):
                     continue
 
                 if (
                     category_has_human_pages(category)
                     and self.options.page_mode & PageMode.HUMAN
                 ):
-                    title = filename
+                    title = get_human_page_title(category, subpagename)
                     to_process.append(
-                        Resumable(filename, ToProcess(category, title, file_path))
+                        Resumable(title, ToProcess(category, title, file_path))
                     )
 
                 if self.options.page_mode & PageMode.DATA:
-                    table = category
-                    data_title = get_data_page_title(table, filename)
+                    data_title = get_data_page_title(category, subpagename)
                     to_process.append(
-                        Resumable(filename, ToProcess(category, data_title, file_path))
+                        Resumable(
+                            data_title, ToProcess(category, data_title, file_path)
+                        )
                     )
 
-        current_index = self.resume.init_resume_index(to_process)
+        current_index = (
+            self.resume.init_resume_index(to_process) if self.args.resume else 0
+        )
 
         for idx in range(current_index, len(to_process)):
             obj: ToProcess = to_process[idx].obj
-            wiki_page_path = get_wiki_page_path(obj.category, obj.title)
 
-            logger.debug(f"Processing page {wiki_page_path} ({obj.category})")
+            logger.debug(f"Processing page {obj.title} ({obj.category})")
 
-            wiki_content = await limiter(self.wiki.page_text)(wiki_page_path)
+            wiki_content = await limiter(self.wiki.page_text)(obj.title)
             made_change = await self.process_page(
-                category, wiki_page_path, wiki_content, obj.path.read_text()
+                category, obj.title, wiki_content, obj.path.read_text()
             )
 
-            self.resume.update_progress(filename)
+            self.resume.update_progress(subpagename)
 
             if made_change and self.args.only_one_change:
                 break

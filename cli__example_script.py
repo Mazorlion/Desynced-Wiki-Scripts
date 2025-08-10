@@ -1,8 +1,12 @@
+# pylint: disable=unused-argument
+# pylint: disable=unused-import
+# (remove those when implementing)
+
 import argparse
 from typing import override
 from cli_tools.common import CliTools, CliToolsOptions, PageMode
 from wiki.data_categories import DataCategory
-from util.ratelimiter import limiter  # pylint: disable=unused-import
+from util.ratelimiter import limiter
 from util.logger import get_logger
 
 logger = get_logger()
@@ -13,14 +17,14 @@ class ExampleScript(CliTools):
 
     @override
     def should_process_page(
-        self, category: DataCategory, title: str
-    ) -> bool:  # pylint: disable=unused-argument
+        self,
+        category: DataCategory,
+        subpagename: str,
+    ) -> bool:
         return True
 
     @override
-    def add_args(
-        self, parser: argparse.ArgumentParser  # pylint: disable=unused-argument
-    ):
+    def add_args(self, parser: argparse.ArgumentParser):
         # parser.add_argument(
         #     "match_pattern",
         #     type=str,
@@ -29,7 +33,7 @@ class ExampleScript(CliTools):
         pass
 
     @override
-    def process_args(self, args: argparse.Namespace):  # pylint: disable=unused-argument
+    def process_args(self, args: argparse.Namespace):
         # self.match_pattern = args.match_pattern
         pass
 
@@ -37,7 +41,7 @@ class ExampleScript(CliTools):
     async def process_page(
         self,
         _: DataCategory,
-        wiki_page_path: str,
+        title: str,
         wiki_content: str | None,
         file_content: str | None,
     ) -> bool:
@@ -46,7 +50,7 @@ class ExampleScript(CliTools):
             if self.args.apply:
                 logger.info("Doing the thing")
                 # await limiter(self.wiki.edit)(
-                #     title=full_title,
+                #     title=pagename,
                 #     text="Batch delete from script",
                 # )
 
@@ -55,8 +59,8 @@ class ExampleScript(CliTools):
     async def main(self):
         # Do whatever first
 
-        # The optional main thing: You don't necess
-        # Calling this will trigger process_page for each page found in the wiki output dir
+        # The optional main thing:
+        # Calling process_all_pages will trigger process_page for each page found in the wiki output dir
         # Override should_process_page to control wheter a page needs to be processed
 
         await self.process_all_pages()
