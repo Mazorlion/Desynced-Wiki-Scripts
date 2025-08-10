@@ -37,7 +37,7 @@ class RemoveDataPages(CliTools):
         )
 
     @override
-    def process_args(self, args: argparse.Namespace):  # pylint: disable=unused-argument
+    def process_args(self, args: argparse.Namespace):
         self.match_pattern = args.match_pattern
 
     @override
