@@ -35,8 +35,15 @@ class DesyncedWiki:
             site=self._site, user=username, password=password
         )
         login_manager.login_to_site()
+        self._site.login(user=username)
         # throttle: Throttle = Throttle(site=self._site)
         # self._site.throttle = throttle
+
+        logged_user = self._site.user()
+        if not logged_user:
+            raise ValueError("Failed to login, logic error?")
+
+        logger.info(f"Logged in to wiki as user {logged_user}")
 
     def recreate_cargo_table(self, template_name: str) -> bool:
         # https://all.docs.genesys.com/api.php?action=help&modules=cargorecreatetables
