@@ -1,4 +1,5 @@
--- Doc in the wiki doc page
+-- This file about generating the navboxes from the game file instead of adding objects manually in them.  
+-- Write doc in Naboxes_doc.mediawiki, and update it on the wiki with https://wiki.desyncedgame.com/index.php?title=Module:Navboxes/doc&action=edit
 
 local p = {}
 local nav = {} -- you can use this one for debugging without exposing functions, return this instead of p
