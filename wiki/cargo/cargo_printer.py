@@ -147,7 +147,7 @@ class CargoPrinter:
         result = [self.transform_line(line) for line in result]
         keys = map(lambda line: re.findall(r"\|([^ ]+) =", line)[0], result)
         duplicates = [item for item, count in Counter(keys).items() if count > 1]
-        assert not len(duplicates), f"{result} for {type_info} found {duplicates}"
+        assert not duplicates, f"{result} for {type_info} found {duplicates}"
         return result
 
     @staticmethod
