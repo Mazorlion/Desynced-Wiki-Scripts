@@ -111,7 +111,10 @@
             "module": "cli_missing_images",
             "console": "integratedTerminal",
             "args": [
+                "../main",
                 "--debug",
+                "--apply",
+                "--resume",
             ],
             "justMyCode": true
         },
