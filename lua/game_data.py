@@ -27,6 +27,7 @@ from models.tech import (
 )
 from models.types import Race
 from util.constants import FORCE_INCLUDE_NAMES
+from wiki.cargo.cargo_printer import CargoPrinter
 from wiki.wiki_name_overrides import get_name_override
 
 logger = logging.getLogger()
@@ -84,7 +85,7 @@ class GameData:
                             "?", "Alien"  # Game does the same
                         ),
                         tab=cat["tab"],
-                        filter_field=cat["filter_field"],
+                        filter_field=CargoPrinter.to_camel_case(cat["filter_field"]),
                         filter_val=cat["filter_val"],
                         ordering=len(categories),
                     )
