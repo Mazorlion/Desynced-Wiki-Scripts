@@ -3,8 +3,8 @@ from dataclasses import dataclass
 import os
 from pathlib import Path
 from typing import override
-from cli_tools.common import CliTools, CliToolsOptions, PageMode
-from util.ratelimiter import limiter
+
+from cli_tools.common import CliTools, CliToolsOptions, PageMode, Page
 from util.logger import get_logger
 from wiki.data_categories import DataCategory
 from wiki.titles import get_template_page, get_template_title
@@ -24,28 +24,25 @@ class UploadWiki(CliTools):
     _updated_data_files: dict[DataCategory, list] = defaultdict(list)
 
     @override
-    async def process_page(
+    def process_page(
         self,
         category: DataCategory,
         title: str,
-        wiki_content: str | None,
-        file_content: str | None,
+        page: Page,
+        file_content: str,
     ) -> bool:
-        if not wiki_content or wiki_content != file_content:
+        if not page.text or page.text != file_content:
             logger.info(f"Updating page {title}")
             self._updated_category_data.add(category)
 
             if self.args.apply:
-                # Upload the file.
-                await limiter(self.wiki.edit)(
-                    title=title,
-                    text=file_content,
-                )
+                page.text = file_content
+                page.save()
                 return True
 
         return False
 
-    async def update_templates(self):
+    def update_templates(self):
         templates_root_dir: Path = self.args.output_directory / "Template"
         for root, _, files in os.walk(templates_root_dir):
             for file in files:
@@ -55,10 +52,10 @@ class UploadWiki(CliTools):
                     content: str = f.read()
 
                     # Upload the file.
-                    wiki_content = await limiter(self.wiki.page_text)(page_title)
+                    page = self.wiki.page(page_title)
 
                     # Bail if there's no change.
-                    if content == wiki_content:
+                    if content == page.text:
                         continue
 
                     self._updated_category_templates.add(DataCategory(file))
@@ -66,14 +63,12 @@ class UploadWiki(CliTools):
                     if not self.args.apply:
                         continue
 
-                    await limiter(self.wiki.edit)(
-                        title=page_title,
-                        text=content,
-                    )
+                    page.text = content
+                    page.save()
 
-    async def main(self):
-        await self.update_templates()
-        await self.process_all_pages()
+    def main(self):
+        self.update_templates()
+        self.process_all_pages()
 
         # Recreate cargo tables here.
         for category in self._updated_category_templates:
@@ -82,23 +77,24 @@ class UploadWiki(CliTools):
             if not self.args.apply:
                 continue
 
-            assert await limiter(self.wiki.recreate_cargo_table)(
+            assert self.wiki.recreate_cargo_table(
                 table
             ), f"Failed to recreate table for {table}"
 
-        # Recreate cargo data here.
-        for category in self._updated_category_data:
-            table = category
-            template_title = get_template_title(category)
-            logger.info(
-                f"Triggering recreating cargo DATA for table {table} template {template_title}"
-            )
-            if not self.args.apply:
-                continue
+        # Should not be needed! Updating a page should automatically update the cargo table data related to it
+        # # Recreate cargo data here.
+        # for category in self._updated_category_data:
+        #     table = category
+        #     template_title = get_template_title(category)
+        #     logger.info(
+        #         f"Triggering recreating cargo DATA for table {table} template {template_title}"
+        #     )
+        #     if not self.args.apply:
+        #         continue
 
-            assert await limiter(self.wiki.recreate_cargo_data)(
-                template_title, table
-            ), f"Failed to recreate data for {table}"
+        #     assert self.wiki.recreate_cargo_data(
+        #         template_title, table
+        #     ), f"Failed to recreate data for {table}"
 
         logger.info(f"Recreated tables: {self._updated_category_templates}")
         logger.info(f"Regenerated data for tables: {self._updated_category_data}")

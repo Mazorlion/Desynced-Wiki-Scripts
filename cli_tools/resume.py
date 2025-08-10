@@ -83,7 +83,7 @@ class ResumeHelper:
         try:
             with open(self._resume_file_path, "w", encoding="utf-8") as f:
                 json.dump(asdict(resume), f, indent=2)
-            logger.debug(f"Resume file updated: {self._resume_file_path}")
+            # logger.debug(f"Resume file updated: {self._resume_file_path}")
         except Exception as e:
             logger.error(f"Failed to write resume file: {e}")
             raise

@@ -1,5 +1,7 @@
 from dataclasses import dataclass
 from typing import TypeAlias
+
+from pywikibot import Page
 from util.logger import get_logger
 from wiki.data_categories import DataCategory
 
@@ -29,7 +31,7 @@ __NOEDITSECTION__
 [[Category:Tech]]
 """
 
-CATEGORY_TEMPLATE: dict[DataCategory, str] = {
+CATEGORY_PAGE_BLUEPRINT: dict[DataCategory, str] = {
     DataCategory.entity: DEFAULT,
     DataCategory.component: DEFAULT,
     DataCategory.item: DEFAULT,
@@ -38,9 +40,9 @@ CATEGORY_TEMPLATE: dict[DataCategory, str] = {
 }
 
 
-def get_category_template(category: DataCategory) -> str | None:
+def get_category_page_blueprint(category: DataCategory) -> str | None:
     """Return the template string for the given data category."""
-    return CATEGORY_TEMPLATE.get(category)
+    return CATEGORY_PAGE_BLUEPRINT.get(category)
 
 
 TemplateName: TypeAlias = str
@@ -59,6 +61,7 @@ class TemplateInfo:
         )
 
 
+# Hardcoded info about what the arguments expect... might get out of date pretty quick
 TEMPLATES_INFO: dict[TemplateName, TemplateInfo] = {
     "Infobox": TemplateInfo(0, 0),
     "Recipe cargo": TemplateInfo(1, 1),
@@ -139,13 +142,18 @@ def page_has_template(content: str, template: str) -> bool:
     return template in templates
 
 
+# Testing, using Page instead. Could be great to use Page everywhere here but that's some rework.
+def page_has_template_title(page: Page, template_title: str) -> bool:
+    return any(t.title == template_title for t in page.templates())
+
+
 def __compute_mandatory_templates() -> dict[DataCategory, list[TemplateName]]:
     """Go through all CATEGORY_TEMPLATE categories. For each of those, we get the template (get_category_template),
     then parse the text to find all listed (mediawiki) templates. We make a list of them, then validate if we have info for all of
     them in TEMPLATES_INFO. Error then raise if we don't."""
     mandatory_templates = {}
 
-    for category, template_text in CATEGORY_TEMPLATE.items():
+    for category, template_text in CATEGORY_PAGE_BLUEPRINT.items():
         mandatory_templates[category] = extract_templates_from_page(template_text)
 
     return mandatory_templates

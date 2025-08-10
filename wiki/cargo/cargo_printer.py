@@ -27,8 +27,8 @@ class CargoPrinter:
         max_length = field_type.list_options.max_length
         assert max_length, f"{field_type} is missing max_length"
         skip_suffix: bool = field_type.list_options.skip_suffix
-        if item_info.kind == TypeInfo.Kind.DATACLASS:
-            item_info.dataclass_options = field_type.list_options.dataclass_options
+        if item_info.kind == TypeInfo.Kind.DATACLASS:  # type: ignore
+            item_info.dataclass_options = field_type.list_options.dataclass_options  # type: ignore
 
         if value:
             assert len(value) <= max_length, (
@@ -41,7 +41,7 @@ class CargoPrinter:
                 self._print_field(
                     field_name=field_name,
                     obj=value[idx] if value and len(value) > idx else None,
-                    field_type=item_info,
+                    field_type=item_info,  # type: ignore
                     suffix=f"{suffix}{'' if skip_suffix else idx + 1 }",
                 )
             )
@@ -63,7 +63,7 @@ class CargoPrinter:
         if field_type.kind == TypeInfo.Kind.LIST:
             return self._print_list(
                 value=obj,
-                field_type=field_type,
+                field_type=field_type,  # type: ignore
                 field_name=field_name,
                 suffix=suffix,
             )
@@ -71,7 +71,7 @@ class CargoPrinter:
         if field_type.kind == TypeInfo.Kind.DATACLASS:
             return self.print_dataclass(
                 dc_obj=obj,
-                type_info=field_type,
+                type_info=field_type,  # type: ignore
                 top_level_field_name=field_name,
                 suffix=suffix,
             )
@@ -115,7 +115,7 @@ class CargoPrinter:
                 f" values={','.join(list(map(lambda x: x.value, field_type.type.__members__.values())))})"
             ]
 
-        return [f"|{field_name}{suffix} = {self._transform_type(field_type.type)}"]
+        return [f"|{field_name}{suffix} = {self._transform_type(field_type.type)}"]  # type: ignore
 
     def print_dataclass(
         self,

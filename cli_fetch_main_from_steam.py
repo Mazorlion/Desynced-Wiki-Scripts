@@ -4,11 +4,11 @@ Requires a valid purchase of Desynced in your account.
 If 2FA is enabled, you will be prompted to provide a code.
 """
 
-from steam.client.cdn import CDNClient
-from steam.client import SteamClient
+import argparse
 import os
 from zipfile import ZipFile
-import argparse
+from steam.client.cdn import CDNClient
+from steam.client import SteamClient
 
 # Apply patches before importing.
 import steam.monkey

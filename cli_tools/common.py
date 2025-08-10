@@ -1,6 +1,4 @@
 import argparse
-import asyncio
-from asyncio.log import logger
 from dataclasses import dataclass, field
 from enum import Flag, auto
 import logging
@@ -9,16 +7,18 @@ from pathlib import Path
 from typing import final
 from abc import ABC, abstractmethod
 
+from pywikibot import Page
+
 from cli_tools.resume import Resumable, ResumeHelper
 from util.constants import DEFAULT_WIKI_OUTPUT_DIR
 from util.logger import get_logger
-from util.ratelimiter import limiter
 from wiki.data_categories import (
     category_has_human_pages,
     DataCategory,
 )
 from wiki.titles import get_data_page_title, get_human_page_title
 from wiki.wiki_override import DesyncedWiki
+
 
 logger = get_logger()
 
@@ -129,6 +129,7 @@ class CliTools(ABC):
     - A standard way to process each file found in the wiki output directory
 
     See cli__example_script.py for an example usage.
+    Also try to avoid discovering you're reinvented a basic pywikibot with this class.
     """
 
     description: str
@@ -173,26 +174,22 @@ class CliTools(ABC):
         return True
 
     @abstractmethod
-    async def process_page(
-        self,
-        category: DataCategory,
-        title: str,
-        wiki_content: str | None,
-        file_content: str | None,
+    def process_page(
+        self, category: DataCategory, title: str, page: Page, file_content: str
     ) -> bool:
         """(To override) Defines how to process one page. Must returns true if a change was made."""
         return False
 
     @abstractmethod
-    async def main(self):
+    def main(self):
         """Your main method, to implement"""
 
     @final
     def run(self):
-        asyncio.run(self.main())
+        self.main()
 
     @final
-    async def process_all_pages(self):
+    def process_all_pages(self):
         """Helper to iterate on every non-data wiki page related to our data and apply given function"""
 
         data_root_dir: Path = self.args.output_directory / "Data"
@@ -256,12 +253,15 @@ class CliTools(ABC):
 
             logger.debug(f"Processing page {obj.title} ({obj.category})")
 
-            wiki_content = await limiter(self.wiki.page_text)(obj.title)
-            made_change = await self.process_page(
-                category, obj.title, wiki_content, obj.path.read_text()
+            page: Page = self.wiki.page(obj.title)
+            made_change = self.process_page(
+                category, obj.title, page, obj.path.read_text()
             )
 
             self.resume.update_progress(subpagename)
 
             if made_change and self.args.only_one_change:
+                logger.info(
+                    "Stopping after processing only one change, as requested from cli args."
+                )
                 break

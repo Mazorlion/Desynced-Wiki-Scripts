@@ -1,68 +1,72 @@
 from typing import Dict
+from typing import cast
+import pywikibot
+import pywikibot.login
+from pywikibot.site import APISite
 
-from pwiki.wiki import WAction, Wiki
-from util.config import CONFIG_FILE, GetCredentials
+from util.config import GetCredentials
 from util.logger import get_logger
 
-DESYNCED_WIKI_URL = "wiki.desyncedgame.com"
-CONFIG_SECTION = "wiki"
+DESYNCED_WIKI_URL = "https://wiki.desyncedgame.com/api.php"
 
 logger = get_logger()
 
 
-class DesyncedWiki(Wiki):
-    """Overrides the regular `pwiki.Wiki` to intercept the endpoint.
-
-    By default the underlying `Wiki` class forced the endpoint to be `/w/api.php`.
-    However the actual endpoint for the desynced wiki is `api.php`.
+class DesyncedWiki:
+    """pywikibot wrapper, handles auth and configuration
 
     Usage:
         wiki = DesyncedWiki()
-        wiki.edit(...)
+        page: Page = wiki.page(title)
+        if page.text = ...
     """
+
+    CONFIG_SECTION_NAME = "wiki"
+
+    _site: APISite
 
     def __init__(
         self,
     ):
-        username, password = GetCredentials(CONFIG_SECTION)
-        self.endpoint = f"https://{DESYNCED_WIKI_URL}/api.php"
-        super().__init__(
-            DESYNCED_WIKI_URL,
-            username,
-            password,
+        username, password = GetCredentials(self.CONFIG_SECTION_NAME)
+
+        self._site = cast(APISite, pywikibot.Site(url=DESYNCED_WIKI_URL, user=username))
+        login_manager = pywikibot.login.ClientLoginManager(
+            site=self._site, user=username, password=password
         )
-        if not self.is_logged_in:
-            raise RuntimeError(
-                f"Could not log in to {DESYNCED_WIKI_URL} with provided credentials (see{CONFIG_FILE})."
-            )
-
-        # Override bot status even without the "bot" permission.
-        self.is_bot = True
-
-    def __setattr__(self, name, value):
-        # Block the super constructor from setting the endpoint to something bad
-        if name == "endpoint" and hasattr(self, "endpoint"):
-            return
-        else:
-            super().__setattr__(name, value)
+        login_manager.login_to_site()
+        # throttle: Throttle = Throttle(site=self._site)
+        # self._site.throttle = throttle
 
     def recreate_cargo_table(self, template_name: str) -> bool:
+        # https://all.docs.genesys.com/api.php?action=help&modules=cargorecreatetables
         form: Dict = {
             "template": template_name,
             "createReplacement": "true",
         }
 
-        # Private invocation, whatever.
-        result = WAction._post_action(self, action="cargorecreatetables", form=form)
-        success = "success" in result
-        if not success:
-            logger.error(f"recreate_cargo_table failed with: {result['error']}")
+        try:
+            result = self._site.post(action="cargorecreatetables", **form)
+            print("Cargo table recreation triggered:", result)
+            return True
+        except pywikibot.exceptions.APIError as e:
+            print("API error:", e)
+            logger.error(f"recreate_cargo_table failed with: {e.info}")
 
-        return success
+        return False
 
     def recreate_cargo_data(self, template_name: str, table_name: str) -> bool:
         form: Dict = {"template": template_name, "table": table_name}
 
-        # Private invocation, whatever.
-        result = WAction._post_action(self, action="cargorecreatedata", form=form)
-        return result["success"] or False
+        try:
+            result = self._site.post(action="cargorecreatedata", **form)
+            print("Cargo table data recreation triggered:", result)
+            return True
+        except pywikibot.exceptions.APIError as e:
+            print("API error:", e)
+            logger.error(f"recreate_cargo_data failed with: {e.info}")
+
+        return False
+
+    def page(self, title):
+        return pywikibot.Page(self._site, title)

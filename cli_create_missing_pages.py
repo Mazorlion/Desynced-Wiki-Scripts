@@ -1,8 +1,7 @@
 from typing import override
-from cli_tools.common import CliTools
+from cli_tools.common import CliTools, Page
 from wiki.data_categories import DataCategory
-from wiki.page_template import get_category_template
-from util.ratelimiter import limiter
+from wiki.page_template import get_category_page_blueprint
 from util.logger import get_logger
 
 
@@ -13,31 +12,26 @@ class CreateMissingPages(CliTools):
     missing_pages = []
 
     @override
-    async def process_page(
+    def process_page(
         self,
         category: DataCategory,
         title: str,
-        wiki_content: str | None,
-        file_content: str | None,
+        page: Page,
+        _file_content: str,
     ) -> bool:
-        if (
-            not wiki_content
-        ):  # seems an empty page returns empty string, rather than None as documented
-            logger.info(f"Missing page: {title}")
+        if not page.text:
+            logger.info(f"Creating page: {title}")
             self.missing_pages.append((title))
 
             if self.args.apply:
-                logger.info(f"Creating page {title}")
-                await limiter(self.wiki.edit)(
-                    title=title,
-                    text=get_category_template(DataCategory(category)),
-                )
+                page.text = get_category_page_blueprint(DataCategory(category))
+                page.save()
                 return True
 
         return False
 
-    async def main(self):
-        await self.process_all_pages()
+    def main(self):
+        self.process_all_pages()
 
         if self.missing_pages:
             logger.info("Found missing pages:")

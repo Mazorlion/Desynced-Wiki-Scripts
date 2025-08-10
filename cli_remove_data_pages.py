@@ -1,9 +1,8 @@
 import argparse
 import re
 from typing import override
-from cli_tools.common import CliTools, CliToolsOptions, PageMode
+from cli_tools.common import CliTools, CliToolsOptions, PageMode, Page
 from wiki.data_categories import DataCategory
-from util.ratelimiter import limiter
 from util.logger import get_logger
 
 
@@ -13,7 +12,7 @@ logger = get_logger()
 class RemoveDataPages(CliTools):
     _match_pattern: str
 
-    _to_remove = []
+    _to_remove: list[Page] = []
 
     @override
     def should_process_page(self, _category: DataCategory, subpagename: str) -> bool:
@@ -40,37 +39,34 @@ class RemoveDataPages(CliTools):
         self._match_pattern = args.match_pattern
 
     @override
-    async def process_page(
+    def process_page(
         self,
         _: DataCategory,
         title: str,
-        wiki_content: str | None,
-        file_content: str | None,
+        page: Page,
+        file_content: str,
     ) -> bool:
         # seems an empty page returns empty string, rather than None as documented
-        if wiki_content:
+        if page.text:
             logger.info(f"Add page to remove: {title}")
-            self._to_remove.append((title))
+            self._to_remove.append(page)
 
         return False
 
-    async def main(self):
-        await self.process_all_pages()
+    def main(self):
+        self.process_all_pages()
 
         if self._to_remove:
             logger.info("Pages to remove:")
-            for title in self._to_remove:
-                print(f"- {title}")
+            for page in self._to_remove:
+                print(f"- {page.title}")
         else:
             logger.info("No pages removed.")
 
         if self.args.apply:
-            for to_remove in self._to_remove:
-                logger.info(f"Removing page {to_remove}")
-                await limiter(self.wiki.delete)(
-                    title=to_remove,
-                    text="Batch delete from script",
-                )
+            for page in self._to_remove:
+                logger.info(f"Removing page {page.title}")
+                page.delete(f"Scripted batch remove from {__class__}")
 
 
 if __name__ == "__main__":

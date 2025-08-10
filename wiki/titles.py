@@ -22,9 +22,9 @@ def get_template_page(template_title: str):
     return f"Template:{template_title}"
 
 
-def get_sub_pagename(pagename: str) -> str:
-    return pagename.split("/")[-1]
+def get_sub_pagename(title: str) -> str:
+    return title.split("/")[-1]
 
 
-def get_base_pagename(pagename: str) -> str:
-    return pagename.split("/")[0]
+def get_base_pagename(title: str) -> str:
+    return title.split("/")[0]

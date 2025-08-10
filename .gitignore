@@ -23,3 +23,7 @@ wiki_output/*
 
 config.ini
 .*resume
+
+# pywikibots artifacts
+apicache/
+throttle.ctrl

@@ -1,7 +1,6 @@
 import logging
 from dataclasses import dataclass
 from enum import Enum
-import os
 from typing import Dict
 
 from jinja2 import Environment, FileSystemLoader, Template

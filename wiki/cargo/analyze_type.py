@@ -1,3 +1,6 @@
+# This file could use better typing. For now:
+# type: ignore
+
 # Fix recursive dataclass references
 from __future__ import annotations
 
@@ -71,8 +74,8 @@ def analyze_type(obj_type: Type[DesyncedObject]) -> TypeInfo | DataClassTypeInfo
     for field_info in fields(obj_type):
         field_type = field_info.type
 
-        if hasattr(field_type, "__origin__") and field_type.__origin__ is list:  # type: ignore
-            list_field = ListTypeInfo(analyze_type(field_type.__args__[0]))  # type: ignore
+        if hasattr(field_type, "__origin__") and field_type.__origin__ is list:
+            list_field = ListTypeInfo(analyze_type(field_type.__args__[0]))
             list_field.list_options = cast(
                 ListFieldOptions, get_field_options(f=field_info)
             )

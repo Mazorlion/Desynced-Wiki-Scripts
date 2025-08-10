@@ -6,7 +6,6 @@ import argparse
 from typing import override
 from cli_tools.common import CliTools, CliToolsOptions, PageMode
 from wiki.data_categories import DataCategory
-from util.ratelimiter import limiter
 from util.logger import get_logger
 
 logger = get_logger()
@@ -38,7 +37,7 @@ class ExampleScript(CliTools):
         pass
 
     @override
-    async def process_page(
+    def process_page(
         self,
         _: DataCategory,
         title: str,
@@ -56,14 +55,14 @@ class ExampleScript(CliTools):
 
         return False
 
-    async def main(self):
+    def main(self):
         # Do whatever first
 
         # The optional main thing:
         # Calling process_all_pages will trigger process_page for each page found in the wiki output dir
         # Override should_process_page to control wheter a page needs to be processed
 
-        await self.process_all_pages()
+        self.process_all_pages()
 
         # Do whatever after
         logger.info("I did all the things.")

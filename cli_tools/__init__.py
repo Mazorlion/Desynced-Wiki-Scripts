@@ -1,0 +1,1 @@
+from pywikibot import Page
