@@ -37,10 +37,10 @@ class ExampleScript(CliTools):
     async def process_page(
         self,
         _: DataCategory,
-        full_title: str,
+        wiki_page_path: str,
         wiki_content: str | None,
+        file_content: str | None,
     ) -> bool:
-        logger.info(f"Processing page: {full_title}")
         if wiki_content:
             logger.info(f"with content: {wiki_content}")
             if self.args.apply:

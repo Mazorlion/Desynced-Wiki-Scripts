@@ -178,6 +178,7 @@ class CleanupPageTemplates(CliTools):
 
         updated_content = swap_templates(category, wiki_content, wiki_page_path)
         updated_content = cleanup_extra_arguments(updated_content, wiki_page_path)
+        # -> Extra cleanup checks go here <-
 
         missing_templates = find_missing_templates(category, updated_content)
         if missing_templates:

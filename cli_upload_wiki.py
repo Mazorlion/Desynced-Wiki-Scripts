@@ -118,6 +118,11 @@ class UploadWiki(CliTools):
         if not self.args.apply:
             logger.info("(Not applied, this is a dry run)")
 
+        logger.info(
+            "New tables/data might need to be swapped in at https://wiki.desyncedgame.com/Special:CargoTables manually.\n"
+            "If it didn't work, delete the temporary table and try again."
+        )
+
 
 if __name__ == "__main__":
     cli = UploadWiki(
