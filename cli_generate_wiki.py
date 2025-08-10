@@ -13,7 +13,6 @@ import os
 from pathlib import Path
 from typing import Any, Dict, List, Type
 
-from models.category_filters import CategoryFilter
 from util.constants import FETCHED_GAME_DATA_DIR, DEFAULT_WIKI_OUTPUT_DIR
 from util.logger import get_logger
 from wiki.data_categories import DataCategory
@@ -24,6 +23,7 @@ from wiki.templates.templater import WikiTemplate, render_template
 
 import lua.lua_util as lua_util
 from lua.game_data import GameData
+from models.category_filters import CategoryFilter
 from models.decorators import DesyncedObject
 from models.component import Component
 from models.entity import Entity

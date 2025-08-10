@@ -1,30 +1,29 @@
 import argparse
+import re
 from typing import override
-from cli_tools.cli_common import CliTools, PageMode
+from cli_tools.common import CliTools, PageMode
 from wiki.data_categories import DataCategory
 from wiki.ratelimiter import limiter
 from util.logger import get_logger
-import re
 
-from wiki.titles import get_template_title
 
 logger = get_logger()
 
 
 class RemoveDataPages(CliTools):
-    match_pattern: str
+    _match_pattern: str
 
-    __to_remove = []
+    _to_remove = []
 
     @override
     def should_process_page(self, _: DataCategory, title: str) -> bool:
-        matched = bool(re.search(self.match_pattern, title))
+        matched = bool(re.search(self._match_pattern, title))
         if matched:
             logger.debug(f"Page {title} did match filter")
         else:
             logger.debug(f"Page {title} did not match filter")
 
-        return bool(re.search(self.match_pattern, title))
+        return bool(re.search(self._match_pattern, title))
 
     @override
     def add_args(
@@ -38,7 +37,7 @@ class RemoveDataPages(CliTools):
 
     @override
     def process_args(self, args: argparse.Namespace):
-        self.match_pattern = args.match_pattern
+        self._match_pattern = args.match_pattern
 
     @override
     async def process_page(
@@ -50,22 +49,22 @@ class RemoveDataPages(CliTools):
         # seems an empty page returns empty string, rather than None as documented
         if existing_content:
             logger.info(f"Add page to remove: {full_title}")
-            self.__to_remove.append((full_title))
+            self._to_remove.append((full_title))
 
         return False
 
     async def main(self):
         await self.process_all_pages()
 
-        if self.__to_remove:
+        if self._to_remove:
             logger.info("Pages to remove:")
-            for full_title in self.__to_remove:
+            for full_title in self._to_remove:
                 print(f"- {full_title}")
         else:
             logger.info("No pages removed.")
 
         if self.args.apply:
-            for to_remove in self.__to_remove:
+            for to_remove in self._to_remove:
                 logger.info(f"Removing page {to_remove}")
                 await limiter(self.wiki.delete)(
                     title=to_remove,

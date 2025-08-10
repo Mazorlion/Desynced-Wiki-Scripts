@@ -5,18 +5,33 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Python: Current File",
+            "name": "Current File (as module)",
             "type": "debugpy",
             "request": "launch",
             "program": "${file}",
             "console": "integratedTerminal",
-            "justMyCode": true
+            "justMyCode": true,
+            "args": [
+                "--debug",
+            ],
+        },
+        {
+            "name": "Current File (as module) - APPLY",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${file}",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "args": [
+                "--debug",
+                "--apply",
+            ],
         },
         {
             "name": "Fetch Main from Steam",
             "type": "debugpy",
             "request": "launch",
-            "program": "fetch_main_from_steam.py",
+            "program": "cli_fetch_main_from_steam.py",
             "console": "integratedTerminal",
             "justMyCode": true
         },
@@ -24,7 +39,7 @@
             "name": "Generate Wiki",
             "type": "debugpy",
             "request": "launch",
-            "program": "generate_wiki.py",
+            "program": "cli_generate_wiki.py",
             "console": "integratedTerminal",
             "args": [
                 "../main",
@@ -36,7 +51,7 @@
             "name": "Upload Wiki",
             "type": "debugpy",
             "request": "launch",
-            "program": "upload_wiki.py",
+            "program": "cli_upload_wiki.py",
             "console": "integratedTerminal",
             "justMyCode": true,
             "args": [
@@ -56,10 +71,10 @@
             ],
         },
         {
-            "name": "Create missing pages (module)",
+            "name": "Create missing pages",
             "type": "debugpy",
             "request": "launch",
-            "module": "cli_tools.create_missing_pages",
+            "module": "cli_create_missing_pages",
             "console": "integratedTerminal",
             "args": [
                 "--debug"
@@ -67,10 +82,10 @@
             "justMyCode": true
         },
         {
-            "name": "Cleanup page templates (module)",
+            "name": "Cleanup page templates",
             "type": "debugpy",
             "request": "launch",
-            "module": "cli_tools.cleanup_page_templates",
+            "module": "cli_cleanup_page_templates",
             "console": "integratedTerminal",
             "args": [
                 "--debug"
@@ -78,14 +93,25 @@
             "justMyCode": true
         },
         {
-            "name": "Remove data pages (module)",
+            "name": "Remove data pages",
             "type": "debugpy",
             "request": "launch",
-            "module": "cli_tools.remove_data_pages",
+            "module": "cli_remove_data_pages",
             "console": "integratedTerminal",
             "args": [
                 "--debug",
                 ".*"
+            ],
+            "justMyCode": true
+        },
+        {
+            "name": "Upload missing images",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "cli_missing_images",
+            "console": "integratedTerminal",
+            "args": [
+                "--debug",
             ],
             "justMyCode": true
         },

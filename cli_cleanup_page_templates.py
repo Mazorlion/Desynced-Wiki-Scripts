@@ -1,4 +1,4 @@
-from cli_tools.cli_common import CliTools
+from cli_tools.common import CliTools
 from wiki.data_categories import DataCategory
 from wiki.page_template import (
     CATEGORY_TEMPLATE,
