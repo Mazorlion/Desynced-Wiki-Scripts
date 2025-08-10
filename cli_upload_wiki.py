@@ -8,7 +8,7 @@ import asyncio
 from util.constants import DEFAULT_WIKI_OUTPUT_DIR
 from util.logger import PrefixAdapter, get_logger
 
-from wiki.ratelimiter import limiter
+from util.ratelimiter import limiter
 from wiki.titles import get_data_page_title, get_template_title
 from wiki.wiki_override import DesyncedWiki
 
@@ -25,7 +25,7 @@ async def run(input_dir: str, dry_run: bool):
         table: str
 
     updated_tables: set[CargoTable] = set()
-    # Walk the recipes directory and upload each file there.
+    # Walk the template directory and upload each file there.
     for root, _, files in os.walk(input_dir):
         subcategory = os.path.basename(root)
         if subcategory != "Template":
@@ -39,10 +39,10 @@ async def run(input_dir: str, dry_run: bool):
                 content: str = f.read()
 
                 # Upload the file.
-                existing_content = await limiter(wiki.page_text)(title)
+                wiki_content = await limiter(wiki.page_text)(title)
 
                 # Bail if there's no change.
-                if content == existing_content:
+                if content == wiki_content:
                     continue
 
                 updated_tables.add(
@@ -81,10 +81,10 @@ async def run(input_dir: str, dry_run: bool):
                 title = get_data_page_title(table, file)
                 content: str = f.read()
 
-                existing_content = await limiter(wiki.page_text)(title)
+                wiki_content = await limiter(wiki.page_text)(title)
 
                 # Bail if there's no change. (long!)
-                if content == existing_content:
+                if content == wiki_content:
                     continue
 
                 logger.debug(f"Updating page {title}")

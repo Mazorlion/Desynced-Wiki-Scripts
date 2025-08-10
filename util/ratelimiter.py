@@ -14,14 +14,14 @@ async def rate_limited_call(func, *args, **kwargs):
 
     Example usage:
       ...
-      existing_content = await limiter(wiki.page_text)(title)
+      wiki_content = await limiter(wiki.page_text)(title)
     """
     async with rate_limiter:
         return await asyncio.to_thread(func, *args, **kwargs)
 
 
 # Example usage:
-#   existing_content = await limiter(wiki.page_text)(title)
+#   wiki_content = await limiter(wiki.page_text)(title)
 def limiter(f):
     """Create a rate-limited version of the given function."""
 

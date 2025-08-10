@@ -1,9 +1,9 @@
 import argparse
 import re
 from typing import override
-from cli_tools.common import CliTools, PageMode
+from cli_tools.common import CliTools, CliToolsOptions, PageMode
 from wiki.data_categories import DataCategory
-from wiki.ratelimiter import limiter
+from util.ratelimiter import limiter
 from util.logger import get_logger
 
 
@@ -43,13 +43,14 @@ class RemoveDataPages(CliTools):
     async def process_page(
         self,
         _: DataCategory,
-        full_title: str,
-        existing_content: str | None,
+        wiki_page_path: str,
+        wiki_content: str | None,
+        file_content: str | None,
     ) -> bool:
         # seems an empty page returns empty string, rather than None as documented
-        if existing_content:
-            logger.info(f"Add page to remove: {full_title}")
-            self._to_remove.append((full_title))
+        if wiki_content:
+            logger.info(f"Add page to remove: {wiki_page_path}")
+            self._to_remove.append((wiki_page_path))
 
         return False
 
@@ -75,6 +76,6 @@ class RemoveDataPages(CliTools):
 if __name__ == "__main__":
     cli = RemoveDataPages(
         description="For all previously generated cargo data pages, remove the one regex-matching given param.",
-        page_mode=PageMode.DATA,
+        options=CliToolsOptions(page_mode=PageMode.DATA),
     )
     cli.run()

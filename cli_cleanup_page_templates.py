@@ -1,3 +1,4 @@
+from typing import override
 from cli_tools.common import CliTools
 from wiki.data_categories import DataCategory
 from wiki.page_template import (
@@ -9,7 +10,7 @@ from wiki.page_template import (
     get_template_info,
 )
 from wiki.page_url import WikiUrl
-from wiki.ratelimiter import limiter
+from util.ratelimiter import limiter
 from util.logger import get_logger
 
 
@@ -159,39 +160,41 @@ def test_category_templates_consistency():
 
 
 class CleanupPageTemplates(CliTools):
-    update_pages = []
+    _update_pages = []
 
+    @override
     async def process_page(
         self,
         category: DataCategory,
-        full_title: str,
-        existing_content: str | None,
+        wiki_page_path: str,
+        wiki_content: str | None,
+        file_content: str | None,
     ) -> bool:
-        if not existing_content:
+        if not wiki_content:
             logger.error(
-                f"Page '{full_title}' did not exists -> {WikiUrl.get_page(full_title)}"
+                f"Page '{wiki_page_path}' did not exists -> {WikiUrl.get_page(wiki_page_path)}"
             )
             return False
 
-        updated_content = swap_templates(category, existing_content, full_title)
-        updated_content = cleanup_extra_arguments(updated_content, full_title)
+        updated_content = swap_templates(category, wiki_content, wiki_page_path)
+        updated_content = cleanup_extra_arguments(updated_content, wiki_page_path)
 
         missing_templates = find_missing_templates(category, updated_content)
         if missing_templates:
             missing_str = ",".join(full_title for full_title in missing_templates)
             logger.warning(
-                f"Page '{full_title}' is missing some templates: '{missing_str}' -> {WikiUrl.get_page(full_title)}"
+                f"Page '{wiki_page_path}' is missing some templates: '{missing_str}' -> {WikiUrl.get_page(wiki_page_path)}"
             )
 
-        if updated_content != existing_content:
+        if updated_content != wiki_content:
             logger.info(
-                f"Updating content for page: '{full_title}' -> {WikiUrl.get_page_history(full_title)}"
+                f"Updating content for page: '{wiki_page_path}' -> {WikiUrl.get_page_history(wiki_page_path)}"
             )
-            self.update_pages.append((full_title))
+            self._update_pages.append((wiki_page_path))
 
             if self.args.apply:
                 await limiter(self.wiki.edit)(
-                    title=full_title,
+                    title=wiki_page_path,
                     text=updated_content,
                 )
                 return True
@@ -202,9 +205,9 @@ class CleanupPageTemplates(CliTools):
         test_category_templates_consistency()
         await self.process_all_pages()
 
-        if self.update_pages:
+        if self._update_pages:
             logger.info("Updated pages:")
-            for full_title in self.update_pages:
+            for full_title in self._update_pages:
                 print(f"- {full_title} -> {WikiUrl.get_page_history(full_title)}")
         else:
             logger.info("No pages were updated.")
