@@ -150,19 +150,21 @@ class CargoPrinter:
         assert not len(duplicates), f"{result} for {type_info} found {duplicates}"
         return result
 
-    def to_camel_case(self, name: str) -> str:
+    @staticmethod
+    def to_camel_case(name: str) -> str:
         parts = name.split("_")
         # Keep the first word in lowercase and capitalize the rest
         return parts[0] + "".join(part.capitalize() for part in parts[1:])
 
-    def transform_line(self, line: str) -> str:
+    @staticmethod
+    def transform_line(line: str) -> str:
         # Match the pattern "|{variable} ="
         match = re.search(r"\|(\w+) =", line)
         if not match:
             return line  # If the line doesn't match the pattern, return it unchanged
 
         variable_name = match.group(1)
-        camel_name = self.to_camel_case(variable_name)
+        camel_name = CargoPrinter.to_camel_case(variable_name)
         # Replace the original variable name with its CamelCase version
         transformed_line = line.replace(f"|{variable_name} =", f"|{camel_name} =", 1)
         return transformed_line
