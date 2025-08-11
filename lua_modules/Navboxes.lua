@@ -2,7 +2,7 @@
 -- Write doc in Naboxes_doc.mediawiki, and update it on the wiki with https://wiki.desyncedgame.com/index.php?title=Module:Navboxes/doc&action=edit
 
 local p = {}
-local nav = {} -- you can use this one for debugging without exposing functions, return this instead of p
+local nav = {} -- Use for internal function. You can use this one for debugging without exposing functions, return this instead of p
 
 ---@type any
 ---@diagnostic disable-next-line: lowercase-global
@@ -263,6 +263,8 @@ local frame = { args = { title = "Buildings", type = "Building" } }
 (enter)
 = p.create(frame, "Buildings", "Building")
 (enter)
+
+Return nav instead of p if you want to debug those private functions
 
 Resources:
 General cargo: https://www.mediawiki.org/wiki/Extension:Cargo/Querying_data
