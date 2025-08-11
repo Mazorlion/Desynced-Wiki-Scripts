@@ -31,6 +31,12 @@ FORCE_INCLUDE_NAMES = {
     "Giant Beast",
 }
 
+FORCE_IGNORE_NAMES = {
+    "socketbuilding",
+    "storage structure",
+    "warp structure",
+}
+
 # List of object for which to override names with a custom name
 # This is used to handle entries having the same names in the game, but need to be differentiated in the wiki.
 # Example: Both c_human_aicenter and c_mission_human_aicenter are called "AI Research Center" in the game.

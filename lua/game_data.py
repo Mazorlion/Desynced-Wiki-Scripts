@@ -26,7 +26,7 @@ from models.tech import (
     TechnologyUnlock,
 )
 from models.types import Race
-from util.constants import FORCE_INCLUDE_NAMES
+from util.constants import FORCE_IGNORE_NAMES, FORCE_INCLUDE_NAMES
 from wiki.cargo.cargo_printer import CargoPrinter
 from wiki.wiki_name_overrides import get_name_override
 
@@ -228,6 +228,8 @@ class GameData:
                                     ):
                                         self.unlockable_names.add(component_name)
                                     break
+            # Finally, forced removes
+            self.unlockable_names.difference_update(FORCE_IGNORE_NAMES)
 
         _extra_unlocks()
         return techs
