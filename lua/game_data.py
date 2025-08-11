@@ -287,12 +287,14 @@ class GameData:
             )
             # The game has uplink rate for all research components except the base one
             uplink_rate = 1 if component_id == "c_uplink" else c_tbl["uplink_rate"]
+            # Some components have no attachment size defined
+            attachment_size = SocketSize[(c_tbl["attachment_size"] or "Hidden").upper()]
             components.append(
                 Component(
                     lua_id=component_id,
                     name=c_tbl["name"],
                     description=c_tbl["desc"],
-                    attachment_size=(SocketSize(c_tbl["attachment_size"].upper())),
+                    attachment_size=attachment_size,
                     power_usage_per_second=per_tick_to_per_second(c_tbl["power"]) or 0,
                     power_stats=power_stats,
                     transfer_radius=c_tbl["transfer_radius"],
@@ -548,8 +550,9 @@ class GameData:
             ret.append(RecipeItem(name, item_amount))
         return ret
 
-    def _parse_recipe_from_table(self, tbl) -> Optional[Recipe]:
+    def _parse_recipe_from_table(self, tbl) -> Recipe:
         """Returns the recipe for the object a `tbl` if it has one.
+        Else, an empty recipe
 
         Args:
             tbl (_type_): Lua table for an object.
@@ -560,32 +563,36 @@ class GameData:
         # Lua table fields
         recipe = None
         recipe_type = None
-        # producers: Optional[list[RecipeProducer]]
+        producers: list[RecipeProducer] = []
         num_produced: int = 1
         if tbl[RecipeTypeGame.CONSTRUCTION]:
-            recipe_type = RecipeType.Construction
+            recipe_type = RecipeType.CONSTRUCTION
             recipe = tbl[RecipeTypeGame.CONSTRUCTION]
             producers: list[RecipeProducer] = self._parse_recipe_construction(
                 recipe[RecipeTypeGame.CONSTRUCTION_TICKS]
             )
         elif tbl[RecipeTypeGame.PRODUCTION]:
-            recipe_type = RecipeType.Production
+            recipe_type = RecipeType.PRODUCTION
             recipe = tbl[RecipeTypeGame.PRODUCTION]
             producers: list[RecipeProducer] = self._parse_recipe_producers(
                 recipe[RecipeTypeGame.PRODUCERS]
             )
             num_produced = recipe["num_produced"]
         elif tbl[RecipeTypeGame.UPLINK]:
-            recipe_type = RecipeType.Uplink
+            recipe_type = RecipeType.UPLINK
             recipe = tbl[RecipeTypeGame.UPLINK]
             producers: list[RecipeProducer] = self._parse_recipe_uplink(
                 recipe[RecipeTypeGame.CONSTRUCTION_TICKS]
             )
-
         else:
-            return None
+            recipe_type = RecipeType.NONE
+            num_produced = 0
 
-        items: list[RecipeItem] = self._parse_recipe_items(recipe[RecipeTypeGame.ITEMS])
+        items: list[RecipeItem] = (
+            self._parse_recipe_items(recipe[RecipeTypeGame.ITEMS])
+            if recipe is not None
+            else []
+        )
         return Recipe(
             items=items,
             producers=producers,

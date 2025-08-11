@@ -50,7 +50,7 @@ class Item:
     # Some items are stored in a special storage (such as gas).
     slot_type: ItemSlotType
     # Recipe to produce this item.
-    production_recipe: Recipe | None
+    production_recipe: Recipe
     # Tag for category matching
     tag: str
     # If this `Item` is mineable, this is a list of components that can mine it.
