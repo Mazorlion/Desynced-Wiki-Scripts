@@ -50,10 +50,10 @@ class Item:
     slot_type: ItemSlotType
     # Recipe to produce this item.
     production_recipe: Recipe
-    # If this `Item` is mineable, this is a list of components that can mine it.
-    mining_recipes: List[MiningRecipe] = annotate(ListFieldOptions(max_length=4))
     # Tag for category matching
     tag: str
+    # If this `Item` is mineable, this is a list of components that can mine it.
+    mining_recipes: List[MiningRecipe] = annotate(ListFieldOptions(max_length=4))
     # How many of this item stack in a single slot.
     stack_size: int = 1
 

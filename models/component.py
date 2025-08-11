@@ -85,18 +85,8 @@ class Component:
     transfer_radius: int
     # Range in which this can activate (attack range for weapons)
     trigger_radius: int
-    # Range for things like radars and transporters.
-    # Cannot be named `range` because it's a SQL keyword
-    range: int = annotate(FieldOptions(name_override="component_range"))
     # Maximum range at which the radar will visibly reveal a scanned object.
     radar_show_range: int
-    # List of available registers
-    register: List[Register] = annotate(
-        ListFieldOptions(
-            max_length=5,
-            dataclass_options=DataClassFieldOptions(prefix_name=True),
-        )
-    )
     # Recipe is always production for components
     production_recipe: Recipe
     # Is this component removable?
@@ -106,4 +96,14 @@ class Component:
     # Number of seconds for extraction (ex. blight gas)
     extraction_time: float
     # For uplink derived components
-    uplink_rate = float
+    uplink_rate: float
+    # Range for things like radars and transporters.
+    # Cannot be named `range` because it's a SQL keyword
+    range: int = annotate(FieldOptions(name_override="component_range"))
+    # List of available registers
+    register: List[Register] = annotate(
+        ListFieldOptions(
+            max_length=5,
+            dataclass_options=DataClassFieldOptions(prefix_name=True),
+        )
+    )

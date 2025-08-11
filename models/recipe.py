@@ -40,11 +40,11 @@ class RecipeProducer:
 
 @desynced_object
 class Recipe:
-    items: List[RecipeItem] = annotate(ListFieldOptions(max_length=4))
-    producers: List[RecipeProducer] = annotate(ListFieldOptions(max_length=4))
     recipe_type: RecipeType
     # For production recipes, the type produced may be greater than one.
     num_produced: int
+    items: List[RecipeItem] = annotate(ListFieldOptions(max_length=4))
+    producers: List[RecipeProducer] = annotate(ListFieldOptions(max_length=4))
 
     def __post_init__(self):
         """Sort the internal lists so that they always get exported in a consistent order."""

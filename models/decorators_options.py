@@ -1,5 +1,5 @@
 from dataclasses import Field, dataclass, field, fields, is_dataclass
-from typing import Optional, Type, Any, TypeVar, cast
+from typing import Optional, Type, Any
 
 
 @dataclass

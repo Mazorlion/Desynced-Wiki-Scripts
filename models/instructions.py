@@ -28,10 +28,11 @@ class Instruction:
     category: str
     # Filename of the icon (no path).
     icon: str
+    explaination: str
+
     args: List[InstructionArg] = annotate(
         ListFieldOptions(
             max_length=11,
             dataclass_options=DataClassFieldOptions(prefix_name=True),
         )
     )
-    explaination: str

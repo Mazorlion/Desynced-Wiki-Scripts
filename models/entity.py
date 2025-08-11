@@ -37,10 +37,10 @@ class Entity:
     storage: int
     size: str
     race: Race
-    types: list[EntityType] = annotate(
-        ListFieldOptions(max_length=2, skip_suffix=False)
-    )
     sockets: Sockets
     # Special kind of storage to house this entity.
     slot_type: SlotType
     recipe: Recipe
+    types: list[EntityType] = annotate(
+        ListFieldOptions(max_length=2, skip_suffix=False)
+    )
