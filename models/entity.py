@@ -1,6 +1,6 @@
 from enum import Enum
 
-from models.decorators import DesyncedObject, desynced_object, length_check
+from models.decorators import desynced_object, length_check
 from models.decorators_options import ListFieldOptions, annotate
 from models.recipe import Recipe
 from models.sockets import Sockets
@@ -26,7 +26,7 @@ class EntityType(Enum):
 
 @desynced_object
 @length_check
-class Entity(DesyncedObject):
+class Entity:
     name: str
     description: str
     lua_id: str

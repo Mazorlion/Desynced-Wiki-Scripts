@@ -57,7 +57,7 @@ class DataClassTypeInfo(TypeInfo):
         self.kind = TypeInfo.Kind.DATACLASS
 
 
-def analyze_type(obj_type: Type[DesyncedObject]) -> TypeInfo | DataClassTypeInfo:
+def analyze_type(obj_type: Type) -> TypeInfo | DataClassTypeInfo:
     """Returns a dictionary containing fields and types for all fields in obj_type.
 
     Args:

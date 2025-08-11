@@ -1,27 +1,32 @@
 from dataclasses import dataclass
-from typing import Optional, Type, TypeVar, cast
+from typing import Optional, Type, TypeVar, cast, dataclass_transform
 
 from models.decorators_options import require_field_options
-
-
-class DesyncedObject:
-    """Marker base class for all desynced objects."""
 
 
 T = TypeVar("T", bound=type)
 
 
+class DesyncedObject:
+    """Dummy parent object for isinstance() checks"""
+
+
+@dataclass_transform()
 def desynced_object(cls: T) -> T:
     """@desynced_object is a dataclass with some validation.
+    Object decorated with this can be checked: isinstance(obj, DesyncedObject)
 
-    Args:
-        cls (Type): Class to wrap (passed by decoration).
+      Args:
+          cls (Type): Class to wrap (passed by decoration).
 
-    Returns:
-        Type: Returns the wrapped class.
+      Returns:
+          Type: Returns the wrapped class.
     """
-    decorated_cls = require_field_options(dataclass(cls))
-    return cast(T, decorated_cls)
+    bases = (DesyncedObject,) + cls.__bases__
+    new_cls = type(cls.__name__, bases, dict(cls.__dict__))
+    wrapped_cls = require_field_options(dataclass(new_cls))
+    setattr(wrapped_cls, "__is_desynced_object__", True)
+    return cast(T, wrapped_cls)
 
 
 def length_check(cls) -> Type:

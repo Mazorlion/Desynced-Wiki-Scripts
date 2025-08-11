@@ -1,7 +1,7 @@
 from enum import Enum
 from typing import List
 
-from models.decorators import DesyncedObject, desynced_object
+from models.decorators import desynced_object
 from models.decorators_options import (
     DataClassFieldOptions,
     FieldOptions,
@@ -71,7 +71,7 @@ class WeaponStats:
 
 
 @desynced_object
-class Component(DesyncedObject):
+class Component:
     name: str
     # ID of the component in lua.
     lua_id: str
