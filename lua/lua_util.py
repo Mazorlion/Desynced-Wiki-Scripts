@@ -2,7 +2,7 @@ import os
 from typing import Optional
 
 import lupa
-from lupa import LuaRuntime
+from lupa import LuaRuntime  # pylint: disable=no-name-in-module
 
 from util.logger import get_logger
 

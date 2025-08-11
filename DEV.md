@@ -29,9 +29,9 @@ class Technology:
     texture: str
     # List of required techs by name.
     required_tech: List[str] = annotate(ListFieldOptions(max_length=3))
-    # Number of times uplink_recipe must be completed.
+    # Number of times recipe must be completed.
     progress_count: int
-    uplink_recipe: Recipe
+    recipe: Recipe
 ```
 
 This model is automatically converted into a cargo table definition like the following:
@@ -92,7 +92,7 @@ _table=tech
 ```
 
 Notice a few things:
-1) The `Recipe` in `uplink_recipe` was automatically flattened into the main structure, and the lists inside were expanded into their own fields.  
+1) The `Recipe` in `recipe` was automatically flattened into the main structure, and the lists inside were expanded into their own fields.  
 2) The list of techs in `required_tech` was expanded to have an entry for each field.
     - The number of entries for each list is described by a field annotation  
 

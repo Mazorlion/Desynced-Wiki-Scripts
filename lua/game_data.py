@@ -36,8 +36,6 @@ logger = logging.getLogger()
 class GameData:
     """Encapsulates the exploration of a lua runtime that has evaluated the game files for Desynced.
 
-    TODO(maz): Clean this up for real :<
-
     Example Usage:
 
         lua = lupa.LuaRuntime()
@@ -183,7 +181,7 @@ class GameData:
                     ),
                     required_tech=required_techs,
                     progress_count=tech["progress_count"],
-                    uplink_recipe=self._parse_recipe_from_table(tech),
+                    recipe=self._parse_recipe_from_table(tech),
                 )
             )
 
@@ -295,7 +293,9 @@ class GameData:
                     production_recipe=self._parse_recipe_from_table(c_tbl),
                     is_removable=False if c_tbl["non_removable"] else True,
                     weapon_stats=weapon_stats,
-                    extraction_time=tick_duration_to_seconds(c_tbl["extraction_time"]),
+                    extraction_time=tick_duration_to_seconds(
+                        c_tbl["extraction_time"] or 0
+                    ),
                 )
             )
 

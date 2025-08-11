@@ -14,9 +14,9 @@ class Technology:
     texture: str
     # List of required techs by name.
     required_tech: List[str] = annotate(ListFieldOptions(max_length=3))
-    # Number of times uplink_recipe must be completed.
+    # Number of times recipe must be completed.
     progress_count: int
-    uplink_recipe: Recipe
+    recipe: Recipe
 
 
 @desynced_object

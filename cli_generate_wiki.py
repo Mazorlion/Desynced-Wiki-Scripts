@@ -38,7 +38,7 @@ from models.tech import (
 logger = get_logger()
 
 
-class LuaAnalyzer:
+class GenerateWiki:
 
     def __init__(
         self,
@@ -289,7 +289,7 @@ def main(args):
     except KeyError as e:
         logger.exception(f"Invalid category name: {e.args[0]}")
 
-    LuaAnalyzer(
+    GenerateWiki(
         args.wiki_output_directory,
         args.game_data_directory,
         args.overwrite,

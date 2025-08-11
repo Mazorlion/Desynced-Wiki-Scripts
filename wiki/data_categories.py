@@ -3,14 +3,15 @@ from enum import StrEnum, auto
 
 
 class DataCategory(StrEnum):
-    entity = auto()  # pylint: disable=invalid-name
+    categoryFilter = auto()  # pylint: disable=invalid-name
     component = auto()  # pylint: disable=invalid-name
+    entity = auto()  # pylint: disable=invalid-name
     item = auto()  # pylint: disable=invalid-name
     instruction = auto()  # pylint: disable=invalid-name
     tech = auto()  # pylint: disable=invalid-name
-    techUnlock = auto()  # pylint: disable=invalid-name
     techCategory = auto()  # pylint: disable=invalid-name
-    categoryFilter = auto()  # pylint: disable=invalid-name
+    techUnlock = auto()  # pylint: disable=invalid-name
+    uplink = auto()  # pylint: disable=invalid-name
 
 
 @dataclass

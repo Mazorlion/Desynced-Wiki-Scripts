@@ -1,4 +1,4 @@
-from enum import StrEnum
+from enum import StrEnum, auto
 from typing import List
 
 from models.decorators import desynced_object
@@ -17,9 +17,9 @@ class RecipeTypeGame(StrEnum):
 
 
 class RecipeType(StrEnum):
-    Construction = "Construction"
-    Production = "Production"
-    Uplink = "Uplink"
+    Construction = auto()
+    Production = auto()
+    Uplink = auto()
 
 
 @desynced_object
