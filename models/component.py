@@ -88,7 +88,7 @@ class Component:
     # Maximum range at which the radar will visibly reveal a scanned object.
     radar_show_range: int
     # Recipe is always production for components
-    production_recipe: Recipe
+    production_recipe: Recipe | None
     # Is this component removable?
     is_removable: bool
     # If the component is a weapon, describes the weapon stats.

@@ -112,11 +112,11 @@ class GameData:
             categories.append(
                 TechnologyCategory(
                     name=cat["name"],
-                    discovery_tech=self.lookup_tech_name(cat["discovery_tech"]),
-                    initial_tech=self.lookup_tech_name(cat["initial_tech"]),
+                    discovery_tech=self.lookup_tech_name(cat["discovery_tech"]) or "",
+                    initial_tech=self.lookup_tech_name(cat["initial_tech"]) or "",
                     sub_categories=sub_cats,
                     texture=(
-                        os.path.basename(cat["texture"]) if cat["texture"] else None
+                        os.path.basename(cat["texture"]) if cat["texture"] else ""
                     ),
                 )
             )
@@ -188,7 +188,7 @@ class GameData:
                     description=tech["description"],
                     category=tech["category"],
                     texture=(
-                        os.path.basename(tech["texture"]) if tech["texture"] else None
+                        os.path.basename(tech["texture"]) if tech["texture"] else ""
                     ),
                     required_tech=required_techs,
                     progress_count=tech["progress_count"],
@@ -223,13 +223,13 @@ class GameData:
             args: list[InstructionArg] = []
             if ins["args"]:
                 for _, arg_tbl in ins["args"].items():
-                    type = arg_tbl[1].upper()
+                    typ = arg_tbl[1].upper()
                     name = arg_tbl[2]
                     description = arg_tbl[3]
                     data_type = arg_tbl[4]
                     args.append(
                         InstructionArg(
-                            type=ArgType[type],
+                            type=ArgType[typ],
                             name=name,
                             description=description,
                             data_type=data_type,
@@ -265,19 +265,21 @@ class GameData:
                     )
             power_stats: PowerStats = PowerStats(
                 power_storage=c_tbl["power_storage"],
-                drain_rate=per_tick_to_per_second(c_tbl["drain_rate"]),
-                charge_rate=per_tick_to_per_second(c_tbl["charge_rate"]),
-                bandwidth=per_tick_to_per_second(c_tbl["bandwidth"]),
+                drain_rate=per_tick_to_per_second(c_tbl["drain_rate"]) or 0.0,
+                charge_rate=per_tick_to_per_second(c_tbl["charge_rate"]) or 0.0,
+                bandwidth=per_tick_to_per_second(c_tbl["bandwidth"]) or 0.0,
                 affected_by_events=c_tbl["adjust_extra_power"],
                 solar_power_generated=per_tick_to_per_second(
                     c_tbl["solar_power_generated"]
-                ),
+                )
+                or 0,
             )
 
             weapon_stats: WeaponStats = WeaponStats(
                 damage=c_tbl["damage"],
-                charge_duration_sec=tick_duration_to_seconds(c_tbl["duration"]),
-                projectile_delay_sec=tick_duration_to_seconds(c_tbl["shoot_speed"]),
+                charge_duration_sec=tick_duration_to_seconds(c_tbl["duration"]) or 0.0,
+                projectile_delay_sec=tick_duration_to_seconds(c_tbl["shoot_speed"])
+                or 0.0,
                 splash_range=c_tbl["blast"],
                 damage_type=c_tbl["damage_type"],
                 extra_effect_name=c_tbl["extra_effect_name"],
@@ -290,12 +292,8 @@ class GameData:
                     lua_id=component_id,
                     name=c_tbl["name"],
                     description=c_tbl["desc"],
-                    attachment_size=(
-                        SocketSize[c_tbl["attachment_size"].upper()]
-                        if c_tbl["attachment_size"]
-                        else None
-                    ),
-                    power_usage_per_second=per_tick_to_per_second(c_tbl["power"]),
+                    attachment_size=(SocketSize(c_tbl["attachment_size"].upper())),
+                    power_usage_per_second=per_tick_to_per_second(c_tbl["power"]) or 0,
                     power_stats=power_stats,
                     transfer_radius=c_tbl["transfer_radius"],
                     trigger_radius=c_tbl["trigger_radius"],
@@ -307,7 +305,8 @@ class GameData:
                     weapon_stats=weapon_stats,
                     extraction_time=tick_duration_to_seconds(
                         c_tbl["extraction_time"] or 0
-                    ),
+                    )
+                    or 0,
                     uplink_rate=uplink_rate,
                 )
             )
@@ -322,7 +321,8 @@ class GameData:
         for component_id, mining_ticks in item["mining_recipe"].items():
             c_name = self.lookup_component_name(component_id)
             mining_seconds = tick_duration_to_seconds(mining_ticks)
-            ret.append(MiningRecipe(c_name, mining_seconds))
+            if c_name and mining_seconds:
+                ret.append(MiningRecipe(c_name, mining_seconds))
 
         return ret
 
@@ -339,7 +339,7 @@ class GameData:
                     type=ItemType[item["tag"].upper()],
                     slot_type=ItemSlotType[item["slot_type"].upper()],
                     production_recipe=recipe,
-                    mining_recipes=self._parse_mining_recipes(item),
+                    mining_recipes=self._parse_mining_recipes(item) or [],
                     stack_size=item["stack_size"],
                     tag=item["tag"],
                 )
@@ -372,7 +372,6 @@ class GameData:
                     types.append(EntityType[channel_type.upper()])
 
             recipe = self._parse_recipe_from_table(frame_tbl)
-            id = frame_tbl["id"]
 
             entities.append(
                 Entity(
@@ -498,10 +497,16 @@ class GameData:
     #     }
     # end
     def _parse_recipe_construction(self, ticks) -> list[RecipeProducer]:
-        return [RecipeProducer("Construction", tick_duration_to_seconds(ticks))]
+        duration = tick_duration_to_seconds(ticks)
+        if duration is None:
+            logger.warning("Failed to convert duration in _parse_recipe_construction")
+        return [RecipeProducer("Construction", duration or 0)]
 
     def _parse_recipe_uplink(self, ticks) -> list[RecipeProducer]:
-        return [RecipeProducer("Uplink", tick_duration_to_seconds(ticks))]
+        duration = tick_duration_to_seconds(ticks)
+        if duration is None:
+            logger.warning("Failed to convert duration in _parse_recipe_uplink")
+        return [RecipeProducer("Uplink", duration or 0)]
 
     # function CreateProductionRecipe(recipe, production)
     #     return {
@@ -520,10 +525,13 @@ class GameData:
                 or self.lookup_frame_name(component_id)
                 or component_id
             )
+            duration = tick_duration_to_seconds(game_ticks)
+            if duration is None:
+                logger.warning("Failed to convert duration in _parse_recipe_producers")
             ret.append(
                 RecipeProducer(
                     name,
-                    tick_duration_to_seconds(ticks=game_ticks),
+                    duration or 0,
                 )
             )
         return ret

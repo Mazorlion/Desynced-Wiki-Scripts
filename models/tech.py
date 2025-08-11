@@ -14,7 +14,7 @@ class Technology:
     texture: str
     # Number of times recipe must be completed.
     progress_count: int
-    recipe: Recipe
+    recipe: Recipe | None
     # List of required techs by name.
     required_tech: List[str] = annotate(ListFieldOptions(max_length=3))
 
