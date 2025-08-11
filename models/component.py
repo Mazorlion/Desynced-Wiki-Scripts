@@ -105,3 +105,5 @@ class Component(DesyncedObject):
     weapon_stats: WeaponStats
     # Number of seconds for extraction (ex. blight gas)
     extraction_time: float
+    # For uplink derived components
+    uplink_rate = float

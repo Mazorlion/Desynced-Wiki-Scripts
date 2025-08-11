@@ -283,7 +283,8 @@ class GameData:
                 extra_effect_name=c_tbl["extra_effect_name"],
                 disruptor=c_tbl["disruptor"],
             )
-
+            # The game has uplink rate for all research components except the base one
+            uplink_rate = 1 if component_id == "c_uplink" else c_tbl["uplink_rate"]
             components.append(
                 Component(
                     lua_id=component_id,
@@ -307,6 +308,7 @@ class GameData:
                     extraction_time=tick_duration_to_seconds(
                         c_tbl["extraction_time"] or 0
                     ),
+                    uplink_rate=uplink_rate,
                 )
             )
 
