@@ -1,7 +1,7 @@
 from enum import Enum
 from typing import List
 
-from models.decorators import desynced_object
+from models.decorators import desynced_object, length_check
 from models.decorators_options import (
     DataClassFieldOptions,
     FieldOptions,
@@ -71,6 +71,7 @@ class WeaponStats:
 
 
 @desynced_object
+@length_check
 class Component:
     name: str
     # ID of the component in lua.

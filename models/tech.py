@@ -1,11 +1,12 @@
 from typing import List
 
-from models.decorators import desynced_object
+from models.decorators import desynced_object, length_check
 from models.decorators_options import FieldOptions, ListFieldOptions, annotate
 from models.recipe import Recipe
 
 
 @desynced_object
+@length_check
 class Technology:
     name: str
     lua_id: str
@@ -27,6 +28,7 @@ class TechnologyUnlock:
 
 
 @desynced_object
+@length_check
 class TechnologyCategory:
     name: str
     discovery_tech: str

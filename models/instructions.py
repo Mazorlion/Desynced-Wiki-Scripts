@@ -1,7 +1,7 @@
 from enum import Enum
 from typing import List
 
-from models.decorators import desynced_object
+from models.decorators import desynced_object, length_check
 from models.decorators_options import DataClassFieldOptions, ListFieldOptions, annotate
 
 
@@ -21,6 +21,7 @@ class InstructionArg:
 
 
 @desynced_object
+@length_check
 class Instruction:
     name: str
     lua_id: str

@@ -1,7 +1,7 @@
 from enum import Enum
 from typing import List
 
-from models.decorators import desynced_object
+from models.decorators import desynced_object, length_check
 from models.decorators_options import ListFieldOptions, annotate
 from models.recipe import Recipe
 
@@ -40,6 +40,7 @@ class MiningRecipe:
 
 
 @desynced_object
+@length_check
 class Item:
     name: str
     lua_id: str
