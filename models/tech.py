@@ -1,12 +1,12 @@
 from typing import List
 
-from models.decorators import desynced_object
+from models.decorators import DesyncedObject, desynced_object
 from models.decorators_options import FieldOptions, ListFieldOptions, annotate
 from models.recipe import Recipe
 
 
 @desynced_object
-class Technology:
+class Technology(DesyncedObject):
     name: str
     lua_id: str
     description: str
@@ -20,14 +20,14 @@ class Technology:
 
 
 @desynced_object
-class TechnologyUnlock:
+class TechnologyUnlock(DesyncedObject):
     name: str = annotate(FieldOptions(skip_field=True))
     tech_name: str
     unlocks: str
 
 
 @desynced_object
-class TechnologyCategory:
+class TechnologyCategory(DesyncedObject):
     name: str
     discovery_tech: str
     initial_tech: str

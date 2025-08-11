@@ -1,8 +1,8 @@
-from models.decorators import desynced_object
+from models.decorators import DesyncedObject, desynced_object
 
 
 @desynced_object
-class CategoryFilter:
+class CategoryFilter(DesyncedObject):
     """Categories filtering, mirroring data.categories in lua"""
 
     name: str

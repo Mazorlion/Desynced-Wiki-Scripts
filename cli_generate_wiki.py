@@ -24,8 +24,8 @@ from wiki.templates.templater import WikiTemplate, render_template
 import lua.lua_util as lua_util
 from lua.game_data import GameData
 from models.category_filters import CategoryFilter
-from models.decorators import DesyncedObject
 from models.component import Component
+from models.decorators import DesyncedObject
 from models.entity import Entity
 from models.instructions import Instruction
 from models.item import Item

@@ -2,7 +2,7 @@ import collections
 from dataclasses import dataclass
 import logging
 import os
-from typing import Optional
+from typing import Any, Optional
 
 from lupa import LuaRuntime  # pylint: disable=no-name-in-module
 
@@ -43,6 +43,19 @@ class GameData:
         data = GameData(lua)
     """
 
+    components: list[Component]
+    lua: LuaRuntime
+    data: Any  # lua table
+    frames: Any  # lua table
+    components: list[Component]
+    items: list[Item]
+    entities: list[Entity]
+    instructions: list[Instruction]
+    tech_unlocks: list[TechnologyUnlock]
+    technologies: list[Technology]
+    technology_categories: list[TechnologyCategory]
+    category_filters: list[CategoryFilter]
+
     unlockable_names: set[str] = set()
 
     def __init__(self, lua: LuaRuntime):
@@ -50,15 +63,13 @@ class GameData:
         self.data = self.globals().data  # type: ignore
         self._apply_renames()  # before everything else
         self.frames = self.data.frames
-        self.components: list[Component] = self._parse_components()
-        self.items: list[Item] = self._parse_items()
-        self.entities: list[Entity] = self._parse_entities()
-        self.instructions: list[Instruction] = self._parse_instructions()
-        self.tech_unlocks: list[TechnologyUnlock] = []
-        self.technologies: list[Technology] = self._parse_technologies()
-        self.technology_categories: list[TechnologyCategory] = (
-            self._parse_technology_categories()
-        )
+        self.components = self._parse_components()
+        self.items = self._parse_items()
+        self.entities = self._parse_entities()
+        self.instructions = self._parse_instructions()
+        self.tech_unlocks = []
+        self.technologies = self._parse_technologies()
+        self.technology_categories = self._parse_technology_categories()
         self.category_filters = self._parse_category_filters()
 
     def _apply_renames(self):
@@ -238,7 +249,7 @@ class GameData:
 
         return instructions
 
-    def _parse_components(self):
+    def _parse_components(self) -> list[Component]:
         components = []
 
         for component_id, c_tbl in self.data.components.items():

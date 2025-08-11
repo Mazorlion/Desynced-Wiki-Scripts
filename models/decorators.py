@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Optional, Type
+from typing import Optional, Type, TypeVar, cast
 
 from models.decorators_options import require_field_options
 
@@ -7,25 +7,21 @@ from models.decorators_options import require_field_options
 class DesyncedObject:
     """Marker base class for all desynced objects."""
 
-    pass
+
+T = TypeVar("T", bound=type)
 
 
-def desynced_object(cls: Type) -> Type:
+def desynced_object(cls: T) -> T:
     """@desynced_object is a dataclass with some validation.
-    Object decorated with this can be checked: isinstance(obj, DesyncedObject)
 
     Args:
         cls (Type): Class to wrap (passed by decoration).
 
     Returns:
-        Type: Returnes the wrapped class.
+        Type: Returns the wrapped class.
     """
-    # Dynamically create a new class that inherits from DesyncedObjectBase and the original class
-    bases = (DesyncedObject,) + cls.__bases__
-    new_cls = type(cls.__name__, bases, dict(cls.__dict__))
-    wrapped_cls = require_field_options(dataclass(new_cls))
-    setattr(wrapped_cls, "__is_desynced_object__", True)
-    return wrapped_cls
+    decorated_cls = require_field_options(dataclass(cls))
+    return cast(T, decorated_cls)
 
 
 def length_check(cls) -> Type:

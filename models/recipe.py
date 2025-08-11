@@ -1,7 +1,7 @@
 from enum import StrEnum, auto
 from typing import List
 
-from models.decorators import desynced_object
+from models.decorators import DesyncedObject, desynced_object
 from models.decorators_options import ListFieldOptions, annotate
 
 
@@ -39,7 +39,7 @@ class RecipeProducer:
 
 
 @desynced_object
-class Recipe:
+class Recipe(DesyncedObject):
     items: List[RecipeItem] = annotate(ListFieldOptions(max_length=4))
     producers: List[RecipeProducer] = annotate(ListFieldOptions(max_length=4))
     recipe_type: RecipeType
