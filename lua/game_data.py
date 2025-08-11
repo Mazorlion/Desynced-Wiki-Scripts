@@ -213,7 +213,23 @@ class GameData:
 
                 self.unlockable_names.add(unlock_name)
 
-        self.unlockable_names.update(FORCE_INCLUDE_NAMES)
+        def _extra_unlocks():
+            # Manually added unlocks
+            self.unlockable_names.update(FORCE_INCLUDE_NAMES)
+            # Unlock internal components from unlocked frames
+            for _frame_id, frame_tbl in self.frames.items():
+                if name := frame_tbl["name"]:
+                    if name in self.unlockable_names:
+                        if components := frame_tbl["components"]:
+                            for _id, comp in components.items():
+                                for _id, comp_lua_id in comp.items():
+                                    if component_name := self.lookup_component_name(
+                                        comp_lua_id
+                                    ):
+                                        self.unlockable_names.add(component_name)
+                                    break
+
+        _extra_unlocks()
         return techs
 
     def _parse_instructions(self) -> list[Instruction]:

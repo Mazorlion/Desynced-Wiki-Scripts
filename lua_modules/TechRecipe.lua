@@ -190,7 +190,7 @@ m.get_uplinks = function()
         "component",
         "name, luaId, uplinkRate",                    -- fields list
         { where ="uplinkRate != 0",
-        orderBy = "-uplinkRate"} -- To try get the most basics first
+        orderBy = "uplinkRate DESC"} -- To try get the most basics first
     )
 
     for _, obj in ipairs(results) do

@@ -17,9 +17,12 @@ class RecipeTypeGame(StrEnum):
 
 
 class RecipeType(StrEnum):
-    Construction = auto()
-    Production = auto()
-    Uplink = auto()
+    """For wiki cargo tables"""
+
+    NONE = ""
+    CONSTRUCTION = "construction"
+    PRODUCTION = "production"
+    UPLINK = "uplink"
 
 
 @desynced_object
