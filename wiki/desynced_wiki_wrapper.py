@@ -1,9 +1,11 @@
+import pprint
 from typing import Dict
 from typing import cast
 import pywikibot
 import pywikibot.login
 from pywikibot.site import APISite
 from pywikibot.throttle import Throttle
+from pywikibot.data import api
 
 from util.config import GetCredentials
 from util.logger import get_logger
@@ -39,6 +41,7 @@ class DesyncedWiki:
         self._site.login(user=username)
         throttle: Throttle = self._site.throttle
         throttle.writedelay = 1
+        throttle.mindelay = 0
 
         logged_user = self._site.user()
         if not logged_user:
@@ -48,14 +51,19 @@ class DesyncedWiki:
 
     def recreate_cargo_table(self, template_name: str) -> bool:
         # https://all.docs.genesys.com/api.php?action=help&modules=cargorecreatetables
-        form: Dict = {
-            "template": template_name,
-            "createReplacement": "true",
-        }
-
         try:
-            result = self._site.post(action="cargorecreatetables", **form)
-            print("Cargo table recreation triggered:", result)
+            form: Dict = {
+                "action": "cargorecreatetables",
+                "template": template_name,
+                "createReplacement": "true",
+                "token": self._site.tokens["csrf"],
+            }
+            request: api.Request = self._site.simple_request(**form, use_get=False)
+            results = request.submit()
+            print(
+                "Cargo table recreation triggered, with results:",
+                pprint.pformat(results),
+            )
             return True
         except pywikibot.exceptions.APIError as e:
             print("API error:", e)
@@ -64,11 +72,21 @@ class DesyncedWiki:
         return False
 
     def recreate_cargo_data(self, template_name: str, table_name: str) -> bool:
-        form: Dict = {"template": template_name, "table": table_name}
-
+        form: Dict = {
+            "action": "cargorecreatedata",
+            "template": template_name,
+            "table": table_name,
+            "token": self._site.tokens["csrf"],
+        }
         try:
-            result = self._site.post(action="cargorecreatedata", **form)
-            print("Cargo table data recreation triggered:", result)
+            request: api.Request = self._site.simple_request(
+                parameters=form, use_get=False
+            )
+            results = request.submit()
+            print(
+                "Cargo table data recreation triggered, with results:",
+                pprint.pformat(results),
+            )
             return True
         except pywikibot.exceptions.APIError as e:
             print("API error:", e)
