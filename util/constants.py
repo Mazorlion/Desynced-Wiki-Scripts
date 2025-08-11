@@ -52,4 +52,7 @@ WIKI_NAME_OVERRIDES: dict[str, str] = {
     "c_trilobyte_attack_t2": "Trilobyte Attack (T2)",
     "c_trilobyte_attack_t3": "Trilobyte Attack (T3)",
     "f_bug_home": "Bug Hole (Giant)",
+    "c_bunker_repair_4": "Bunker Repair Facilities (Heavy Bunker)",
+    "c_alien_crane2": "Phase Transporter",
+    "c_alien_crane3": "Phase Transporter (Alien Worker)",
 }
