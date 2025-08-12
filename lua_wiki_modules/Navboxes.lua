@@ -2,7 +2,7 @@
 -- Write doc in Naboxes_doc.mediawiki, and update it on the wiki with https://wiki.desyncedgame.com/index.php?title=Module:Navboxes/doc&action=edit
 
 local p = {}
-local nav = {} -- Use for internal function. You can use this one for debugging without exposing functions, return this instead of p
+local m = {} -- Use for internal function. You can use this one for debugging without exposing functions, return this instead of p
 
 ---@type any
 ---@diagnostic disable-next-line: lowercase-global
@@ -23,12 +23,12 @@ end
 ---@field filterField string
 ---@field recipeType string|nil
 
----@alias NavboxType "UNIT" | "BUILDING" | "COMPONENT" | "ITEM"
+---@alias NavboxType "BOT" | "BUILDING" | "COMPONENT" | "ITEM"
 
 -- Possible types to create a navbox with
 ---@type table<NavboxType, TypeData>
 local TYPES = {
-  UNIT = {
+  BOT = {
     cargo_table = "entity",
     tab = "frame",
     filterField = "size",
@@ -60,7 +60,7 @@ local TYPES = {
 
 ---@param categories table<string, CategoryData>
 ---@return nil
-nav.removeEmptyCategories = function(categories)
+m.removeEmptyCategories = function(categories)
  for k, v in pairs(categories) do
     if #(v.names) == 0 then
       categories[k] = nil
@@ -70,7 +70,7 @@ end
 
 ---@param typeData TypeData
 ---@return table<string, CategoryData>
-nav.queryBaseCategories = function (typeData)
+m.queryBaseCategories = function (typeData)
   local categoriesMeta = cargo.query(
     CATEGORY_FILTER_TABLE .. "=cat",
     'name, filterVal, ordering',
@@ -82,7 +82,7 @@ nav.queryBaseCategories = function (typeData)
   local categories = {}
   for _, cat in ipairs(categoriesMeta) do
     local name, val, order = cat.name, cat.filterVal, cat.ordering
-    local wherePart = string.format('%s="%s" AND luaId NOT LIKE "%%attack%%"', typeData.filterField, val)
+    local wherePart = string.format('%s="%s" AND unlockable = TRUE', typeData.filterField, val)
     if typeData.recipeType then
       wherePart = wherePart .. string.format(' AND recipeType="%s"', typeData.recipeType)
     end
@@ -106,7 +106,7 @@ end
 
 ---@param type string
 ---@return table<string, CategoryData>
-nav.queryUserExtrasCategories =  function(type)
+m.queryUserExtrasCategories =  function(type)
   local userCategoriesRows = cargo.query(
     USER_NAV_CATEGORIES_TABLE,
     'category=catName, pagename',
@@ -132,7 +132,7 @@ end
 ---@param base table<string, CategoryData>
 ---@param extra table<string, CategoryData>
 ---@return table<string, CategoryData>
-nav.mergeCategories = function (base, extra)
+m.mergeCategories = function (base, extra)
   -- Step 1: Remove from base any name also found in extra
   for _, extraCat in pairs(extra) do
     for _, name in ipairs(extraCat.names) do
@@ -167,7 +167,7 @@ end
 
 ---@param categories table<string, CategoryData>
 ---@return SortedCategoryEntry[]
-nav.sortCategories = function(categories)
+m.sortCategories = function(categories)
   -- Convert map to array
   local arr = {}
   for name, data in pairs(categories) do
@@ -189,7 +189,7 @@ end
 ---@param tableTitle string Navtable title
 ---@param rawType string from types above here, like Building or Item (any case)
 ---@return string
-nav.createNavBox = function(tableTitle, rawType)
+m.createNavBox = function(tableTitle, rawType)
   ---@type NavboxType
   local type = mw.ustring.upper(rawType or "")
   local typeData = TYPES[type]
@@ -199,14 +199,14 @@ nav.createNavBox = function(tableTitle, rawType)
 
   local frame = mw.getCurrentFrame()
 
-  local baseCategories = nav.queryBaseCategories(typeData)
-  local extraCategories = nav.queryUserExtrasCategories(type)
+  local baseCategories = m.queryBaseCategories(typeData)
+  local extraCategories = m.queryUserExtrasCategories(type)
 
-  local categories = nav.mergeCategories(baseCategories, extraCategories)
+  local categories = m.mergeCategories(baseCategories, extraCategories)
   -- mw.logObject(categories) 
-  nav.removeEmptyCategories(categories)
+  m.removeEmptyCategories(categories)
 
-  local sortedCategories = nav.sortCategories(categories)
+  local sortedCategories = m.sortCategories(categories)
 
   local rowsHtml = ""
   for _, cat in pairs(sortedCategories) do
@@ -249,7 +249,7 @@ p.create = function(frame)
   if not rawType then
     return "(Navbox error: No type provided)"
   end
-  return nav.createNavBox(title, rawType)
+  return m.createNavBox(title, rawType)
 end
 
 return p
@@ -264,7 +264,7 @@ local frame = { args = { title = "Buildings", type = "Building" } }
 = p.create(frame, "Buildings", "Building")
 (enter)
 
-Return nav instead of p if you want to debug those private functions
+Return m instead of p if you want to debug the non exposed functions
 
 Resources:
 General cargo: https://www.mediawiki.org/wiki/Extension:Cargo/Querying_data
