@@ -299,6 +299,11 @@ class GameData:
         components = []
 
         for component_id, c_tbl in self.data.components.items():
+            name = c_tbl["name"]
+            if name == component_id:
+                # Some components in the game are not named, just skip those
+                continue
+
             registers: list[Register] = []
             if c_tbl["registers"]:
                 for register in c_tbl["registers"].values():
@@ -338,7 +343,7 @@ class GameData:
             components.append(
                 Component(
                     lua_id=component_id,
-                    name=c_tbl["name"],
+                    name=name,
                     description=c_tbl["desc"],
                     attachment_size=attachment_size,
                     power_usage_per_second=per_tick_to_per_second(c_tbl["power"]) or 0,
