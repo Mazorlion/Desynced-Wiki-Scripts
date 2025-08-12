@@ -44,6 +44,8 @@ The script will:
 - For files in `--wiki-output-directory`, in `Data` uploads them to their own `Data:...` pages. (this does not create the "human" page meant to be read)
 - Trigger cargo tables regeneration as needed
 
+/!\ This currently does not remove older data removed from the game
+
 ### Extra manual things
 
 - You might have to handle new name collisions. Generation script should stop and error out if it detects one.  

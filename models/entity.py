@@ -1,7 +1,9 @@
+from dataclasses import field
 from enum import Enum
 
 from models.decorators import desynced_object, length_check
 from models.decorators_options import ListFieldOptions, annotate
+from models.wiki_metadata import WikiMetadata
 from models.recipe import Recipe
 from models.sockets import Sockets
 from models.types import Race
@@ -43,4 +45,10 @@ class Entity:
     recipe: Recipe
     types: list[EntityType] = annotate(
         ListFieldOptions(max_length=2, skip_suffix=False)
+    )
+    # Shared attributes for wiki metadata
+    metadata: (
+        WikiMetadata
+    ) = field(  # pylint: disable=invalid-field-call # type: ignore[misc]
+        default_factory=WikiMetadata  # type: ignore[misc]
     )

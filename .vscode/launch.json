@@ -51,7 +51,7 @@
             "name": "Upload Wiki",
             "type": "debugpy",
             "request": "launch",
-            "program": "cli_upload_wiki.py",
+            "module": "cli_upload_wiki",
             "console": "integratedTerminal",
             "justMyCode": true,
             "args": [
@@ -62,12 +62,12 @@
             "name": "Upload Wiki (for real)",
             "type": "debugpy",
             "request": "launch",
-            "program": "upload_wiki.py",
+            "module": "cli_upload_wiki",
             "console": "integratedTerminal",
             "justMyCode": true,
             "args": [
                 "--debug",
-                "--no-dry-run",
+                "--apply",
             ],
         },
         {
@@ -114,7 +114,6 @@
                 "../main",
                 "--debug",
                 "--apply",
-                "--resume",
             ],
             "justMyCode": true
         },

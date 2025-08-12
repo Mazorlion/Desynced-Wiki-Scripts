@@ -1,3 +1,6 @@
+from dataclasses import dataclass
+
+
 DEFAULT_WIKI_OUTPUT_DIR = "wiki_output"
 FETCHED_GAME_DATA_DIR = "fetched_game_data"
 
@@ -5,32 +8,39 @@ DESYNCED_APP_ID = 1450900
 
 WIKI_BASE_URL = "https://wiki.desyncedgame.com"
 
-FORCE_INCLUDE_NAMES = {
-    "Command Center",
-    "Trilobyte",
-    "Malika",
-    "Mothika",
-    "Scale Worm",
-    "Ravager",
-    "Trilobyte Attack",
-    "Trilobyte Attack (1)",
-    "Trilobyte Attack (2)",
-    "Trilobyte Attack (3)",
-    "Trilobyte Attack (4)",
-    "Trilobyte Attack (T2)",
-    "Trilobyte Attack (T3)",
-    "Wasp Attack",
-    "Greelobyte",
-    "Trilopew",
-    "Wasp",
-    "Gigakaiju",
-    "Shield Worm",
-    "Bug Hole",
-    "Bug Hive",
-    "Large Bug Hive",
-    "Giant Beast",
+
+@dataclass
+class WikiOverride:
+    unlockable: bool
+
+
+WIKI_OVERRIDES: dict[str, WikiOverride] = {
+    "Command Center": WikiOverride(True),
+    "Trilobyte": WikiOverride(False),
+    "Malika": WikiOverride(False),
+    "Mothika": WikiOverride(False),
+    "Scale Worm": WikiOverride(False),
+    "Ravager": WikiOverride(False),
+    "Trilobyte Attack": WikiOverride(False),
+    "Trilobyte Attack (1)": WikiOverride(False),
+    "Trilobyte Attack (2)": WikiOverride(False),
+    "Trilobyte Attack (3)": WikiOverride(False),
+    "Trilobyte Attack (4)": WikiOverride(False),
+    "Trilobyte Attack (T2)": WikiOverride(False),
+    "Trilobyte Attack (T3)": WikiOverride(False),
+    "Wasp Attack": WikiOverride(False),
+    "Greelobyte": WikiOverride(False),
+    "Trilopew": WikiOverride(False),
+    "Wasp": WikiOverride(False),
+    "Gigakaiju": WikiOverride(False),
+    "Shield Worm": WikiOverride(False),
+    "Bug Hole": WikiOverride(False),
+    "Bug Hive": WikiOverride(False),
+    "Large Bug Hive": WikiOverride(False),
+    "Giant Beast": WikiOverride(False),
 }
 
+# Those will be excluded from upload to wiki
 FORCE_IGNORE_NAMES = {
     "socketbuilding",
     "storage structure",

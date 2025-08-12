@@ -26,7 +26,7 @@ class ListFieldOptions(FieldOptions):
     skip_suffix: bool = False
     # If the element in a list is a dataclass, should the name be prefixed.
     dataclass_options: DataClassFieldOptions = field(
-        default_factory=lambda: DataClassFieldOptions()  # pylint: disable=unnecessary-lambda
+        default_factory=DataClassFieldOptions
     )
 
 

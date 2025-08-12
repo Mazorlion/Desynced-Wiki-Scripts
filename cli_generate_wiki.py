@@ -56,9 +56,6 @@ class GenerateWiki:
         lua = lua_util.load_lua_runtime(game_data_directory)
         self.game: GameData = GameData(lua)
 
-    def should_skip(self, desynced_object: Any) -> bool:
-        return desynced_object.name not in self.game.unlockable_names
-
     def clean_output_dir(self, output_dir: Path):
         """Recursively deletes all files in `dir`. Doesn't touch directories.
 
@@ -190,9 +187,6 @@ class GenerateWiki:
     def build(self):
         output_directory = Path(self.wiki_output_directory)
 
-        # Identify objects that can be unlocked via tech as allowed to upload to the wiki.
-        # TODO(maz): Upload bug enemies and stuff.
-
         # Delete outdated wiki files.
         output_directory.mkdir(parents=True, exist_ok=True)
         if output_directory.exists() and not self.only_categories:
@@ -234,7 +228,9 @@ class GenerateWiki:
         # Apply filtering
         for table_name, td in tables_by_name.items():
             if td.should_filter:
-                td.objects = [obj for obj in td.objects if not self.should_skip(obj)]
+                td.objects = [
+                    obj for obj in td.objects if not self.game.should_skip_upload(obj)
+                ]
 
         if self.only_categories:
             filtered_tables = {

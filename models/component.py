@@ -1,3 +1,4 @@
+from dataclasses import field
 from enum import Enum
 from typing import List
 
@@ -8,6 +9,7 @@ from models.decorators_options import (
     ListFieldOptions,
     annotate,
 )
+from models.wiki_metadata import WikiMetadata
 from models.recipe import Recipe
 from models.sockets import SocketSize
 
@@ -107,4 +109,10 @@ class Component:
             max_length=5,
             dataclass_options=DataClassFieldOptions(prefix_name=True),
         )
+    )
+    # Shared attributes for wiki metadata
+    metadata: (
+        WikiMetadata
+    ) = field(  # pylint: disable=invalid-field-call # type: ignore[misc]
+        default_factory=WikiMetadata  # type: ignore[misc]
     )

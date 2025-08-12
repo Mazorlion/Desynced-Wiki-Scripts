@@ -47,6 +47,7 @@ class MissingImages(CliTools):
             )
             logger.debug(f"Checking image: {image_page.title()}")
 
+            # this does not actually check if there is an image on the file page
             if not image_page.exists():
                 logger.info(f"Image: {image_page.title()} is missing.")
                 return self.handle_missing_image(

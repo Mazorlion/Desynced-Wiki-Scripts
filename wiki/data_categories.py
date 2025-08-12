@@ -11,7 +11,6 @@ class DataCategory(StrEnum):
     tech = auto()  # pylint: disable=invalid-name
     techCategory = auto()  # pylint: disable=invalid-name
     techUnlock = auto()  # pylint: disable=invalid-name
-    uplink = auto()  # pylint: disable=invalid-name
 
 
 @dataclass

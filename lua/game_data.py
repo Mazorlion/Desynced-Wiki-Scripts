@@ -26,7 +26,7 @@ from models.tech import (
     TechnologyUnlock,
 )
 from models.types import Race
-from util.constants import FORCE_IGNORE_NAMES, FORCE_INCLUDE_NAMES
+from util.constants import FORCE_IGNORE_NAMES, WIKI_OVERRIDES
 from wiki.cargo.cargo_printer import CargoPrinter
 from wiki.wiki_name_overrides import get_name_override
 
@@ -56,7 +56,9 @@ class GameData:
     technology_categories: list[TechnologyCategory]
     category_filters: list[CategoryFilter]
 
-    unlockable_names: set[str] = set()
+    # Names we consider for uploading to wiki cargo tables
+    _upload_names: set[str] = set()
+    _unlockable_names_from_tech: set[str] = set()
 
     def __init__(self, lua: LuaRuntime):
         self.lua: LuaRuntime = lua
@@ -71,6 +73,7 @@ class GameData:
         self.technologies = self._parse_technologies()
         self.technology_categories = self._parse_technology_categories()
         self.category_filters = self._parse_category_filters()
+        self._compute_wiki_metadata()
 
     def _apply_renames(self):
         def apply_overrides(collection):
@@ -81,6 +84,50 @@ class GameData:
         apply_overrides(self.data.components)
         apply_overrides(self.data["items"])
         apply_overrides(self.data.frames)
+
+    def _compute_wiki_metadata(self):
+        # Start from unlocked names from tech
+        self._upload_names = self._unlockable_names_from_tech
+        # Merge the names manually added
+        self._upload_names.update({name for name in WIKI_OVERRIDES.keys()})
+        # Unlock other components/items referenced from unlocked frames
+        for _frame_id, frame_tbl in self.frames.items():
+            if name := frame_tbl["name"]:
+                if name in self._upload_names:
+                    if components := frame_tbl["components"]:
+                        for _id, comp in components.items():
+                            for _id, comp_lua_id in comp.items():
+                                if component_name := self.lookup_component_name(
+                                    comp_lua_id
+                                ):
+                                    self._upload_names.add(component_name)
+                                break
+
+                    if convert_to := frame_tbl["convert_to"]:
+                        if item_name := self.lookup_item_name(convert_to):
+                            self._upload_names.add(item_name)
+
+        # Finally, forced removes
+        self._upload_names.difference_update(FORCE_IGNORE_NAMES)
+
+        def is_unlockable(obj: Any) -> bool:
+            for name, override in WIKI_OVERRIDES.items():
+                if name == obj.name:
+                    return override.unlockable
+
+            # Default
+            return True
+
+        # Now handle WikiMetadata
+        for comp in self.components:
+            comp.metadata.unlockable = is_unlockable(comp)
+        for entity in self.entities:
+            entity.metadata.unlockable = is_unlockable(entity)
+        for item in self.items:
+            item.metadata.unlockable = is_unlockable(item)
+
+    def should_skip_upload(self, desynced_object: Any) -> bool:
+        return desynced_object.name not in self._upload_names
 
     def _parse_category_filters(self) -> list[CategoryFilter]:
         categories = []
@@ -211,27 +258,8 @@ class GameData:
                 if not unlock_name:
                     continue
 
-                self.unlockable_names.add(unlock_name)
+                self._unlockable_names_from_tech.add(unlock_name)
 
-        def _extra_unlocks():
-            # Manually added unlocks
-            self.unlockable_names.update(FORCE_INCLUDE_NAMES)
-            # Unlock internal components from unlocked frames
-            for _frame_id, frame_tbl in self.frames.items():
-                if name := frame_tbl["name"]:
-                    if name in self.unlockable_names:
-                        if components := frame_tbl["components"]:
-                            for _id, comp in components.items():
-                                for _id, comp_lua_id in comp.items():
-                                    if component_name := self.lookup_component_name(
-                                        comp_lua_id
-                                    ):
-                                        self.unlockable_names.add(component_name)
-                                    break
-            # Finally, forced removes
-            self.unlockable_names.difference_update(FORCE_IGNORE_NAMES)
-
-        _extra_unlocks()
         return techs
 
     def _parse_instructions(self) -> list[Instruction]:

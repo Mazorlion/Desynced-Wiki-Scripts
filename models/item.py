@@ -1,8 +1,10 @@
+from dataclasses import field
 from enum import Enum
 from typing import List
 
 from models.decorators import desynced_object, length_check
 from models.decorators_options import ListFieldOptions, annotate
+from models.wiki_metadata import WikiMetadata
 from models.recipe import Recipe
 
 
@@ -57,6 +59,12 @@ class Item:
     mining_recipes: List[MiningRecipe] = annotate(ListFieldOptions(max_length=4))
     # How many of this item stack in a single slot.
     stack_size: int = 1
+    # Shared attributes for wiki metadata
+    metadata: (
+        WikiMetadata
+    ) = field(  # pylint: disable=invalid-field-call # type: ignore[misc]
+        default_factory=WikiMetadata  # type: ignore[misc]
+    )
 
 
 # data.items.sampleitem = {

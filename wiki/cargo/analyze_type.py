@@ -33,13 +33,13 @@ class TypeInfo:
         DATACLASS = 2
 
     type: Optional[Union[Type[DesyncedObject], TypeInfo]]
-    options: FieldOptions = field(default_factory=lambda: FieldOptions())
+    options: FieldOptions = field(default_factory=FieldOptions)
     kind: Kind = Kind.SCALAR
 
 
 @dataclass
 class ListTypeInfo(TypeInfo):
-    list_options: ListFieldOptions = field(default_factory=lambda: ListFieldOptions())
+    list_options: ListFieldOptions = field(default_factory=ListFieldOptions)
 
     def __post_init__(self):
         self.kind = TypeInfo.Kind.LIST
@@ -50,7 +50,7 @@ class DataClassTypeInfo(TypeInfo):
     # Dictionary of field_name to TypeInfo for the field.
     fields: Dict[str, TypeInfo] = field(default_factory=lambda: {})
     dataclass_options: DataClassFieldOptions = field(
-        default_factory=lambda: DataClassFieldOptions()
+        default_factory=DataClassFieldOptions
     )
 
     def __post_init__(self):
