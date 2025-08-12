@@ -35,6 +35,7 @@ class Entity:
     health: int
     power_usage_per_second: int
     movement_speed: float
+    flying: bool
     visibility: float
     storage: int
     size: str

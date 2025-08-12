@@ -438,6 +438,7 @@ class GameData:
                         else 0
                     ),
                     movement_speed=frame_tbl["movement_speed"],
+                    flying=frame_tbl["cost_modifier"] == 0,
                     visibility=frame_tbl["visibility_range"],
                     storage=frame_tbl["slots"]["storage"] if frame_tbl["slots"] else 0,
                     size=frame_tbl["size"],
