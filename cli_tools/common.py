@@ -152,7 +152,8 @@ class CliTools(ABC):
         self.args = CliToolsArgs.process_common_args(parsed_args)
         logger.setLevel(logging.DEBUG if self.args.debug else logging.INFO)
         self.process_args(parsed_args)
-        self.resume = ResumeHelper(self.args.resume_file, self.args.resume)
+        source_id = str(hash(self.description))  # simple unique id for tools
+        self.resume = ResumeHelper(source_id, self.args.resume_file, self.args.resume)
         self.wiki = DesyncedWiki()
 
     def add_args(self, _parser: argparse.ArgumentParser):

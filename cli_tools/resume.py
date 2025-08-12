@@ -20,6 +20,7 @@ ResumableId: TypeAlias = str
 
 @dataclass
 class ResumeData:
+    source: str  # anything that can be used as script id
     last_processed: str = ""  # can be whatever
     total_processed: int = 0  # minimal consistency check
 
@@ -27,10 +28,12 @@ class ResumeData:
 class ResumeHelper:
     _resume_data: ResumeData
     _resume_file_path: Path
+    _source_id: str
 
-    def __init__(self, resume_file_path: Path, resume: bool):
+    def __init__(self, source_id: str, resume_file_path: Path, resume: bool):
         self._resume_file_path = resume_file_path
-        self._resume_data = self._init_resume_data(resume)
+        self._source_id = source_id
+        self._resume_data = self._init_resume_data(source_id, resume)
 
     def init_resume_index(self, to_process: list[Resumable]) -> int:
         """
@@ -55,6 +58,7 @@ class ResumeHelper:
                     f"Resuming at index {last_processed_index} ({self._resume_data.last_processed})"
                 )
                 self._resume_data = ResumeData(
+                    self._source_id,
                     to_process[last_processed_index].id,
                     self._resume_data.total_processed,
                 )
@@ -68,7 +72,7 @@ class ResumeHelper:
         else:
             logger.info("No valid resume index found, starting from 0.")
 
-        self._resume_data = ResumeData()
+        self._resume_data = ResumeData(self._source_id)
         self._write_resume_file(self._resume_data)
         return 0
 
@@ -88,7 +92,7 @@ class ResumeHelper:
             logger.error(f"Failed to write resume file: {e}")
             raise
 
-    def _init_resume_data(self, resume: bool) -> ResumeData:
+    def _init_resume_data(self, source_id: str, resume: bool) -> ResumeData:
         if self._resume_file_path.exists() and resume:
             try:
                 with open(self._resume_file_path, "r", encoding="utf-8") as f:
@@ -97,16 +101,16 @@ class ResumeHelper:
                 logger.debug(f"Loaded resume file: {self._resume_file_path}")
             except FileNotFoundError as e:
                 logger.warning(f"Resume file not found, starting fresh: {e}")
-                return ResumeData()
+                return ResumeData(source_id)
             except json.JSONDecodeError as e:
                 logger.warning(f"Invalid JSON in resume file, starting fresh: {e}")
-                return ResumeData()
+                return ResumeData(source_id)
             except TypeError as e:
                 logger.warning(f"Invalid data in resume file, starting fresh: {e}")
-                return ResumeData()
+                return ResumeData(source_id)
         else:
             if not resume:
                 logger.debug(
                     f"Resuming not requested, resume file ({self._resume_file_path}) will be overwritten"
                 )
-            return ResumeData()
+            return ResumeData(source_id)
