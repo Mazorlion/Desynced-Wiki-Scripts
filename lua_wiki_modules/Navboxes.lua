@@ -1,5 +1,5 @@
 -- This file about generating the navboxes from the game file instead of adding objects manually in them.  
--- Write doc in Naboxes_doc.mediawiki, and update it on the wiki with https://wiki.desyncedgame.com/index.php?title=Module:Navboxes/doc&action=edit
+-- Write doc on the wiki with https://wiki.desyncedgame.com/index.php?title=Module:Navboxes/doc&action=edit
 
 local p = {}
 local m = {} -- Use for internal function. You can use this one for debugging without exposing functions, return this instead of p
@@ -19,6 +19,7 @@ end
 ---@class TypeData
 ---@comment Contains categoryfilter selectors for given type
 ---@field cargo_table string
+---@field extra_fields string|nil Fields to query, beside name
 ---@field tab string
 ---@field filterField string
 ---@field recipeType string|nil
@@ -30,6 +31,7 @@ end
 local TYPES = {
   BOT = {
     cargo_table = "entity",
+    extra_fields = "race, slotType",
     tab = "frame",
     filterField = "size",
     recipeType = "Production"
@@ -68,9 +70,68 @@ m.removeEmptyCategories = function(categories)
   end
 end
 
----@param typeData TypeData
+---@param categories table<string, CategoryData>
+---@param cat_name string
+---@param name string
+---@param ordering number
+---@return nil
+m.createOrAppendToCategory = function(categories, cat_name, name, ordering)
+   -- If the category doesn't exist, create it
+    if not categories[cat_name] then
+        categories[cat_name] = {
+            ordering = ordering,
+            names = {}
+        }
+    end
+
+    -- Append the new name
+    table.insert(categories[cat_name].names, name)
+end
+
+
+---Custom sorting for bots here
+---@param type NavboxType
+---@param categories table<string, CategoryData>
+---@param game_cat_name string
+---@param ordering number
+---@param row table
+---@return nil
+m.sortInCategory = function(type, categories, game_cat_name, ordering, row)
+  if type == "BOT" then
+    if row.slotType ~= nil and mw.ustring.upper(row.slotType) == "DRONE" then
+      m.createOrAppendToCategory(categories, "Drone", row.name, ordering)
+    elseif row.slotType ~= nil and mw.ustring.upper(row.slotType) == "SATELLITE" then
+      m.createOrAppendToCategory(categories, "Satellite", row.name, ordering)
+    elseif row.race ~= nil then
+      m.createOrAppendToCategory(categories, row.race, row.name, ordering)
+    else -- fallback
+      m.createOrAppendToCategory(categories, "Other", row.name, ordering)
+    end
+  else
+    m.createOrAppendToCategory(categories, game_cat_name, row.name, ordering)
+  end
+end
+
+---@param categories table<string, CategoryData>
+---@return nil
+m.addBugsBots = function(categories)
+  local typeData = TYPES["BOT"]
+  local query_objects = cargo.query(
+    typeData.cargo_table,
+    'name',
+    {
+      where = ('size = "Unit" AND race = "Virus"'),
+    }
+  )
+  for _, row in ipairs(query_objects) do
+    m.createOrAppendToCategory(categories, "Bugs", row.name, 999)
+  end
+end
+
+---@param type NavboxType
 ---@return table<string, CategoryData>
-m.queryBaseCategories = function (typeData)
+m.queryBaseCategories = function (type)
+  local typeData = TYPES[type]
   local categoriesMeta = cargo.query(
     CATEGORY_FILTER_TABLE .. "=cat",
     'name, filterVal, ordering',
@@ -81,30 +142,37 @@ m.queryBaseCategories = function (typeData)
   )
   local categories = {}
   for _, cat in ipairs(categoriesMeta) do
-    local name, val, order = cat.name, cat.filterVal, cat.ordering
-    local wherePart = string.format('%s="%s" AND unlockable = TRUE', typeData.filterField, val)
+    local game_cat_name, filter_val, ordering = cat.name, cat.filterVal, cat.ordering
+    local wherePart = string.format('%s="%s" AND unlockable = TRUE', typeData.filterField, filter_val)
     if typeData.recipeType then
       wherePart = wherePart .. string.format(' AND recipeType="%s"', typeData.recipeType)
     end
 
-    local foundObjects = cargo.query(
+    local fields = 'name, unlockable'
+    if typeData.extra_fields ~= nil then
+        fields = fields .. ',' .. typeData.extra_fields
+    end
+    local query_objects = cargo.query(
       typeData.cargo_table,
-      'name',
+      fields,
       {
         where = wherePart,
       }
     )
-    local foundNames = {}
-    for _, row in ipairs(foundObjects) do
-      table.insert(foundNames, row.name)
+    for _, row in ipairs(query_objects) do
+      m.sortInCategory(type, categories, game_cat_name, tonumber(ordering) or 0, row)
     end
-    categories[name] = { ordering = tonumber(order) or 0, names = foundNames }
+  end
+
+  
+  if type == "BOT" then
+    m.addBugsBots(categories)
   end
 
   return categories
 end
 
----@param type string
+---@param type NavboxType
 ---@return table<string, CategoryData>
 m.queryUserExtrasCategories =  function(type)
   local userCategoriesRows = cargo.query(
@@ -198,8 +266,9 @@ m.createNavBox = function(tableTitle, rawType)
   end
 
   local frame = mw.getCurrentFrame()
+  
+  local baseCategories = m.queryBaseCategories(type)
 
-  local baseCategories = m.queryBaseCategories(typeData)
   local extraCategories = m.queryUserExtrasCategories(type)
 
   local categories = m.mergeCategories(baseCategories, extraCategories)
@@ -260,8 +329,9 @@ return p
 Debugging:
 
 local frame = { args = { title = "Buildings", type = "Building" } }
+local frame = { args = { title = "Bots", type = "BOT" } }
 (enter)
-= p.create(frame, "Buildings", "Building")
+= p.create(frame)
 (enter)
 
 Return m instead of p if you want to debug the non exposed functions

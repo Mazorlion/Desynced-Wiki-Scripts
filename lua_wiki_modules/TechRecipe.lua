@@ -1,3 +1,5 @@
+-- Write doc on the wiki with https://wiki.desyncedgame.com/index.php?title=Module:TechRecipe/doc&action=edit
+
 local p = {}
 local m = {} -- Use for internal function. You can use this one for debugging without exposing functions, return this instead of p
 
