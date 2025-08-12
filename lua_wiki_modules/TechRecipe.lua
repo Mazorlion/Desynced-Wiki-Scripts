@@ -71,9 +71,6 @@ function m.get_tech_cargo_data(name)
     for _, f in ipairs(numericFields) do
         row[f] = tonumber(row[f]) or 0
     end
-    if row.numProduced == 0 then
-        row.numProduced = 1
-    end
 
     ---@cast row TechCargo
     return row
@@ -179,7 +176,8 @@ end
 --- Replace some components with their building (by lua id). Only supports frame
 --- Or hide them if nil
 local UPLINK_REPLACEMENTS = {
-    c_alien_research = "f_alien_researcher"
+    c_alien_research = "f_alien_researcher",
+    c_human_science = "f_human_sciencelab",
 }
 
 ---@return RecipeUplink[]
@@ -250,6 +248,9 @@ end
 ---@param tech TechCargo
 ---@return string
 m.total_requirements_table = function(tech)
+    if tech.numProduced == 0 then
+        return "<!-- Wrong tech.numProduced, should not be 0 -->"
+    end
     local elem = mw.html.create("table")
     elem
         :addClass("wikitable")
@@ -266,8 +267,10 @@ end
 ---@return string
 m.render = function(name)
     local tech = m.get_tech_cargo_data(name)
-    if not tech then
-        return "(Recipe not found)"
+
+    -- Some techs are not researched
+    if not tech or not tech.ingredient1 then
+        return "<!-- No recipe found for tech -->"
     end
 
     local result = 
