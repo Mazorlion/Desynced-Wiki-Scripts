@@ -23,10 +23,12 @@ end
 ---@field tab string
 ---@field filterField string
 ---@field recipeType string|nil
+---@field orderBy string|nil
 
 ---@alias NavboxType "BOT" | "BUILDING" | "COMPONENT" | "ITEM"
 
 -- Possible types to create a navbox with
+-- THe filter fields & recipe types are about listing & filtering like the game does
 ---@type table<NavboxType, TypeData>
 local TYPES = {
   BOT = {
@@ -46,13 +48,13 @@ local TYPES = {
     cargo_table = "component",
     tab = "item",
     filterField = "attachmentSize",
-    recipeType = nil --unused
   },
   ITEM = {
     cargo_table = "item",
+    extra_fields = "type, race",
     tab = "item",
     filterField = "tag",
-    recipeType = nil --unused
+    orderBy = "type, race"
   }
 }
 
@@ -100,7 +102,7 @@ m.sortInCategory = function(type, categories, game_cat_name, ordering, row)
   if type == "BOT" then
     if row.slotType ~= nil and mw.ustring.upper(row.slotType) == "DRONE" then
       m.createOrAppendToCategory(categories, "Drone", row.name, ordering)
-    elseif row.slotType ~= nil and mw.ustring.upper(row.slotType) == "SATELLITE" then
+    elseif row.slotType ~= nil and mw.ustring.upper(row.slotType) == "SATELLITE" then -- Doesn't actually get passed to this function atm
       m.createOrAppendToCategory(categories, "Satellite", row.name, ordering)
     elseif row.race ~= nil then
       m.createOrAppendToCategory(categories, row.race, row.name, ordering)
@@ -157,6 +159,7 @@ m.queryBaseCategories = function (type)
       fields,
       {
         where = wherePart,
+        orderBy = typeData.orderBy
       }
     )
     for _, row in ipairs(query_objects) do

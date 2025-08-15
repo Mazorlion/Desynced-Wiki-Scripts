@@ -17,6 +17,7 @@ class WikiOverride:
 WIKI_OVERRIDES: dict[str, WikiOverride] = {
     "Command Center": WikiOverride(True),
     "Robotics Datacube": WikiOverride(True),
+    "Mothership": WikiOverride(True),
     "Trilobyte": WikiOverride(False),
     "Malika": WikiOverride(False),
     "Mothika": WikiOverride(False),

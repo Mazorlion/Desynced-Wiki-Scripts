@@ -55,6 +55,8 @@ class Item:
     production_recipe: Recipe
     # Tag for category matching
     tag: str
+    # Race if any
+    race: str
     # If this `Item` is mineable, this is a list of components that can mine it.
     mining_recipes: List[MiningRecipe] = annotate(ListFieldOptions(max_length=4))
     # How many of this item stack in a single slot.

@@ -390,6 +390,7 @@ class GameData:
                     name=item["name"],
                     description=item["desc"],
                     type=ItemType[item["tag"].upper()],
+                    race=item["race"],
                     slot_type=ItemSlotType[item["slot_type"].upper()],
                     production_recipe=recipe,
                     mining_recipes=self._parse_mining_recipes(item) or [],
