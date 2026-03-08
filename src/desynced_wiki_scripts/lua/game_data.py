@@ -278,6 +278,9 @@ class GameData:
         instructions = []
 
         for instruction_id, ins in self.data.instructions.items():
+            if str(ins["desc"]).count("DEPRECATED") > 0:
+                continue
+
             args: list[InstructionArg] = []
             if ins["args"]:
                 for _, arg_tbl in ins["args"].items():
