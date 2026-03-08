@@ -16,4 +16,4 @@ jobs:
         pip install uv
         uv sync
     - run: |
-        python -m unittest discover -s test -p '*_test.py'
+        uv run -m unittest discover -s test -p '*_test.py'
