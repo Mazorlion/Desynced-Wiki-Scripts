@@ -37,4 +37,4 @@ class TechnologyCategory:
     discovery_tech: str
     initial_tech: str
     texture: str
-    sub_categories: List[str] = annotate(ListFieldOptions(max_length=3))
+    sub_categories: List[str] = annotate(ListFieldOptions(max_length=4))
