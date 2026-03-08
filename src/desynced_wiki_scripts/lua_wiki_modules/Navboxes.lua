@@ -10,11 +10,36 @@ mw = mw
 
 local cargo = mw.ext.cargo
 
-local CATEGORY_FILTER_TABLE = "categoryfilter"
-local USER_NAV_CATEGORIES_TABLE = "userNavCategories"
 local function stripWhitespace(str)
     return str:match("^%s*(.-)%s*$")
 end
+
+local _cache = {
+  base = {},
+  extras = {},
+  bugs = nil
+}
+
+local _expandCache = {}
+
+local function expandCached(frame, title, args)
+  local key = title .. '|' .. (args.name or '')
+
+  if _expandCache[key] then
+    return _expandCache[key]
+  end
+
+  local result = stripWhitespace(frame:expandTemplate{
+    title = title,
+    args = args
+  })
+
+  _expandCache[key] = result
+  return result
+end
+
+local CATEGORY_FILTER_TABLE = "categoryfilter"
+local USER_NAV_CATEGORIES_TABLE = "userNavCategories"
 
 ---@class TypeData
 ---@comment Contains categoryfilter selectors for given type
@@ -117,14 +142,24 @@ end
 ---@param categories table<string, CategoryData>
 ---@return nil
 m.addBugsBots = function(categories)
+  if _cache.bugs then
+    for _, row in ipairs(_cache.bugs) do
+      m.createOrAppendToCategory(categories, "Bugs", row.name, 999)
+    end
+    return
+  end
+
   local typeData = TYPES["BOT"]
   local query_objects = cargo.query(
     typeData.cargo_table,
     'name',
     {
-      where = ('size = "Unit" AND race = "Virus"'),
+      where = 'size = "Unit" AND race = "Virus"'
     }
   )
+
+  _cache.bugs = query_objects
+
   for _, row in ipairs(query_objects) do
     m.createOrAppendToCategory(categories, "Bugs", row.name, 999)
   end
@@ -133,7 +168,13 @@ end
 ---@param type NavboxType
 ---@return table<string, CategoryData>
 m.queryBaseCategories = function (type)
+  if _cache.base[type] then
+    return _cache.base[type]
+  end
+
   local typeData = TYPES[type]
+
+  -- STEP 1: get category metadata
   local categoriesMeta = cargo.query(
     CATEGORY_FILTER_TABLE .. "=cat",
     'name, filterVal, ordering',
@@ -142,42 +183,64 @@ m.queryBaseCategories = function (type)
       groupBy = 'cat.filterVal'
     }
   )
-  local categories = {}
-  for _, cat in ipairs(categoriesMeta) do
-    local game_cat_name, filter_val, ordering = cat.name, cat.filterVal, cat.ordering
-    local wherePart = string.format('%s="%s" AND unlockable = TRUE', typeData.filterField, filter_val)
-    if typeData.recipeType then
-      wherePart = wherePart .. string.format(' AND recipeType="%s"', typeData.recipeType)
-    end
 
-    local fields = 'name, unlockable'
-    if typeData.extra_fields ~= nil then
-        fields = fields .. ',' .. typeData.extra_fields
-    end
-    local query_objects = cargo.query(
-      typeData.cargo_table,
-      fields,
-      {
-        where = wherePart,
-        orderBy = typeData.orderBy
-      }
-    )
-    for _, row in ipairs(query_objects) do
-      m.sortInCategory(type, categories, game_cat_name, tonumber(ordering) or 0, row)
+  -- build lookup table
+  local filterToCategory = {}
+  local categories = {}
+
+  for _, cat in ipairs(categoriesMeta) do
+    filterToCategory[cat.filterVal] = {
+      name = cat.name,
+      ordering = tonumber(cat.ordering) or 0
+    }
+  end
+
+  -- STEP 2: single bulk object query
+  local fields = 'name, unlockable,' .. typeData.filterField
+  if typeData.extra_fields then
+    fields = fields .. ',' .. typeData.extra_fields
+  end
+
+  local wherePart = 'unlockable = TRUE'
+  if typeData.recipeType then
+    wherePart = wherePart .. string.format(' AND recipeType="%s"', typeData.recipeType)
+  end
+
+  local allObjects = cargo.query(
+    typeData.cargo_table,
+    fields,
+    {
+      where = wherePart,
+      orderBy = typeData.orderBy
+    }
+  )
+
+  -- STEP 3: assign objects to categories in Lua
+  for _, row in ipairs(allObjects) do
+    local filterVal = row[typeData.filterField]
+    local meta = filterToCategory[filterVal]
+
+    if meta then
+      m.sortInCategory(type, categories, meta.name, meta.ordering, row)
     end
   end
 
-  
+  -- BOT special handling
   if type == "BOT" then
     m.addBugsBots(categories)
   end
 
+  _cache.base[type] = categories
   return categories
 end
 
 ---@param type NavboxType
 ---@return table<string, CategoryData>
-m.queryUserExtrasCategories =  function(type)
+m.queryUserExtrasCategories = function(type)
+  if _cache.extras[type] then
+    return _cache.extras[type]
+  end
+
   local userCategoriesRows = cargo.query(
     USER_NAV_CATEGORIES_TABLE,
     'category=catName, pagename',
@@ -185,16 +248,18 @@ m.queryUserExtrasCategories =  function(type)
       where = string.format('UPPER(type) = "%s"', type)
     }
   )
+
   local categories = {}
+
   for _, row in ipairs(userCategoriesRows) do
-    local catName = row.catName;
+    local catName = row.catName
     if not categories[catName] then
       categories[catName] = { ordering = 999, names = {} }
     end
-
     table.insert(categories[catName].names, row.pagename)
   end
 
+  _cache.extras[type] = categories
   return categories
 end
 
@@ -281,10 +346,10 @@ m.createNavBox = function(tableTitle, rawType)
   local sortedCategories = m.sortCategories(categories)
 
   local rowsHtml = ""
-  for _, cat in pairs(sortedCategories) do
+  for _, cat in ipairs(sortedCategories) do
     local objects = "" -- list of objects to insert in a row
     for _, name in ipairs(cat.data.names) do
-      objects = objects .. stripWhitespace(frame:expandTemplate { title = "NavboxIconLinkNamed", args = { name = name } })
+      objects = objects .. expandCached(frame, "NavboxIconLinkNamed", { name = name })
     end
     -- Returns a table row [ category | objects ]
     rowsHtml = rowsHtml .. stripWhitespace(frame:expandTemplate {
