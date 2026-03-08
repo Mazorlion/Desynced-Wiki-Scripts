@@ -63,7 +63,7 @@ class GameData:
     items: list[Item]
     entities: list[Entity]
     instructions: list[Instruction]
-    tech_unlocks: list[TechnologyUnlock]
+    tech_unlocks: set[TechnologyUnlock]
     technologies: list[Technology]
     technology_categories: list[TechnologyCategory]
     category_filters: list[CategoryFilter]
@@ -81,7 +81,7 @@ class GameData:
         self.items = self._parse_items()
         self.entities = self._parse_entities()
         self.instructions = self._parse_instructions()
-        self.tech_unlocks = []
+        self.tech_unlocks = set()
         self.technologies = self._parse_technologies()
         self.technology_categories = self._parse_technology_categories()
         self.category_filters = self._parse_category_filters()
@@ -233,7 +233,7 @@ class GameData:
                                 continue
 
                         if unlocked_name := self.lookup_name(unlock_id):
-                            self.tech_unlocks.append(
+                            self.tech_unlocks.add(
                                 TechnologyUnlock(
                                     name=f"{tech['name']}_{unlocked_name}",
                                     tech_name=tech["name"],

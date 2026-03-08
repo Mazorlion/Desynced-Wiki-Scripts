@@ -26,6 +26,9 @@ class TechnologyUnlock:
     unlocks: str
     name: str = annotate(FieldOptions(skip_field=True))
 
+    def __hash__(self):
+        return hash((self.tech_name, self.unlocks))
+
 
 @desynced_object
 @length_check
