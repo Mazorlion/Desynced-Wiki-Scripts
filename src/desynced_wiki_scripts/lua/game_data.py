@@ -96,6 +96,7 @@ class GameData:
         apply_overrides(self.data.components)
         apply_overrides(self.data["items"])
         apply_overrides(self.data.frames)
+        apply_overrides(self.data["techs"])
 
     def _compute_wiki_metadata(self):
         # Start from unlocked names from tech
