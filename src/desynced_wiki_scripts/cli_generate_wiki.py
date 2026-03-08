@@ -166,6 +166,19 @@ class GenerateWiki:
                 logger.debug(f"File: {desynced_object.name}. Content: {content}\n")
                 storage_file.write(content)
 
+    def check_name_collisions(self, tables_by_name: dict) -> bool:
+        """Returns wheter a name collision was found in any of the tables. Logs the collisions if found."""
+        has_error = False
+        for name, table in tables_by_name.items():
+            if collisions := get_name_collisions(table.objects):
+                # transform Dict[str, list[str]] to Dict[str, str] with ', '.join(ids)
+                formatted_collisions = {name: ",".join(ids) for name, ids in collisions.items()}
+                logger.error(
+                    f"Name collisions found in table {name}:\n{pprint.pformat(formatted_collisions, indent=4)}",
+                )
+                has_error = True
+        return has_error
+
     def build(self):
         output_directory = Path(self.wiki_output_directory)
 
@@ -185,7 +198,7 @@ class GenerateWiki:
         class TableData:
             type: Type[DesyncedObject]  # object type from models
             objects: Collection
-            should_filter: bool = False
+            should_filter: bool = False  # if set, consider objects for should_skip_upload filtering when uploading
 
         # Mapping of cargo table name to the type and list of actual game data objects
         tables_by_name: Dict[DataCategory, TableData] = {
@@ -211,19 +224,10 @@ class GenerateWiki:
                 return
             tables_by_name = filtered_tables
 
-        if not self.only_templates:
-            has_error = False
-            for name, table in tables_by_name.items():
-                if collisions := get_name_collisions(table.objects):
-                    # transform Dict[str, list[str]] to Dict[str, str] with ', '.join(ids)
-                    formatted_collisions = {name: ",".join(ids) for name, ids in collisions.items()}
-                    logger.error(
-                        f"Name collisions found in table {name}:\n{pprint.pformat(formatted_collisions, indent=4)}",
-                    )
-                    has_error = True
-            if has_error:
-                logger.error("Name collisions found. Please resolve them before proceeding. (search WIKI_NAME_OVERRIDES)")
-                return
+        # Check for name collisions before writing any files
+        if not self.only_templates and self.check_name_collisions(tables_by_name):
+            logger.error("Name collisions found. Please resolve them before proceeding. (search WIKI_NAME_OVERRIDES)")
+            return
 
         for table_name, table_def in tables_by_name.items():
             self.fill_templates(
