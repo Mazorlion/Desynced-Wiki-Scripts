@@ -176,9 +176,16 @@ class GameData:
             )
         return categories
 
-    SEED_TECHS = ["t_assembly", "t_robot_tech_basic"]
+    # id: category name
+    SEED_TECHS = {
+        "t_assembly": "Robot",
+        "t_robot_tech_basic": "Robot",
+        "t_human_tech_basic": "Human",
+        "t_alien_tech_basic": "Alien",
+    }
 
     def _parse_technologies(self) -> list[Technology]:
+
         # Return list of tech objects.
         techs: list[Technology] = []
         # Tech Lua ID to Lua ID of techs it unlocks.
@@ -208,10 +215,10 @@ class GameData:
                 for _, req in tech["require_tech"].items():
                     tech_id_to_unlocked_tech_ids.setdefault(req, set()).add(technology_id)
                     required_techs.append(self.lookup_tech_name(req))
-            elif technology_id in self.SEED_TECHS:
+            elif technology_id in self.SEED_TECHS.keys():
                 # Seed our queue with the root techs.
                 # Robot isn't properly set on the category.
-                queue.append(TechNode(technology_id, "Robot"))
+                queue.append(TechNode(technology_id, self.SEED_TECHS[technology_id]))
 
             # Process unlocked objects (non-techs).
             if tech["unlocks"]:
