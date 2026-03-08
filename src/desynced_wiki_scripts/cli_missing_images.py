@@ -104,7 +104,7 @@ class MissingImages(CliTools):
 
         file_path = Path(self._game_data_directory) / cleaned_texture_path
         if not file_path.exists() or file_path.is_dir():
-            logger.error("Image file {file_path} does not exists")
+            logger.error(f"Image file {file_path} does not exists")
             return None
 
         return file_path
