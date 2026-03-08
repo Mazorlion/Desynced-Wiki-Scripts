@@ -1,4 +1,35 @@
 [project]
-name = "Desynced Wiki Scripts"
-version = "1.0.0"
+name = "Desynced-Wiki-Scripts"
+version = "1.0.1"
+authors = [{ name = "Mazorlion", email = "maz@mazorlion.com" },{ name = "Kelno", email = "kelnowm@gmail.com" }]
 requires-python = ">=3.13"
+dependencies = [
+    "colorlog>=6.10.1",
+    "jinja2>=3.1",
+    "lupa>=2.5",
+    "pywikibot>=11.0.0",
+    "steam[client]>=1.4.4",
+    "uv>=0.10.9",
+]
+
+[project.scripts]
+# This creates a console command
+cleanup_page_templates = "desynced_wiki_scripts.cli_cleanup_page_templates:main"
+upload_wiki = "desynced_wiki_scripts.cli_upload_wiki:main"
+create_missing_pages = "desynced_wiki_scripts.cli_create_missing_pages:main"
+missing_images = "desynced_wiki_scripts.cli_missing_images:main"
+remove_data_pages = "desynced_wiki_scripts.cli_remove_data_pages:main"
+generate_wiki = "desynced_wiki_scripts.cli_generate_wiki:main"
+fetch_main_from_steam = "desynced_wiki_scripts.cli_fetch_main_from_steam:main"
+example_script = "desynced_wiki_scripts.cli__example_script:main"
+
+[project.optional-dependencies]
+dev = [
+   "black",
+]
+
+[tool.uv]
+package = true
+
+[tool.black]
+line-length = 140

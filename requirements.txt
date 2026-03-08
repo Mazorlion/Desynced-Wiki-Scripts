@@ -1,5 +1,0 @@
-Jinja2==3.1
-lupa==2.5
-pywikibot
-steam[client]
-colorlog

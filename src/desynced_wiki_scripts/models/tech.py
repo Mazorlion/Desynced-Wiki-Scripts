@@ -1,0 +1,37 @@
+from typing import List
+
+from .decorators import desynced_object, length_check
+from .decorators_options import FieldOptions, ListFieldOptions, annotate
+from .recipe import Recipe
+
+
+@desynced_object
+@length_check
+class Technology:
+    name: str
+    lua_id: str
+    description: str
+    category: str
+    texture: str
+    # Number of times recipe must be completed.
+    progress_count: int
+    recipe: Recipe
+    # List of required techs by name.
+    required_tech: List[str] = annotate(ListFieldOptions(max_length=3))
+
+
+@desynced_object
+class TechnologyUnlock:
+    tech_name: str
+    unlocks: str
+    name: str = annotate(FieldOptions(skip_field=True))
+
+
+@desynced_object
+@length_check
+class TechnologyCategory:
+    name: str
+    discovery_tech: str
+    initial_tech: str
+    texture: str
+    sub_categories: List[str] = annotate(ListFieldOptions(max_length=3))

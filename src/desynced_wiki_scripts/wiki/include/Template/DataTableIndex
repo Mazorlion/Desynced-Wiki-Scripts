@@ -1,0 +1,15 @@
+<noinclude>
+[[Category:Data:TableDefinition]]
+
+{{#cargo_declare:
+_table=table_index
+|name = String
+|stored_table = String
+}}
+</noinclude>
+<includeonly>
+{{#cargo_store:
+_table=table_index
+|name = {{{name}}}
+|storedTable = {{{stored_table}}}
+}}</includeonly>

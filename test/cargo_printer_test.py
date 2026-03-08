@@ -3,10 +3,10 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import List
 
-from models.decorators import desynced_object
-from models.decorators_options import FieldOptions, ListFieldOptions, annotate
-from wiki.cargo.analyze_type import ListTypeInfo, TypeInfo, analyze_type
-from wiki.cargo.cargo_printer import CargoPrinter
+from desynced_wiki_scripts.models.decorators import desynced_object
+from desynced_wiki_scripts.models.decorators_options import FieldOptions, ListFieldOptions, annotate
+from desynced_wiki_scripts.wiki.cargo.analyze_type import ListTypeInfo, TypeInfo, analyze_type
+from desynced_wiki_scripts.wiki.cargo.cargo_printer import CargoPrinter
 
 
 class TestAnalyzeType(unittest.TestCase):
@@ -17,9 +17,7 @@ class TestAnalyzeType(unittest.TestCase):
             age: int
 
         type_info = analyze_type(Simple)
-        self.assertDictEqual(
-            type_info.fields, {"name": TypeInfo(str), "age": TypeInfo(int)}
-        )
+        self.assertDictEqual(type_info.fields, {"name": TypeInfo(str), "age": TypeInfo(int)})
 
     def test_analyze_list_with_max_length(self):
         @desynced_object
@@ -131,9 +129,7 @@ class TestDataclassPrinter(unittest.TestCase):
         obj = WithNestedList(matrix=[[1, 2], [3, 4]])
         type_info = analyze_type(WithNestedList)
         output = CargoPrinter().print_dataclass(obj, type_info)
-        self.assertListEqual(
-            output, ["|matrix1 = [1, 2]", "|matrix2 = [3, 4]", "|matrix3 = "]
-        )
+        self.assertListEqual(output, ["|matrix1 = [1, 2]", "|matrix2 = [3, 4]", "|matrix3 = "])
 
     def test_deeply_nested_dataclass(self):
         @dataclass
@@ -173,9 +169,7 @@ class TestDataclassDeclarationPrinter(unittest.TestCase):
         type_info = analyze_type(Simple)
         self.assertEqual(
             ["|name = String", "|age = Integer"],
-            CargoPrinter(mode=CargoPrinter.Mode.DECLARATIONS).print_dataclass(
-                dc_obj=None, type_info=type_info
-            ),
+            CargoPrinter(mode=CargoPrinter.Mode.DECLARATIONS).print_dataclass(dc_obj=None, type_info=type_info),
         )
 
 

@@ -4,54 +4,31 @@
     // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
     "configurations": [
-        {
-            "name": "Current File (as module)",
-            "type": "debugpy",
-            "request": "launch",
-            "program": "${file}",
-            "console": "integratedTerminal",
-            "justMyCode": true,
-            "args": [
-                "--debug",
-            ],
-        },
-        {
-            "name": "Current File (as module) - APPLY",
-            "type": "debugpy",
-            "request": "launch",
-            "program": "${file}",
-            "console": "integratedTerminal",
-            "justMyCode": true,
-            "args": [
-                "--debug",
-                "--apply",
-            ],
-        },
-        {
-            "name": "Fetch Main from Steam",
-            "type": "debugpy",
-            "request": "launch",
-            "program": "cli_fetch_main_from_steam.py",
-            "console": "integratedTerminal",
-            "justMyCode": true
-        },
+        // Disabled as it's not working atm
+        // {
+        //     "name": "Fetch Main from Steam",
+        //     "type": "debugpy",
+        //     "request": "launch",
+        //     "program": "src/desynced_wiki_scripts/cli_fetch_main_from_steam.py",
+        //     "console": "integratedTerminal",
+        //     "justMyCode": true
+        // },
         {
             "name": "Generate Wiki",
             "type": "debugpy",
             "request": "launch",
-            "program": "cli_generate_wiki.py",
+            "module": "desynced_wiki_scripts.cli_generate_wiki",
             "console": "integratedTerminal",
             "args": [
-                "../main",
                 "--overwrite",
             ],
             "justMyCode": true
         },
         {
-            "name": "Upload Wiki",
+            "name": "Upload Wiki (dry-run)",
             "type": "debugpy",
             "request": "launch",
-            "module": "cli_upload_wiki",
+            "module": "desynced_wiki_scripts.cli_upload_wiki",
             "console": "integratedTerminal",
             "justMyCode": true,
             "args": [
@@ -62,7 +39,7 @@
             "name": "Upload Wiki (for real)",
             "type": "debugpy",
             "request": "launch",
-            "module": "cli_upload_wiki",
+            "module": "desynced_wiki_scripts.cli_upload_wiki",
             "console": "integratedTerminal",
             "justMyCode": true,
             "args": [
@@ -71,10 +48,10 @@
             ],
         },
         {
-            "name": "Create missing pages",
+            "name": "Create missing pages (dry-run)",
             "type": "debugpy",
             "request": "launch",
-            "module": "cli_create_missing_pages",
+            "module": "desynced_wiki_scripts.cli_create_missing_pages",
             "console": "integratedTerminal",
             "args": [
                 "--debug"
@@ -82,10 +59,10 @@
             "justMyCode": true
         },
         {
-            "name": "Cleanup page templates",
+            "name": "Cleanup page templates (dry-run)",
             "type": "debugpy",
             "request": "launch",
-            "module": "cli_cleanup_page_templates",
+            "module": "desynced_wiki_scripts.cli_cleanup_page_templates",
             "console": "integratedTerminal",
             "args": [
                 "--debug"
@@ -93,10 +70,10 @@
             "justMyCode": true
         },
         {
-            "name": "Remove data pages",
+            "name": "Remove data pages (dry-run)",
             "type": "debugpy",
             "request": "launch",
-            "module": "cli_remove_data_pages",
+            "module": "desynced_wiki_scripts.cli_remove_data_pages",
             "console": "integratedTerminal",
             "args": [
                 "--debug",
@@ -105,10 +82,10 @@
             "justMyCode": true
         },
         {
-            "name": "Upload missing images",
+            "name": "Upload missing images (for real)",
             "type": "debugpy",
             "request": "launch",
-            "module": "cli_missing_images",
+            "module": "desynced_wiki_scripts.cli_missing_images",
             "console": "integratedTerminal",
             "args": [
                 "../main",
