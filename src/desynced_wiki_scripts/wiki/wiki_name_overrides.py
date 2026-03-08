@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, Collection
 
 from desynced_wiki_scripts.util.constants import WIKI_NAME_OVERRIDES
 
@@ -11,7 +11,7 @@ def get_name_override(lua_id: str) -> str | None:
     return WIKI_NAME_OVERRIDES.get(lua_id)
 
 
-def get_name_collisions(objects: list[Any]) -> dict[str, list[str]]:
+def get_name_collisions(objects: Collection[Any]) -> dict[str, list[str]]:
     """
     Check if there are any name collisions in the table.
     Argument: table: List of desynced_object

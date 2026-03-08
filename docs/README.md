@@ -68,8 +68,6 @@ Copy `config.ini.example` to `config.ini` and update your credentials as needed.
 Steam credentials are needed to download the game assets.  
 Wiki credentials are needed for the import process.  
 
-This file is already ignored by git.
-
 ## Other helper scripts
 
 Some other scripts to help with wiki maintenance. Most of those scripts can be resumed with `--resume`.

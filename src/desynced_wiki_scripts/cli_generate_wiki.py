@@ -11,7 +11,7 @@ import argparse
 import logging
 import os
 from pathlib import Path
-from typing import Dict, List, Type
+from typing import Collection, Dict, Type
 
 import desynced_wiki_scripts.lua.lua_util as lua_util
 from .util.constants import (
@@ -100,7 +100,7 @@ class GenerateWiki:
         output_dir: Path,
         table_name: str,
         desynced_object_type: Type[DesyncedObject],
-        objects: list,
+        objects: Collection,
     ):
         """Fills in both table definition and data storage templates.
 
@@ -108,7 +108,7 @@ class GenerateWiki:
             output_dir (str): Directory to store results in.
             table_name (str): Name of the cargo (camelCase)
             desynced_object_type (Type): Python type to use for the table definition.
-            objects (list): List of filled in objects, from game data, of Type `type`.
+            objects (collection): List of filled in objects, from game data, of Type `type`.
             should_filter (bool, optional): If True, attempts to filter for spoilers or fake data.
         """
 
@@ -184,7 +184,7 @@ class GenerateWiki:
         @dataclass
         class TableData:
             type: Type[DesyncedObject]  # object type from models
-            objects: List
+            objects: Collection
             should_filter: bool = False
 
         # Mapping of cargo table name to the type and list of actual game data objects
