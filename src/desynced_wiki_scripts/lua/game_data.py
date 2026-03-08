@@ -144,12 +144,17 @@ class GameData:
         categories = []
 
         for _, cat in self.data.categories.items():
+            name = str(cat["name"]).replace("?", "Alien")  # Game does the same
             tab = cat["tab"]
+
+            if cat["filter_field"] == "type":
+                continue  # idk what to do with that yet
+
             if tab == "item" or tab == "frame":
                 categories.append(
                     CategoryFilter(
-                        name=str(cat["name"]).replace("?", "Alien"),  # Game does the same
-                        tab=cat["tab"],
+                        name=name,
+                        tab=tab,
                         filter_field=CargoPrinter.to_camel_case(cat["filter_field"]),
                         filter_val=cat["filter_val"],
                         ordering=len(categories),
