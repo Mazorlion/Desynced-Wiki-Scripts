@@ -181,7 +181,7 @@ class GameData:
         # Return list of tech objects.
         techs: list[Technology] = []
         # Tech Lua ID to Lua ID of techs it unlocks.
-        tech_id_to_unlocked_tech_ids: dict[str, list[str]] = {}
+        tech_id_to_unlocked_tech_ids: dict[str, set[str]] = {}
         # Lua ID of technology to object (non-tech) lua IDs.
         tech_id_to_unlock_id: dict[str, list[str]] = {}
 
@@ -205,7 +205,7 @@ class GameData:
             if tech["require_tech"]:
                 # Build a tree of the inverse of requirement: which techs unlock which.
                 for _, req in tech["require_tech"].items():
-                    tech_id_to_unlocked_tech_ids.setdefault(req, []).append(technology_id)
+                    tech_id_to_unlocked_tech_ids.setdefault(req, set()).add(technology_id)
                     required_techs.append(self.lookup_tech_name(req))
             elif technology_id in self.SEED_TECHS:
                 # Seed our queue with the root techs.
@@ -245,11 +245,15 @@ class GameData:
                 )
             )
 
+        processed_techs_ids = set()  # Remember which techs we processed to avoid infinite loops in case of circular requirements
         while len(queue) > 0:
             current_node: TechNode = queue.popleft()
             # Traverse the tree and ad child techs for future processing.
-            for unlocked_tech_id in tech_id_to_unlocked_tech_ids.get(current_node.id, []):
-                queue.append(TechNode(unlocked_tech_id, current_node.category))
+            for unlocked_tech_id in tech_id_to_unlocked_tech_ids.get(current_node.id, set()):
+                if unlocked_tech_id not in processed_techs_ids:
+                    # print(f"{current_node.id} unlocks {unlocked_tech_id}")
+                    queue.append(TechNode(unlocked_tech_id, current_node.category))
+                    processed_techs_ids.add(unlocked_tech_id)
 
             # Categorize the things we unlock at this node.
             for unlocked_object_id in tech_id_to_unlock_id.get(current_node.id, []):
