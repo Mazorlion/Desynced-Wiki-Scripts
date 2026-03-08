@@ -60,7 +60,8 @@ def load_lua_runtime(game_data_dir) -> LuaRuntime:
         visualeffects = {},
         components = {},
         techs = {},
-        tech_categories = {}
+        tech_categories = {},
+        text_vars = {}
     }
 
     UIMsg = {}
@@ -68,6 +69,7 @@ def load_lua_runtime(game_data_dir) -> LuaRuntime:
     EntityAction = {}
     FactionAction = {}
     Delay = {}
+    MapMsg = {}
 
     function Map:GetSettings()
         return { blight_threshold = 0.1 }
