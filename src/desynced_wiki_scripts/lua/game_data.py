@@ -34,6 +34,17 @@ from .lua_util import tick_duration_to_seconds, per_tick_to_per_second
 logger = logging.getLogger()
 
 
+def dump_lua_table(tbl, indent=0):
+    """For debugging purposes, recursively prints the contents of a Lua table."""
+    prefix = "  " * indent
+    for k, v in tbl.items():
+        if hasattr(v, "items"):  # likely another Lua table
+            print(f"{prefix}{k}:")
+            dump_lua_table(v, indent + 1)
+        else:
+            print(f"{prefix}{k}: {v}")
+
+
 class GameData:
     """Encapsulates the exploration of a lua runtime that has evaluated the game files for Desynced.
 
@@ -366,6 +377,10 @@ class GameData:
 
         for item_id, item in self.data["items"].items():
             recipe = self._parse_recipe_from_table(item)
+            # dump_lua_table(item)
+            if item["tag"] is None:
+                continue  # deprecated items have no tag
+
             items.append(
                 Item(
                     lua_id=item_id,
