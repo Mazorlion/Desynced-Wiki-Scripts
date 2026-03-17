@@ -84,3 +84,6 @@ WIKI_NAME_OVERRIDES: dict[str, str] = {
     "c_virus_entity_holder": "Virus Possessor (Entity Holder)",
     "c_alien_heart_repair": "Auto Repair Module (Heart Shard)",
 }
+
+# Tech to ignore when considering tech unlocks
+IGNORED_TECHS = ["t_human_faction_npc", "t_alien_faction_npc"]

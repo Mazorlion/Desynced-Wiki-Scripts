@@ -25,7 +25,7 @@ from desynced_wiki_scripts.models.tech import (
     TechnologyUnlock,
 )
 from desynced_wiki_scripts.models.types import Race
-from desynced_wiki_scripts.util.constants import FORCE_IGNORE_NAMES, WIKI_OVERRIDES
+from desynced_wiki_scripts.util.constants import FORCE_IGNORE_NAMES, WIKI_OVERRIDES, IGNORED_TECHS
 from desynced_wiki_scripts.wiki.cargo.cargo_printer import CargoPrinter
 from desynced_wiki_scripts.wiki.wiki_name_overrides import get_name_override
 
@@ -181,6 +181,7 @@ class GameData:
             )
         return categories
 
+    # Those are the "starting" techs that are not unlocked by any other tech?
     # id: category name
     SEED_TECHS = {
         "t_assembly": "Robot",
@@ -213,6 +214,9 @@ class GameData:
                 queue.append(TechNode(cat["discovery_tech"], cat.name))
 
         for technology_id, tech in self.data.techs.items():
+            if technology_id in IGNORED_TECHS:
+                continue
+
             # Process previously required technologies.
             required_techs = []
             if tech["require_tech"]:
@@ -222,7 +226,6 @@ class GameData:
                     required_techs.append(self.lookup_tech_name(req))
             elif technology_id in self.SEED_TECHS.keys():
                 # Seed our queue with the root techs.
-                # Robot isn't properly set on the category.
                 queue.append(TechNode(technology_id, self.SEED_TECHS[technology_id]))
 
             # Process unlocked objects (non-techs).

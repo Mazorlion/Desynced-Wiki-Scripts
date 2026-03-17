@@ -59,6 +59,18 @@
             "justMyCode": true
         },
         {
+            "name": "Create missing pages (apply)",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "desynced_wiki_scripts.cli_create_missing_pages",
+            "console": "integratedTerminal",
+            "args": [
+                "--debug",
+                "--apply",
+            ],
+            "justMyCode": true
+        },
+        {
             "name": "Cleanup page templates (dry-run)",
             "type": "debugpy",
             "request": "launch",
@@ -82,13 +94,12 @@
             "justMyCode": true
         },
         {
-            "name": "Upload missing images (for real)",
+            "name": "Upload missing images (apply)",
             "type": "debugpy",
             "request": "launch",
             "module": "desynced_wiki_scripts.cli_missing_images",
             "console": "integratedTerminal",
             "args": [
-                "../main",
                 "--debug",
                 "--apply",
             ],
